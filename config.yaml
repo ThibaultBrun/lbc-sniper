@@ -1,0 +1,19 @@
+watches:
+  - id: vtt-enduro-bayonne
+    label: "VTT Enduro - 30km autour de Bayonne"
+    category: VEHICULES_VELOS
+    # LBC élargit la recherche aux catégories proches quand le texte matche
+    # plusieurs univers (ex: "enduro" = vélos + motos). On filtre donc côté
+    # Python sur les category_id retournés par l'API. 55 = Vélos.
+    accept_category_ids: ["55"]
+    text: "enduro"
+    location:
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 30
+    price_max: 5000
+    limit: 100
+    # Domaine pour le prompt Claude. Détermine le contexte expert utilisé.
+    # Valeurs supportées: "vtt", "vtt_enduro", "voiture", "moto", etc.
+    enrichment_domain: "vtt_enduro"

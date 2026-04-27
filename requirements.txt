@@ -1,0 +1,4 @@
+lbc>=1.1.2
+supabase>=2.9
+pyyaml>=6.0
+python-dotenv>=1.0
