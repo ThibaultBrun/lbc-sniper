@@ -14,6 +14,29 @@ watches:
       radius_km: 30
     price_max: 5000
     limit: 100
-    # Domaine pour le prompt Claude. Détermine le contexte expert utilisé.
-    # Valeurs supportées: "vtt", "vtt_enduro", "voiture", "moto", etc.
     enrichment_domain: "vtt_enduro"
+
+  - id: ludospace-voitures-bayonne
+    label: "Ludospaces (voitures) - 50km autour de Bayonne"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    location:
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 50
+    limit: 100
+    enrichment_domain: "ludospace"
+
+  - id: ludospace-utilitaires-bayonne
+    label: "Ludospaces (utilitaires 4+ places) - 50km autour de Bayonne"
+    category: VEHICULES_UTILITAIRES
+    accept_category_ids: ["5"]
+    location:
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 50
+    limit: 100
+    # Le prompt ludospace impose la règle "≥4 places" pour cette catégorie.
+    enrichment_domain: "ludospace_utilitaire"

@@ -76,6 +76,36 @@ DOMAIN_INTROS = {
         "Trek Slash/Remedy, Canyon Torque/Spectral/Strive, Commencal Meta/Clash, Santa Cruz Megatower/Bronson/Nomad, "
         "Cube Stereo, Orbea Occam/Rallon, BH Linx, Mondraker Crafty/Foxy, Haibike Alltrail) et leurs cotes."
     ),
+    "ludospace": (
+        "Tu es un expert du marche automobile d'occasion en France et tu cherches "
+        "specifiquement des LUDOSPACES (monospaces compacts familiaux derives d'utilitaires). "
+        "Modeles cibles: Citroen Berlingo, Peugeot Partner/Rifter, Renault Kangoo, Fiat Doblo, "
+        "VW Caddy, Opel Combo/Combo Life, Toyota Proace City Verso, Opel Vivaro Life, Nissan NV200, "
+        "Citroen Spacetourer, Peugeot Traveller, VW Caravelle, Mercedes Citan/Vito Tourer. "
+        "REGLE CRITIQUE: si l'annonce n'est PAS un ludospace (berline classique, SUV, sportive, "
+        "fourgon tole utilitaire pur, pickup, etc.), donne un deal_score TRES bas (0-15) et explique-le "
+        "clairement dans reasoning + cons (ex: 'pas un ludospace, c'est une Citroen C3'). "
+        "Pour un vrai ludospace, evalue normalement: cote occasion realiste, kilometrage, motorisation, "
+        "annee, options (climatisation, GPS, attelage), proprete de l'annonce."
+    ),
+    "ludospace_utilitaire": (
+        "Tu es un expert du marche automobile d'occasion en France et tu cherches specifiquement "
+        "des LUDOSPACES en version utilitaire AVEC AU MOINS 4 PLACES (cabine approfondie, banquette "
+        "arriere amovible, type 'Crew Cab' / 'L1 5 places' / 'Multispace' / 'Combi'). "
+        "Modeles cibles: Citroen Berlingo Multispace, Peugeot Partner Tepee/Rifter, Renault Kangoo, "
+        "Fiat Doblo Cargo Combi, VW Caddy Maxi Life, Mercedes Vito Tourer/Mixto, Renault Trafic "
+        "Combi/Passenger, Peugeot Expert Combi, Citroen Jumpy Combi, Opel Vivaro Combi, Ford Transit "
+        "Custom Kombi, Toyota Proace Verso. "
+        "REGLES CRITIQUES: "
+        "(1) Si le vehicule a MOINS de 4 places (fourgon tole 2 ou 3 places sans banquette arriere), "
+        "donne deal_score=0 et explique dans reasoning+cons que c'est exclu. "
+        "(2) Si tu n'es PAS sur du nombre de places (annonce vague), donne un deal_score MAXIMUM de 30 "
+        "et mentionne dans cons 'Nombre de places non confirme, risque utilitaire 2 places'. "
+        "(3) Si c'est confirme 4+ places (banquette arriere, vitres laterales, ceintures arriere), "
+        "evalue normalement le bon plan. "
+        "Indices d'un vrai 4+ places: 'Combi', 'Multispace', 'Tepee', 'Combi Passenger', 'Mixto', "
+        "mention de 5/7/9 places, photos avec banquette arriere visible."
+    ),
     "voiture": "Tu es un expert du marche automobile d'occasion en France.",
     "moto": "Tu es un expert du marche moto d'occasion en France.",
 }
