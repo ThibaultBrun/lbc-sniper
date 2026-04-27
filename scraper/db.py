@@ -110,6 +110,20 @@ def fetch_unenriched_ads(db: Client, watch_id: Optional[str] = None, limit: int 
     return q.execute().data
 
 
+def fetch_active_ads(db: Client, watch_id: Optional[str] = None, limit: int = 100) -> list[dict]:
+    """Récupère les annonces actives, enrichies ou pas (utilisé pour --reset)."""
+    q = (
+        db.table("ads")
+        .select("*")
+        .eq("is_active", True)
+        .order("first_seen_at", desc=True)
+        .limit(limit)
+    )
+    if watch_id:
+        q = q.eq("watch_id", watch_id)
+    return q.execute().data
+
+
 def update_enrichment(
     db: Client,
     ad_id: int,
@@ -130,6 +144,8 @@ def update_enrichment(
             "estimated_market_eur": enriched.get("estimated_market_eur"),
             "deal_score": enriched.get("deal_score"),
             "reasoning": enriched.get("reasoning"),
+            "pros": enriched.get("pros"),
+            "cons": enriched.get("cons"),
             "enriched_at": datetime.now(timezone.utc).isoformat(),
             "enrich_model": model,
             "enrich_error": None,

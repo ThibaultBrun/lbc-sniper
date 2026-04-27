@@ -20,6 +20,7 @@ import sys
 from typing import Optional
 
 from .db import (
+    fetch_active_ads,
     fetch_unenriched_ads,
     finish_run,
     get_client,
@@ -46,10 +47,23 @@ SCHEMA = {
         "estimated_market_eur": {"type": "number"},
         "deal_score": {"type": "integer", "minimum": 0, "maximum": 100},
         "reasoning": {"type": "string"},
+        "pros": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 0,
+            "maxItems": 6,
+        },
+        "cons": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 0,
+            "maxItems": 6,
+        },
     },
     "required": [
         "brand", "model", "year", "electric",
-        "condition_score", "estimated_market_eur", "deal_score", "reasoning",
+        "condition_score", "estimated_market_eur", "deal_score",
+        "reasoning", "pros", "cons",
     ],
 }
 
@@ -101,7 +115,19 @@ Note d'etat (condition_score):
 - 80  = bon etat
 - 95+ = quasi neuf
 
-Reasoning: 2-3 phrases max. Mentionne pourquoi tu donnes ce score, et les points de vigilance (manque de photos, kilometrage suspect, modele recent vs ancien, etc.)."""
+Champs a remplir:
+- reasoning: analyse detaillee (3-6 phrases) qui explique le score, situe le modele
+  sur le marche (cote neuf / cote occasion typique), commente l'etat declare et
+  rappelle l'enjeu (interet de cette annonce specifique).
+- pros: 2-5 points forts concrets et factuels (ex: "carbone haut de gamme", "marque
+  reputee Specialized", "annee recente 2023", "prix 40% sous la cote", "composants
+  premium SRAM XX1", "vendeur professionnel").
+- cons: 2-5 points de vigilance (ex: "absence de photos detaillees des suspensions",
+  "modele ancien, pieces peut-etre obsoletes", "kilometrage non mentionne", "vendeur
+  particulier, paiement en main propre uniquement", "annonce vague, manque de specs",
+  "prix tres bas, verifier qu'il ne s'agit pas d'une arnaque").
+
+Sois precis et factuel, evite les banalites. Si une info manque dans l'annonce, mentionne-le."""
 
 
 def call_claude(prompt: str, model: str = "opus") -> dict:
@@ -158,10 +184,15 @@ def enrich(
     watch_id: Optional[str] = None,
     limit: int = 50,
     model: str = "opus",
+    reset: bool = False,
 ) -> int:
     db = get_client()
-    pending = fetch_unenriched_ads(db, watch_id=watch_id, limit=limit)
-    print(f"Found {len(pending)} unenriched ads (model={model})")
+    if reset:
+        pending = fetch_active_ads(db, watch_id=watch_id, limit=limit)
+        print(f"[--reset] Re-enriching {len(pending)} active ads (model={model})")
+    else:
+        pending = fetch_unenriched_ads(db, watch_id=watch_id, limit=limit)
+        print(f"Found {len(pending)} unenriched ads (model={model})")
 
     if not pending:
         return 0
@@ -213,5 +244,10 @@ if __name__ == "__main__":
     parser.add_argument("--watch", help="Limit to a single watch_id")
     parser.add_argument("--limit", type=int, default=50, help="Max ads per run")
     parser.add_argument("--model", default="opus", help="claude model: opus or haiku")
+    parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Re-enrich all active ads (not just unenriched ones). Use after schema changes.",
+    )
     args = parser.parse_args()
-    sys.exit(enrich(args.watch, args.limit, args.model))
+    sys.exit(enrich(args.watch, args.limit, args.model, reset=args.reset))
