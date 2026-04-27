@@ -12,6 +12,15 @@ import argparse
 import sys
 import traceback
 
+# Windows console cp1252 → on force UTF-8 pour ne pas crash sur les emojis
+# qu'on retrouve parfois dans les titres LBC.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 import lbc
 
 from .config import load_config

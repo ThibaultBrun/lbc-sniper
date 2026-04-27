@@ -19,6 +19,15 @@ import subprocess
 import sys
 from typing import Optional
 
+# Windows console est en cp1252 par defaut → crash sur les emojis dans les
+# titres d'annonces. On force UTF-8 et on remplace les chars non encodables.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 from .db import (
     fetch_active_ads,
     fetch_unenriched_ads,
