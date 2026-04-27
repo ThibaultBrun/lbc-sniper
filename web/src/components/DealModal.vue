@@ -65,7 +65,7 @@ onUnmounted(() => {
     @click.self="emit('close')"
   >
     <div
-      class="relative w-full max-w-4xl bg-slate-900 rounded-2xl shadow-2xl shadow-black/60 border border-slate-700 overflow-hidden my-8"
+      class="relative w-full max-w-7xl bg-slate-900 rounded-2xl shadow-2xl shadow-black/60 border border-slate-700 overflow-hidden my-8"
       @click.stop
     >
       <!-- Bandeau verdict -->
@@ -86,8 +86,8 @@ onUnmounted(() => {
         </button>
       </div>
 
-      <div class="grid lg:grid-cols-[1fr_1.4fr] gap-0">
-        <!-- Colonne photo + prix + tags -->
+      <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">
+        <!-- Colonne 1 : photo + prix + tags -->
         <div class="p-6 space-y-4 border-b lg:border-b-0 lg:border-r border-slate-800">
           <div class="aspect-square rounded-xl bg-slate-800 overflow-hidden">
             <img
@@ -167,17 +167,29 @@ onUnmounted(() => {
           </a>
         </div>
 
-        <!-- Colonne analyse -->
-        <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <!-- Colonne 2 : Analyse + description originale -->
+        <div class="p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto border-b lg:border-b-0 lg:border-r border-slate-800">
           <section v-if="ad.reasoning">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-              Analyse
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-2">
+              <span class="text-base">🧠</span> Analyse
             </h3>
             <p class="text-base text-slate-100 leading-relaxed">
               {{ ad.reasoning }}
             </p>
           </section>
 
+          <section v-if="ad.body" class="pt-4 border-t border-slate-800/70">
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
+              Description originale
+            </h3>
+            <p class="text-xs text-slate-400 leading-relaxed whitespace-pre-line">
+              {{ ad.body }}
+            </p>
+          </section>
+        </div>
+
+        <!-- Colonne 3 : Pros / Cons -->
+        <div class="p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto">
           <section v-if="ad.pros?.length">
             <h3 class="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-3 flex items-center gap-2">
               <span class="text-lg">✓</span> Points forts
@@ -208,15 +220,6 @@ onUnmounted(() => {
                 <span>{{ c }}</span>
               </li>
             </ul>
-          </section>
-
-          <section v-if="ad.body" class="pt-4 border-t border-slate-800">
-            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">
-              Description originale
-            </h3>
-            <p class="text-xs text-slate-400 leading-relaxed whitespace-pre-line">
-              {{ ad.body }}
-            </p>
           </section>
         </div>
       </div>
