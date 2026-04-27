@@ -11,6 +11,16 @@ if (!url || !anonKey) {
 
 export const supabase = createClient(url, anonKey);
 
+export async function getAdById(id: number): Promise<Ad | null> {
+  const { data, error } = await supabase
+    .from("ads")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return (data as Ad | null) ?? null;
+}
+
 export type Ad = {
   id: number;
   watch_id: string;

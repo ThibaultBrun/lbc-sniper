@@ -1,9 +1,23 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import type { Ad } from "../supabase";
 
 const props = defineProps<{ ad: Ad }>();
 const emit = defineEmits<{ close: [] }>();
+
+const copied = ref(false);
+
+async function copyShareLink() {
+  const url = `${window.location.origin}/ad/${props.ad.id}`;
+  try {
+    await navigator.clipboard.writeText(url);
+    copied.value = true;
+    setTimeout(() => (copied.value = false), 2000);
+  } catch {
+    // Fallback: prompt user to copy manually
+    window.prompt("Copier le lien :", url);
+  }
+}
 
 const score = computed(() => props.ad.deal_score ?? 0);
 
@@ -77,13 +91,28 @@ onUnmounted(() => {
             <div class="text-xs uppercase tracking-widest opacity-75 mt-1">Analyse IA — Claude Opus</div>
           </div>
         </div>
-        <button
-          @click="emit('close')"
-          class="rounded-full bg-black/20 hover:bg-black/40 w-10 h-10 grid place-items-center text-2xl leading-none transition shrink-0"
-          aria-label="Fermer"
-        >
-          ×
-        </button>
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            @click="copyShareLink"
+            :class="[
+              'rounded-full px-3 h-10 text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5',
+              copied
+                ? 'bg-emerald-400 text-slate-950'
+                : 'bg-black/20 hover:bg-black/40',
+            ]"
+            :aria-label="copied ? 'Lien copié' : 'Copier le lien partageable'"
+          >
+            <span v-if="copied">✓ Copié</span>
+            <span v-else>🔗 Partager</span>
+          </button>
+          <button
+            @click="emit('close')"
+            class="rounded-full bg-black/20 hover:bg-black/40 w-10 h-10 grid place-items-center text-2xl leading-none transition"
+            aria-label="Fermer"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">

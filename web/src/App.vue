@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { supabase, type Ad } from "./supabase";
+import { computed, onMounted, ref, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { getAdById, supabase, type Ad } from "./supabase";
 import DealCard from "./components/DealCard.vue";
 import DealModal from "./components/DealModal.vue";
+
+const route = useRoute();
+const router = useRouter();
 
 const ads = ref<Ad[]>([]);
 const loading = ref(true);
@@ -11,7 +15,45 @@ const minScore = ref(60);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const watchFilter = ref<string | null>(null);
 const showUnenriched = ref(false);
+
+// L'annonce affichée dans la modale est dérivée de l'URL.
+// Si l'annonce est dans la liste mémo, on l'utilise direct ; sinon
+// on la fetch en standalone (utile quand quelqu'un arrive via lien partagé).
 const selectedAd = ref<Ad | null>(null);
+const selectedAdLoading = ref(false);
+
+async function syncSelectedFromRoute() {
+  const id = route.params.id;
+  if (!id || Array.isArray(id)) {
+    selectedAd.value = null;
+    return;
+  }
+  const adId = Number(id);
+  const inList = ads.value.find((a) => a.id === adId);
+  if (inList) {
+    selectedAd.value = inList;
+    return;
+  }
+  selectedAdLoading.value = true;
+  try {
+    selectedAd.value = await getAdById(adId);
+  } catch (e) {
+    console.error("Failed to fetch ad", adId, e);
+    selectedAd.value = null;
+  } finally {
+    selectedAdLoading.value = false;
+  }
+}
+
+function openAd(ad: Ad) {
+  router.push({ name: "ad", params: { id: ad.id } });
+}
+
+function closeAd() {
+  router.push({ name: "home" });
+}
+
+watch(() => route.params.id, syncSelectedFromRoute);
 
 async function load() {
   loading.value = true;
@@ -30,9 +72,17 @@ async function load() {
   } finally {
     loading.value = false;
   }
+  // Une fois la liste chargée, on resync la modale (si l'URL pointe sur une annonce
+  // qui est dans la liste, on l'utilise telle quelle plutôt que de refetch).
+  await syncSelectedFromRoute();
 }
 
-onMounted(load);
+onMounted(async () => {
+  // Lance la requête modale en parallèle de la liste (utile quand quelqu'un
+  // arrive direct sur /ad/:id, on ne veut pas attendre la liste pour afficher).
+  syncSelectedFromRoute();
+  await load();
+});
 
 const watches = computed(() => {
   const set = new Set(ads.value.map((a) => a.watch_id));
@@ -166,15 +216,23 @@ const stats = computed(() => {
           v-for="ad in filtered"
           :key="ad.id"
           :ad="ad"
-          @open="selectedAd = $event"
+          @open="openAd"
         />
       </div>
     </main>
 
+    <!-- Loader plein écran si on attend l'annonce ciblée par l'URL -->
+    <div
+      v-if="selectedAdLoading"
+      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm grid place-items-center"
+    >
+      <div class="text-slate-400">Chargement de l'annonce…</div>
+    </div>
+
     <DealModal
       v-if="selectedAd"
       :ad="selectedAd"
-      @close="selectedAd = null"
+      @close="closeAd"
     />
   </div>
 </template>
