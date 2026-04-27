@@ -1,9 +1,37 @@
+import re
 from dataclasses import dataclass
 from typing import Optional
 
 import lbc
 
-from .config import Watch
+from .config import AttributeFilter, Watch
+
+
+_NUM_RE = re.compile(r"-?\d+")
+
+
+def _extract_first_int(s: Optional[str]) -> Optional[int]:
+    """Extrait le premier entier d'une string LBC type '300 cm²', '4800 km', '2011'."""
+    if not s:
+        return None
+    m = _NUM_RE.search(s)
+    return int(m.group(0)) if m else None
+
+
+def _ad_passes_attribute_filters(
+    attrs: dict[str, str], filters: dict[str, AttributeFilter]
+) -> bool:
+    for key, rng in filters.items():
+        raw = attrs.get(key)
+        val = _extract_first_int(raw)
+        if val is None:
+            # Pas l'attribut → on rejette (l'utilisateur a explicitement demandé un range)
+            return False
+        if rng.min is not None and val < rng.min:
+            return False
+        if rng.max is not None and val > rng.max:
+            return False
+    return True
 
 
 @dataclass
@@ -79,5 +107,11 @@ def fetch_watch(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
     if watch.accept_category_ids:
         allowed = set(watch.accept_category_ids)
         fetched = [a for a in fetched if a.category_id in allowed]
+
+    if watch.attribute_filters:
+        fetched = [
+            a for a in fetched
+            if _ad_passes_attribute_filters(a.attributes, watch.attribute_filters)
+        ]
 
     return fetched

@@ -14,6 +14,14 @@ class WatchLocation:
 
 
 @dataclass
+class AttributeFilter:
+    """Range filter on an LBC ad attribute. min/max sont des entiers, comparés
+    au premier nombre extrait de la valeur LBC (qui est une string, ex: "300 cm²")."""
+    min: Optional[int] = None
+    max: Optional[int] = None
+
+
+@dataclass
 class Watch:
     id: str
     label: str
@@ -24,6 +32,7 @@ class Watch:
     limit: int
     accept_category_ids: Optional[list[str]] = None
     enrichment_domain: Optional[str] = None  # ex: "vtt", utilisé dans le prompt
+    attribute_filters: Optional[dict[str, AttributeFilter]] = None
 
 
 def load_config(path: Path | str = "config.yaml") -> list[Watch]:
@@ -51,6 +60,14 @@ def load_config(path: Path | str = "config.yaml") -> list[Watch]:
                     else None
                 ),
                 enrichment_domain=w.get("enrichment_domain"),
+                attribute_filters=(
+                    {
+                        k: AttributeFilter(min=v.get("min"), max=v.get("max"))
+                        for k, v in w["attribute_filters"].items()
+                    }
+                    if w.get("attribute_filters")
+                    else None
+                ),
             )
         )
     return watches
