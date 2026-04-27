@@ -40,3 +40,23 @@ watches:
     limit: 100
     # Le prompt ludospace impose la règle "≥4 places" pour cette catégorie.
     enrichment_domain: "ludospace_utilitaire"
+
+  - id: motos-125-500-bayonne
+    label: "Motos 125-500cc, 2010+ - 50km autour de Bayonne"
+    category: VEHICULES_MOTOS
+    accept_category_ids: ["3"]
+    location:
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 50
+    limit: 100
+    enrichment_domain: "moto"
+    # Filtres côté client sur les attributs LBC (avant enrichissement Claude).
+    # cubic_capacity = "300 cm²" / regdate = "2011" — on extrait le 1er entier.
+    attribute_filters:
+      cubic_capacity:
+        min: 125
+        max: 500
+      regdate:
+        min: 2010

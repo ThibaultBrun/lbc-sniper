@@ -107,7 +107,16 @@ DOMAIN_INTROS = {
         "mention de 5/7/9 places, photos avec banquette arriere visible."
     ),
     "voiture": "Tu es un expert du marche automobile d'occasion en France.",
-    "moto": "Tu es un expert du marche moto d'occasion en France.",
+    "moto": (
+        "Tu es un expert du marche moto d'occasion en France, specialise dans les "
+        "cylindrees moyennes (125-500cc) accessibles en permis A2 ou A. "
+        "Tu connais les segments: roadster (MT-07, CB500F, SV650, Z650, Duke 390), "
+        "trail/aventure (V-Strom 250/650, NC750X, Tracer 700, F750GS), sportive "
+        "(R3, Ninja 400/650, RS660), custom (Vulcan S, Rebel 500, Bolt), supermotard "
+        "(Husqvarna 701, KTM 690 SMC), enduro/cross route-legaux (CRF300L, KTM EXC). "
+        "Verifie age + kilometrage + entretien (chaine, pneus, plaquettes) et "
+        "compatibilite permis dans tes pros/cons."
+    ),
 }
 
 
