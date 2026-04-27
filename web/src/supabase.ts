@@ -33,6 +33,8 @@ export type Ad = {
   estimated_market_eur: number | null;
   deal_score: number | null;
   reasoning: string | null;
+  pros: string[] | null;
+  cons: string[] | null;
   enriched_at: string | null;
   enrich_error: string | null;
   first_publication: string | null;
