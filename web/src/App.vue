@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { supabase, type Ad } from "./supabase";
 import DealCard from "./components/DealCard.vue";
+import DealModal from "./components/DealModal.vue";
 
 const ads = ref<Ad[]>([]);
 const loading = ref(true);
@@ -10,6 +11,7 @@ const minScore = ref(60);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const watchFilter = ref<string | null>(null);
 const showUnenriched = ref(false);
+const selectedAd = ref<Ad | null>(null);
 
 async function load() {
   loading.value = true;
@@ -160,8 +162,19 @@ const stats = computed(() => {
         v-else
         class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
       >
-        <DealCard v-for="ad in filtered" :key="ad.id" :ad="ad" />
+        <DealCard
+          v-for="ad in filtered"
+          :key="ad.id"
+          :ad="ad"
+          @open="selectedAd = $event"
+        />
       </div>
     </main>
+
+    <DealModal
+      v-if="selectedAd"
+      :ad="selectedAd"
+      @close="selectedAd = null"
+    />
   </div>
 </template>
