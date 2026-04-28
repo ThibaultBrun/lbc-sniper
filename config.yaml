@@ -1,10 +1,17 @@
+# Watches LBC. Chacun = une recherche regulière.
+# Un watch peut partager son `category_label` avec d'autres watches : ils sont
+# alors regroupes ensemble dans le filtre du site web.
+
 watches:
+
+  # ============================================================================
+  # VTT ENDURO
+  # ============================================================================
+
   - id: vtt-enduro-bayonne
     label: "VTT Enduro - 30km autour de Bayonne"
+    category_label: "VTT enduro"
     category: VEHICULES_VELOS
-    # LBC élargit la recherche aux catégories proches quand le texte matche
-    # plusieurs univers (ex: "enduro" = vélos + motos). On filtre donc côté
-    # Python sur les category_id retournés par l'API. 55 = Vélos.
     accept_category_ids: ["55"]
     text: "enduro"
     location:
@@ -16,20 +23,13 @@ watches:
     limit: 100
     enrichment_domain: "vtt_enduro"
 
-  - id: ludospace-voitures-bayonne
-    label: "Ludospaces (voitures) - 50km autour de Bayonne"
-    category: VEHICULES_VOITURES
-    accept_category_ids: ["2"]
-    location:
-      city: Bayonne
-      lat: 43.4933
-      lng: -1.4747
-      radius_km: 50
-    limit: 100
-    enrichment_domain: "ludospace"
+  # ============================================================================
+  # MOTOS A2 (125-500cc, 2010+)
+  # ============================================================================
 
   - id: motos-125-500-bayonne
     label: "Motos 125-500cc, 2010+ - 50km autour de Bayonne"
+    category_label: "Motos"
     category: VEHICULES_MOTOS
     accept_category_ids: ["3"]
     location:
@@ -39,11 +39,262 @@ watches:
       radius_km: 50
     limit: 100
     enrichment_domain: "moto"
-    # Filtres côté client sur les attributs LBC (avant enrichissement Claude).
-    # cubic_capacity = "300 cm²" / regdate = "2011" — on extrait le 1er entier.
     attribute_filters:
       cubic_capacity:
         min: 125
         max: 500
       regdate:
         min: 2010
+
+  # ============================================================================
+  # VOITURES — ludospaces et monospaces familiaux (un watch par modele)
+  # Tous regroupes dans le label "Voitures" cote UI.
+  # search_in_title_only: true pour eviter les annonces qui mentionnent juste
+  # le modele dans le body (ex: "alternative au Berlingo").
+  # ============================================================================
+
+  - id: voiture-berlingo-bayonne
+    label: "Citroen Berlingo - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "berlingo"
+    search_in_title_only: true
+    location: &bayonne_50
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-partner-bayonne
+    label: "Peugeot Partner - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "partner"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-rifter-bayonne
+    label: "Peugeot Rifter - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "rifter"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-kangoo-bayonne
+    label: "Renault Kangoo - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "kangoo"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-doblo-bayonne
+    label: "Fiat Doblo - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "doblo"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-caddy-bayonne
+    label: "VW Caddy - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "caddy"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-combo-bayonne
+    label: "Opel Combo - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "combo"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-dokker-bayonne
+    label: "Dacia Dokker - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "dokker"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-tourneo-connect-bayonne
+    label: "Ford Tourneo Connect - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "tourneo connect"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-tourneo-courier-bayonne
+    label: "Ford Tourneo Courier - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "tourneo courier"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-proace-city-bayonne
+    label: "Toyota Proace City Verso - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "proace city"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-jogger-bayonne
+    label: "Dacia Jogger - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "jogger"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-touran-bayonne
+    label: "VW Touran - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "touran"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-scenic-bayonne
+    label: "Renault Scenic / Grand Scenic - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "scenic"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-espace-bayonne
+    label: "Renault Espace - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "espace"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-c4-spacetourer-bayonne
+    label: "Citroen C4 SpaceTourer / Grand C4 Picasso - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "spacetourer"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-c4-picasso-bayonne
+    label: "Citroen Grand C4 Picasso - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "picasso"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-s-max-bayonne
+    label: "Ford S-Max - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "s-max"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-galaxy-bayonne
+    label: "Ford Galaxy - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "galaxy"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-alhambra-bayonne
+    label: "Seat Alhambra - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "alhambra"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-sharan-bayonne
+    label: "VW Sharan - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "sharan"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"
+
+  - id: voiture-carens-bayonne
+    label: "Kia Carens - 50km autour de Bayonne"
+    category_label: "Voitures"
+    category: VEHICULES_VOITURES
+    accept_category_ids: ["2"]
+    text: "carens"
+    search_in_title_only: true
+    location: *bayonne_50
+    limit: 50
+    enrichment_domain: "voiture"

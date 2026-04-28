@@ -31,6 +31,7 @@ export type Ad = {
   city: string | null;
   zipcode: string | null;
   category_name: string | null;
+  category_label: string | null;
   current_price: number | null;
   brand: string | null;
   model: string | null;

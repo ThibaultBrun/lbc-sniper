@@ -13,7 +13,7 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 const minScore = ref(60);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
-const watchFilter = ref<string | null>(null);
+const categoryFilter = ref<string | null>(null);
 const showUnenriched = ref(false);
 
 // L'annonce affichée dans la modale est dérivée de l'URL.
@@ -84,14 +84,17 @@ onMounted(async () => {
   await load();
 });
 
-const watches = computed(() => {
-  const set = new Set(ads.value.map((a) => a.watch_id));
+const categories = computed(() => {
+  const set = new Set(
+    ads.value.map((a) => a.category_label).filter((c): c is string => !!c),
+  );
   return Array.from(set).sort();
 });
 
 const filtered = computed(() => {
   let list = ads.value;
-  if (watchFilter.value) list = list.filter((a) => a.watch_id === watchFilter.value);
+  if (categoryFilter.value)
+    list = list.filter((a) => a.category_label === categoryFilter.value);
   if (!showUnenriched.value) list = list.filter((a) => a.deal_score !== null);
   list = list.filter((a) => (a.deal_score ?? -1) >= minScore.value || a.deal_score === null && showUnenriched.value);
 
@@ -149,13 +152,13 @@ const stats = computed(() => {
       <!-- Filtres -->
       <div class="flex flex-wrap items-center gap-4 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
         <label class="flex items-center gap-2">
-          <span class="text-slate-400">Recherche:</span>
+          <span class="text-slate-400">Catégorie:</span>
           <select
-            v-model="watchFilter"
+            v-model="categoryFilter"
             class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
           >
             <option :value="null">Toutes</option>
-            <option v-for="w in watches" :key="w" :value="w">{{ w }}</option>
+            <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
           </select>
         </label>
 

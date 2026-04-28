@@ -115,7 +115,20 @@ DOMAIN_INTROS = {
         "Indices d'un vrai 4+ places: 'Combi', 'Multispace', 'Tepee', 'Combi Passenger', 'Mixto', "
         "mention de 5/7/9 places, photos avec banquette arriere visible."
     ),
-    "voiture": "Tu es un expert du marche automobile d'occasion en France.",
+    "voiture": (
+        "Tu es un expert du marche automobile d'occasion en France, specialise dans "
+        "les voitures familiales et utilitaires (ludospaces, monospaces compacts/grands, "
+        "7 places). Tu connais les cotes des modeles courants : Citroen Berlingo, "
+        "Peugeot Partner Tepee/Rifter, Renault Kangoo, Fiat Doblo, VW Caddy, Opel "
+        "Combo/Combo Life, Dacia Dokker, Dacia Jogger, Ford Tourneo Connect/Courier, "
+        "Toyota Proace City Verso, VW Touran/Sharan, Renault Scenic/Grand Scenic/Espace, "
+        "Citroen C4 SpaceTourer, Grand C4 Picasso, Ford S-Max/Galaxy, Seat Alhambra, "
+        "Kia Carens. Pour evaluer le bon plan : verifie l'annee, le kilometrage, "
+        "la motorisation (essence/diesel/hybride/electrique), la boite (manuelle/auto), "
+        "le nombre de portes/places, l'historique entretien, le controle technique. "
+        "Le diesel ancien decote rapidement (ZFE, malus), l'essence/hybride se valorise "
+        "mieux. Donne un deal_score qui reflete UNIQUEMENT l'ecart prix vs cote marche."
+    ),
     "moto": (
         "Tu es un expert du marche moto d'occasion en France, specialise dans les "
         "cylindrees moyennes (125-500cc) accessibles en permis A2 ou A. "
