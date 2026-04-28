@@ -24,7 +24,7 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
 import lbc
 
 from .config import load_config
-from .db import finish_run, get_client, start_run, upsert_ads
+from .db import deactivate_stale_ads, finish_run, get_client, start_run, upsert_ads
 from .fetcher import fetch_watch
 
 
@@ -51,6 +51,19 @@ def run(watch_id_filter: str | None = None) -> int:
             print(f"  fetched {len(ads)} ads from LBC")
             new, updated = upsert_ads(db, watch.id, ads)
             print(f"  upsert: {new} new, {updated} updated")
+
+            # Cleanup : désactive les annonces disparues de LBC. Si LBC nous a
+            # renvoyé moins que la limite, c'est exhaustif → on désactive direct.
+            # Sinon on tolère 3 jours d'absence avant désactivation.
+            seen_ids = [a.id for a in ads]
+            fetch_was_complete = len(ads) < watch.limit
+            stale = deactivate_stale_ads(
+                db, watch.id, seen_ids, fetch_was_complete=fetch_was_complete
+            )
+            if stale:
+                tag = "exhaustive" if fetch_was_complete else "after grace period"
+                print(f"  deactivated {stale} stale ads ({tag})")
+
             finish_run(db, run_id, ads_processed=len(ads), ads_new=new, ads_updated=updated)
             total_new += new
             total_updated += updated

@@ -2,7 +2,7 @@
 bypasser RLS (lecture/écriture totales)."""
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -93,6 +93,44 @@ def upsert_ads(
         db.table("price_history").insert(price_history_rows).execute()
 
     return new_count, updated_count
+
+
+def deactivate_stale_ads(
+    db: Client,
+    watch_id: str,
+    seen_ids: list[int],
+    fetch_was_complete: bool,
+    grace_days: int = 3,
+) -> int:
+    """Désactive les annonces du watch qui ont disparu de LBC.
+
+    Si `fetch_was_complete` (le scraper a ramené moins que la limite, donc
+    la liste est exhaustive) : tout ce qui n'est pas dans seen_ids est désactivé.
+
+    Sinon (la liste est tronquée par la limite) : on attend `grace_days` sans
+    réapparaître avant de désactiver. Une annonce qui sort du top puis y revient
+    n'est donc pas pénalisée.
+    """
+    q = (
+        db.table("ads")
+        .update({"is_active": False})
+        .eq("watch_id", watch_id)
+        .eq("is_active", True)
+    )
+
+    if seen_ids:
+        # Excluant celles qui viennent d'être vues
+        q = q.not_.in_("id", seen_ids)
+
+    if not fetch_was_complete:
+        # Liste tronquée → on tolère grace_days d'absence
+        cutoff = (
+            datetime.now(timezone.utc) - timedelta(days=grace_days)
+        ).isoformat()
+        q = q.lt("last_seen_at", cutoff)
+
+    res = q.execute()
+    return len(res.data)
 
 
 def fetch_unenriched_ads(db: Client, watch_id: Optional[str] = None, limit: int = 100) -> list[dict]:
