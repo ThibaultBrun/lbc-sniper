@@ -21,12 +21,14 @@ def _extract_first_int(s: Optional[str]) -> Optional[int]:
 def _ad_passes_attribute_filters(
     attrs: dict[str, str], filters: dict[str, AttributeFilter]
 ) -> bool:
+    """Applique les filtres min/max si l'attribut est present. Si l'attribut
+    n'est pas dans l'annonce, on garde l'annonce (on n'a pas de raison de
+    rejeter sur l'absence d'info)."""
     for key, rng in filters.items():
         raw = attrs.get(key)
         val = _extract_first_int(raw)
         if val is None:
-            # Pas l'attribut → on rejette (l'utilisateur a explicitement demandé un range)
-            return False
+            continue
         if rng.min is not None and val < rng.min:
             return False
         if rng.max is not None and val > rng.max:

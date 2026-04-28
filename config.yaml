@@ -67,6 +67,9 @@ watches:
       radius_km: 50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: &voiture_filters
+      mileage:
+        max: 150000
 
   - id: voiture-partner-bayonne
     label: "Peugeot Partner - 50km autour de Bayonne"
@@ -78,6 +81,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-rifter-bayonne
     label: "Peugeot Rifter - 50km autour de Bayonne"
@@ -89,6 +93,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-kangoo-bayonne
     label: "Renault Kangoo - 50km autour de Bayonne"
@@ -100,6 +105,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-doblo-bayonne
     label: "Fiat Doblo - 50km autour de Bayonne"
@@ -111,6 +117,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-caddy-bayonne
     label: "VW Caddy - 50km autour de Bayonne"
@@ -122,6 +129,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-combo-bayonne
     label: "Opel Combo - 50km autour de Bayonne"
@@ -133,6 +141,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-dokker-bayonne
     label: "Dacia Dokker - 50km autour de Bayonne"
@@ -144,6 +153,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-tourneo-connect-bayonne
     label: "Ford Tourneo Connect - 50km autour de Bayonne"
@@ -155,6 +165,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-tourneo-courier-bayonne
     label: "Ford Tourneo Courier - 50km autour de Bayonne"
@@ -166,6 +177,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-proace-city-bayonne
     label: "Toyota Proace City Verso - 50km autour de Bayonne"
@@ -177,6 +189,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-jogger-bayonne
     label: "Dacia Jogger - 50km autour de Bayonne"
@@ -188,6 +201,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-touran-bayonne
     label: "VW Touran - 50km autour de Bayonne"
@@ -199,6 +213,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-scenic-bayonne
     label: "Renault Scenic / Grand Scenic - 50km autour de Bayonne"
@@ -210,6 +225,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-espace-bayonne
     label: "Renault Espace - 50km autour de Bayonne"
@@ -221,6 +237,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-c4-spacetourer-bayonne
     label: "Citroen C4 SpaceTourer / Grand C4 Picasso - 50km autour de Bayonne"
@@ -232,6 +249,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-c4-picasso-bayonne
     label: "Citroen Grand C4 Picasso - 50km autour de Bayonne"
@@ -243,6 +261,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-s-max-bayonne
     label: "Ford S-Max - 50km autour de Bayonne"
@@ -254,6 +273,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-galaxy-bayonne
     label: "Ford Galaxy - 50km autour de Bayonne"
@@ -265,6 +285,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-alhambra-bayonne
     label: "Seat Alhambra - 50km autour de Bayonne"
@@ -276,6 +297,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-sharan-bayonne
     label: "VW Sharan - 50km autour de Bayonne"
@@ -287,6 +309,7 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
 
   - id: voiture-carens-bayonne
     label: "Kia Carens - 50km autour de Bayonne"
@@ -298,3 +321,4 @@ watches:
     location: *bayonne_50
     limit: 50
     enrichment_domain: "voiture"
+    attribute_filters: *voiture_filters
