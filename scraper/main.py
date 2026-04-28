@@ -49,7 +49,7 @@ def run(watch_id_filter: str | None = None) -> int:
         try:
             ads = fetch_watch(client, watch)
             print(f"  fetched {len(ads)} ads from LBC")
-            new, updated = upsert_ads(db, watch.id, ads)
+            new, updated = upsert_ads(db, watch.id, ads, category_label=watch.category_label)
             print(f"  upsert: {new} new, {updated} updated")
 
             # Cleanup : désactive les annonces disparues de LBC. Si LBC nous a

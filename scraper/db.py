@@ -45,7 +45,7 @@ def get_client() -> Client:
 
 
 def upsert_ads(
-    db: Client, watch_id: str, ads: list[FetchedAd]
+    db: Client, watch_id: str, ads: list[FetchedAd], category_label: Optional[str] = None
 ) -> tuple[int, int]:
     """Upsert chaque annonce. Si le prix a changé, on log dans price_history.
     Retourne (new_count, updated_count)."""
@@ -78,6 +78,7 @@ def upsert_ads(
         row: dict = {
             "id": a.id,
             "watch_id": watch_id,
+            "category_label": category_label,
             "subject": a.subject,
             "body": a.body,
             "url": a.url,

@@ -33,6 +33,10 @@ class Watch:
     accept_category_ids: Optional[list[str]] = None
     enrichment_domain: Optional[str] = None  # ex: "vtt", utilisé dans le prompt
     attribute_filters: Optional[dict[str, AttributeFilter]] = None
+    search_in_title_only: bool = False
+    # Etiquette UI : plusieurs watches partageant la meme valeur sont groupes
+    # ensemble dans le filtre du site (ex: "Voitures" pour 22 watches modele).
+    category_label: Optional[str] = None
 
 
 def load_config(path: Path | str = "config.yaml") -> list[Watch]:
@@ -68,6 +72,8 @@ def load_config(path: Path | str = "config.yaml") -> list[Watch]:
                     if w.get("attribute_filters")
                     else None
                 ),
+                search_in_title_only=bool(w.get("search_in_title_only", False)),
+                category_label=w.get("category_label"),
             )
         )
     return watches

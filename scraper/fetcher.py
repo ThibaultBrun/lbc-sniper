@@ -99,6 +99,7 @@ def fetch_watch(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
         locations=[city],
         limit=watch.limit,
         sort=lbc.Sort.NEWEST,
+        search_in_title_only=watch.search_in_title_only,
         **kwargs,
     )
 
