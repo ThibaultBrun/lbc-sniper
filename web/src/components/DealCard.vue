@@ -133,6 +133,18 @@ const hasAnalysis = computed(
       </div>
 
       <div class="flex flex-wrap gap-1 text-[10px]">
+        <span v-if="ad.regyear" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 font-semibold">
+          {{ ad.regyear }}
+        </span>
+        <span v-if="ad.mileage_km" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 tabular-nums">
+          {{ ad.mileage_km.toLocaleString("fr-FR") }} km
+        </span>
+        <span v-if="ad.fuel" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
+          {{ ad.fuel }}
+        </span>
+        <span v-if="ad.gearbox" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
+          {{ ad.gearbox }}
+        </span>
         <span v-if="ad.size_label" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
           {{ ad.size_label }}
         </span>

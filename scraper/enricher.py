@@ -138,6 +138,30 @@ def build_prompt(ad: dict, domain: Optional[str]) -> str:
     price = ad.get("current_price")
     price_str = f"{int(price)} EUR" if price else "Non indique"
 
+    # Attributs structures LBC : kilometrage, energie, boite, annee MEC, marque,
+    # modele, cylindree, etat, etc. Ces champs sont fiables (saisis via formulaire
+    # LBC), beaucoup plus que les infos en texte libre dans le body.
+    attributes = ad.get("attributes") or {}
+    # On filtre les attributs verbeux/inutiles (urls d'images, ids internes, etc.)
+    skip_keys = {
+        "profile_picture_url", "rating_score", "rating_count", "is_bundleable",
+        "purchase_cta_visible", "negotiation_cta_visible", "country_isocode3166",
+        "shipping_type", "shippable", "is_import", "vehicle_available_payment_methods",
+        "vehicle_is_eligible_p2p", "estimated_parcel_size", "estimated_parcel_weight",
+        "payment_methods", "stock_quantity", "activity_sector", "argus_object_id",
+        "spare_parts_availability", "bicycode", "u_moto_brand", "u_moto_model",
+        "u_moto_finition", "u_moto_version",
+    }
+    attr_lines = "\n".join(
+        f"  - {k}: {v}" for k, v in sorted(attributes.items())
+        if k not in skip_keys and v
+    )
+    attr_block = (
+        f"\nAttributs structures LBC (fiables, saisis via formulaire) :\n{attr_lines}\n"
+        if attr_lines
+        else ""
+    )
+
     return f"""{intro}
 
 Analyse cette annonce LeBonCoin et estime si c'est une bonne affaire.
@@ -145,7 +169,8 @@ Analyse cette annonce LeBonCoin et estime si c'est une bonne affaire.
 Titre: {ad.get("subject", "")}
 Prix demande: {price_str}
 Ville: {ad.get("city") or "?"}
-Description:
+{attr_block}
+Description (texte libre du vendeur) :
 {body or "(vide)"}
 
 Estime le prix de marche actuel pour ce vehicule/objet (en euros, valeur centrale).

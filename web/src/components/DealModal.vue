@@ -170,6 +170,18 @@ onUnmounted(() => {
             <span v-if="ad.electric" class="rounded bg-blue-500 text-white font-bold px-2 py-1">
               ⚡ électrique
             </span>
+            <span v-if="ad.regyear" class="rounded bg-slate-700 text-slate-100 font-semibold px-2 py-1">
+              {{ ad.regyear }}
+            </span>
+            <span v-if="ad.mileage_km" class="rounded bg-slate-700 text-slate-100 px-2 py-1 tabular-nums font-semibold">
+              {{ ad.mileage_km.toLocaleString("fr-FR") }} km
+            </span>
+            <span v-if="ad.fuel" class="rounded bg-slate-800 px-2 py-1 text-slate-300">
+              {{ ad.fuel }}
+            </span>
+            <span v-if="ad.gearbox" class="rounded bg-slate-800 px-2 py-1 text-slate-300">
+              {{ ad.gearbox }}
+            </span>
             <span v-if="ad.size_label" class="rounded bg-slate-800 px-2 py-1 text-slate-300">
               taille {{ ad.size_label }}
             </span>

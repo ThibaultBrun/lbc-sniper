@@ -51,4 +51,10 @@ export type Ad = {
   first_seen_at: string;
   last_seen_at: string;
   is_active: boolean;
+  // Attributs LBC structurés (depuis la migration 20260427212853)
+  attributes: Record<string, string> | null;
+  mileage_km: number | null;
+  fuel: string | null;
+  gearbox: string | null;
+  regyear: number | null;
 };

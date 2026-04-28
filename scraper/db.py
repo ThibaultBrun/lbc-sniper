@@ -2,6 +2,7 @@
 bypasser RLS (lecture/écriture totales)."""
 
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -11,6 +12,26 @@ from supabase import Client, create_client
 from .fetcher import FetchedAd
 
 load_dotenv()
+
+
+_NUM_RE = re.compile(r"-?\d+")
+
+
+def _first_int(s: Optional[str]) -> Optional[int]:
+    if not s:
+        return None
+    m = _NUM_RE.search(s)
+    return int(m.group(0)) if m else None
+
+
+def _extract_columns(attrs: dict[str, str]) -> dict:
+    """Extrait quelques attributs LBC bien connus en colonnes top-level."""
+    return {
+        "mileage_km": _first_int(attrs.get("mileage")),
+        "fuel": attrs.get("fuel"),
+        "gearbox": attrs.get("gearbox"),
+        "regyear": _first_int(attrs.get("regdate")),
+    }
 
 
 def get_client() -> Client:
@@ -69,6 +90,8 @@ def upsert_ads(
             "first_publication": a.first_publication_date,
             "last_seen_at": now,
             "is_active": True,
+            "attributes": a.attributes or {},
+            **_extract_columns(a.attributes or {}),
         }
         if is_new:
             row["first_seen_at"] = now
