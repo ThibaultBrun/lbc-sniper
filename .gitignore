@@ -13,3 +13,4 @@ build/
 *.log
 supabase/.temp/
 supabase/.branches/
+.claude/

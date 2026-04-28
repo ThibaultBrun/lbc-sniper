@@ -272,6 +272,80 @@ def call_claude(prompt: str, model: str = "opus") -> dict:
     return structured
 
 
+# Si on a ce nombre d'echecs d'affilee, c'est probablement le quota Anthropic
+# epuise (signal: claude CLI exited 1 sans stderr). On arrete le run pour ne
+# pas marquer en erreur 100 annonces alors qu'il suffit d'attendre la prochaine
+# fenetre de 5h.
+_CONSECUTIVE_FAILURE_LIMIT = 5
+
+
+def _reset_failed_burst(db, pending: list, current_index: int, burst_size: int) -> None:
+    """Reset les enriched_at + enrich_error des `burst_size` dernieres annonces
+    pour qu'elles soient re-essayees au prochain run."""
+    start = max(0, current_index - burst_size)
+    burst_ids = [pending[k]["id"] for k in range(start, current_index)]
+    if not burst_ids:
+        return
+    try:
+        db.table("ads").update(
+            {"enriched_at": None, "enrich_error": None}
+        ).in_("id", burst_ids).execute()
+        print(f"  (reset {len(burst_ids)} ads to pending so the next run picks them up)")
+    except Exception as e:
+        print(f"  (failed to reset burst: {e})", file=sys.stderr)
+
+
+def _process_one(db, ad: dict, watches: dict, model: str) -> bool:
+    """Enrichit une annonce. Retourne True si succes, False si echec."""
+    watch = watches.get(ad["watch_id"])
+    domain = watch.enrichment_domain if watch else None
+    prompt = build_prompt(ad, domain)
+    try:
+        result = call_claude(prompt, model=model)
+        update_enrichment(db, ad["id"], result, model=model)
+        print(
+            f"  -> deal_score={result.get('deal_score')} "
+            f"market={result.get('estimated_market_eur')}€ "
+            f"brand={result.get('brand')} model={result.get('model')}"
+        )
+        return True
+    except Exception as e:
+        err_str = str(e)
+        print(f"  FAILED: {err_str}", file=sys.stderr)
+        try:
+            update_enrichment_error(db, ad["id"], err_str, model=model)
+        except Exception:
+            pass
+        return False
+
+
+def _run_loop(db, pending: list, watches: dict, model: str) -> tuple[int, int, bool]:
+    """Boucle principale d'enrichissement. Retourne (ok, failed, rate_limit_hit)."""
+    ok = 0
+    failed = 0
+    consecutive = 0
+
+    for i, ad in enumerate(pending, 1):
+        print(f"\n[{i}/{len(pending)}] [{ad['id']}] {ad['subject'][:60]}")
+        if _process_one(db, ad, watches, model):
+            ok += 1
+            consecutive = 0
+            continue
+        failed += 1
+        consecutive += 1
+        if consecutive >= _CONSECUTIVE_FAILURE_LIMIT:
+            print(
+                f"\n!!! {consecutive} echecs consecutifs - probable rate-limit "
+                f"Claude (quota Opus epuise sur la fenetre 5h). Arret du run, "
+                f"reessaie dans quelques heures.",
+                file=sys.stderr,
+            )
+            _reset_failed_burst(db, pending, i, consecutive)
+            return ok, failed, True
+
+    return ok, failed, False
+
+
 def enrich(
     watch_id: Optional[str] = None,
     limit: int = 50,
@@ -289,43 +363,23 @@ def enrich(
     if not pending:
         return 0
 
-    # On regroupe par watch pour récupérer le domaine de chaque watch
     from .config import load_config
     watches = {w.id: w for w in load_config("config.yaml")}
 
     run_id = start_run(db, watch_id or "*", "enrich")
-    ok = 0
-    failed = 0
+    ok, failed, rate_limit_hit = _run_loop(db, pending, watches, model)
 
-    for i, ad in enumerate(pending, 1):
-        watch = watches.get(ad["watch_id"])
-        domain = watch.enrichment_domain if watch else None
+    if rate_limit_hit:
+        run_error = "rate-limit hit, run aborted"
+    elif failed:
+        run_error = f"{failed} failures"
+    else:
+        run_error = None
+    finish_run(db, run_id, ads_processed=ok + failed, ads_new=ok, error=run_error)
 
-        print(f"\n[{i}/{len(pending)}] [{ad['id']}] {ad['subject'][:60]}")
-        prompt = build_prompt(ad, domain)
-        try:
-            result = call_claude(prompt, model=model)
-            update_enrichment(db, ad["id"], result, model=model)
-            ok += 1
-            print(
-                f"  -> deal_score={result.get('deal_score')} "
-                f"market={result.get('estimated_market_eur')}€ "
-                f"brand={result.get('brand')} model={result.get('model')}"
-            )
-        except Exception as e:
-            print(f"  FAILED: {e}", file=sys.stderr)
-            try:
-                update_enrichment_error(db, ad["id"], str(e), model=model)
-            except Exception:
-                pass
-            failed += 1
-
-    finish_run(
-        db, run_id,
-        ads_processed=ok + failed,
-        ads_new=ok,
-        error=f"{failed} failures" if failed else None,
-    )
+    if rate_limit_hit:
+        print(f"\n=== Stopped early: {ok} ok, {failed} failed ===", file=sys.stderr)
+        return 2
 
     print(f"\n=== Enrich summary: {ok} ok, {failed} failed ===")
     return 1 if failed and not ok else 0
