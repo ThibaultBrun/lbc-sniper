@@ -319,31 +319,36 @@ def _process_one(db, ad: dict, watches: dict, model: str) -> bool:
         return False
 
 
-def _run_loop(db, pending: list, watches: dict, model: str) -> tuple[int, int, bool]:
-    """Boucle principale d'enrichissement. Retourne (ok, failed, rate_limit_hit)."""
+def _run_loop(
+    db, pending: list, watches: dict, model: str, prefix: str = ""
+) -> tuple[int, int, bool, list[int]]:
+    """Boucle principale d'enrichissement.
+    Retourne (ok, failed, rate_limit_hit, ok_ids)."""
     ok = 0
     failed = 0
     consecutive = 0
+    ok_ids: list[int] = []
 
     for i, ad in enumerate(pending, 1):
-        print(f"\n[{i}/{len(pending)}] [{ad['id']}] {ad['subject'][:60]}")
+        print(f"\n{prefix}[{i}/{len(pending)}] [{ad['id']}] {ad['subject'][:60]}")
         if _process_one(db, ad, watches, model):
             ok += 1
             consecutive = 0
+            ok_ids.append(ad["id"])
             continue
         failed += 1
         consecutive += 1
         if consecutive >= _CONSECUTIVE_FAILURE_LIMIT:
             print(
                 f"\n!!! {consecutive} echecs consecutifs - probable rate-limit "
-                f"Claude (quota Opus epuise sur la fenetre 5h). Arret du run, "
+                f"Claude (quota {model} epuise sur la fenetre 5h). Arret du run, "
                 f"reessaie dans quelques heures.",
                 file=sys.stderr,
             )
             _reset_failed_burst(db, pending, i, consecutive)
-            return ok, failed, True
+            return ok, failed, True, ok_ids
 
-    return ok, failed, False
+    return ok, failed, False, ok_ids
 
 
 def enrich(
@@ -367,7 +372,7 @@ def enrich(
     watches = {w.id: w for w in load_config("config.yaml")}
 
     run_id = start_run(db, watch_id or "*", "enrich")
-    ok, failed, rate_limit_hit = _run_loop(db, pending, watches, model)
+    ok, failed, rate_limit_hit, _ = _run_loop(db, pending, watches, model)
 
     if rate_limit_hit:
         run_error = "rate-limit hit, run aborted"
@@ -385,6 +390,83 @@ def enrich(
     return 1 if failed and not ok else 0
 
 
+def enrich_hybrid(
+    watch_id: Optional[str] = None,
+    limit: int = 50,
+    reset: bool = False,
+    refine_threshold: int = 60,
+) -> int:
+    """Mode hybride : pass Haiku rapide sur tout, puis pass Opus de raffinement
+    sur les annonces dont le deal_score Haiku >= refine_threshold.
+
+    Retour : 0 = ok, 1 = quelques echecs, 2 = rate-limit hit."""
+    db = get_client()
+    if reset:
+        pending = fetch_active_ads(db, watch_id=watch_id, limit=limit)
+        print(f"[hybrid --reset] {len(pending)} active ads to process")
+    else:
+        pending = fetch_unenriched_ads(db, watch_id=watch_id, limit=limit)
+        print(f"[hybrid] {len(pending)} unenriched ads to process")
+
+    if not pending:
+        return 0
+
+    from .config import load_config
+    watches = {w.id: w for w in load_config("config.yaml")}
+
+    # === Pass 1 : Haiku sur tout ===
+    print(f"\n>>> PASS 1 / Haiku ({len(pending)} ads)")
+    run_id_1 = start_run(db, watch_id or "*", "enrich")
+    ok1, failed1, rate1, ok_ids = _run_loop(
+        db, pending, watches, model="haiku", prefix="[H1] ",
+    )
+    finish_run(
+        db, run_id_1, ads_processed=ok1 + failed1, ads_new=ok1,
+        error="rate-limit hit (haiku)" if rate1 else (f"{failed1} failures" if failed1 else None),
+    )
+    if rate1:
+        print(f"\n=== Hybrid aborted at pass 1: {ok1} ok, {failed1} failed ===", file=sys.stderr)
+        return 2
+    if not ok_ids:
+        print("\n=== No successful Haiku analysis, nothing to refine ===")
+        return 1 if failed1 else 0
+
+    # === Pass 2 : Opus uniquement sur les annonces deal_score >= refine_threshold ===
+    refresh = (
+        db.table("ads")
+        .select("*")
+        .in_("id", ok_ids)
+        .gte("deal_score", refine_threshold)
+        .execute()
+    )
+    to_refine = refresh.data
+    print(
+        f"\n>>> PASS 2 / Opus refinement ({len(to_refine)}/{len(ok_ids)} ads "
+        f"with deal_score >= {refine_threshold})"
+    )
+
+    if not to_refine:
+        print(f"\n=== Hybrid done: {ok1} Haiku, 0 promoted to Opus ===")
+        return 0
+
+    run_id_2 = start_run(db, watch_id or "*", "enrich")
+    ok2, failed2, rate2, _ = _run_loop(
+        db, to_refine, watches, model="opus", prefix="[O2] ",
+    )
+    finish_run(
+        db, run_id_2, ads_processed=ok2 + failed2, ads_new=ok2,
+        error="rate-limit hit (opus)" if rate2 else (f"{failed2} failures" if failed2 else None),
+    )
+
+    print(
+        f"\n=== Hybrid done: {ok1} Haiku passes, {ok2} Opus refinements"
+        + (f", {failed2} Opus failures" if failed2 else "")
+        + (" (Opus rate-limited)" if rate2 else "")
+        + " ==="
+    )
+    return 2 if rate2 else (1 if (failed1 or failed2) else 0)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Enrich ads via claude CLI")
     parser.add_argument("--watch", help="Limit to a single watch_id")
@@ -395,5 +477,21 @@ if __name__ == "__main__":
         action="store_true",
         help="Re-enrich all active ads (not just unenriched ones). Use after schema changes.",
     )
+    parser.add_argument(
+        "--hybrid",
+        action="store_true",
+        help="Hybrid mode: Haiku on everything, then Opus only on deal_score >= --refine-threshold.",
+    )
+    parser.add_argument(
+        "--refine-threshold",
+        type=int,
+        default=60,
+        help="Min deal_score from Haiku to trigger Opus refinement (default: 60).",
+    )
     args = parser.parse_args()
+    if args.hybrid:
+        sys.exit(enrich_hybrid(
+            args.watch, args.limit,
+            reset=args.reset, refine_threshold=args.refine_threshold,
+        ))
     sys.exit(enrich(args.watch, args.limit, args.model, reset=args.reset))
