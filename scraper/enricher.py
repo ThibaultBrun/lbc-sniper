@@ -175,12 +175,18 @@ Description (texte libre du vendeur) :
 
 Estime le prix de marche actuel pour ce vehicule/objet (en euros, valeur centrale).
 
-Note de bon plan (deal_score):
-- 0   = arnaque ou prix tres au-dessus du marche
+Note de bon plan (deal_score) — UNIQUEMENT basee sur l'ecart prix demande vs prix de marche estime :
+- 0   = beaucoup plus cher que le marche
 - 30  = un peu cher
 - 50  = au prix du marche
-- 70  = clairement sous le marche
-- 90+ = excellente affaire (>30% sous la cote, etat correct)
+- 70  = clairement sous le marche (-15 a -30%)
+- 90+ = tres au-dessous du marche (>30% en dessous)
+
+REGLE IMPORTANTE: ne baisse JAMAIS le deal_score parce que tu suspectes une arnaque,
+un vol, ou que l'annonce paraitrait "trop belle pour etre vraie". On ne fait pas de
+detection d'arnaque ici. Si le prix demande est tres bas vs marche, le deal_score
+DOIT etre tres haut, point. Les doutes/verifications a faire vont dans `cons`, pas
+dans le score.
 
 Note d'etat (condition_score):
 - 0   = HS / pour pieces
