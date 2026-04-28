@@ -111,7 +111,11 @@ def upsert_ads(
                 {"ad_id": a.id, "price": a.price, "seen_at": now}
             )
 
-    db.table("ads").upsert(rows_to_upsert).execute()
+    # default_to_null=False : pour les upserts qui matchent une ligne existante,
+    # les colonnes non envoyées (ex: first_seen_at sur un update) sont laissees
+    # telles quelles plutot que d'etre remises a NULL. Sans ça, un update casse
+    # le not-null constraint sur first_seen_at.
+    db.table("ads").upsert(rows_to_upsert, default_to_null=False).execute()
     if price_history_rows:
         db.table("price_history").insert(price_history_rows).execute()
 
