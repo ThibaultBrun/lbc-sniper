@@ -95,8 +95,13 @@ const hasAnalysis = computed(
       </span>
     </div>
 
-    <!-- IMAGE -->
-    <a :href="ad.url" target="_blank" rel="noopener noreferrer" class="block">
+    <!-- IMAGE — ouvre l'analyse (la modale), pas LBC -->
+    <button
+      type="button"
+      @click="emit('open', ad)"
+      class="block w-full text-left"
+      :aria-label="`Voir l'analyse de ${ad.subject}`"
+    >
       <div class="aspect-[4/3] w-full bg-slate-800 overflow-hidden">
         <img
           v-if="ad.image_url"
@@ -109,7 +114,7 @@ const hasAnalysis = computed(
           pas de photo
         </div>
       </div>
-    </a>
+    </button>
 
     <!-- INFOS -->
     <div class="p-3 space-y-1.5 flex-1 flex flex-col">

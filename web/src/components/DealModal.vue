@@ -8,14 +8,14 @@ const emit = defineEmits<{ close: [] }>();
 const copied = ref(false);
 
 async function copyShareLink() {
-  const url = `${window.location.origin}/ad/${props.ad.id}`;
+  const url = `${globalThis.location.origin}/ad/${props.ad.id}`;
   try {
     await navigator.clipboard.writeText(url);
     copied.value = true;
     setTimeout(() => (copied.value = false), 2000);
   } catch {
     // Fallback: prompt user to copy manually
-    window.prompt("Copier le lien :", url);
+    globalThis.prompt("Copier le lien :", url);
   }
 }
 
@@ -118,17 +118,23 @@ onUnmounted(() => {
       <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">
         <!-- Colonne 1 : photo + prix + tags -->
         <div class="p-6 space-y-4 border-b lg:border-b-0 lg:border-r border-slate-800">
-          <div class="aspect-square rounded-xl bg-slate-800 overflow-hidden">
+          <a
+            :href="ad.url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="block aspect-square rounded-xl bg-slate-800 overflow-hidden group/img"
+            title="Ouvrir sur LeBonCoin"
+          >
             <img
               v-if="ad.image_url"
               :src="ad.image_url"
               :alt="ad.subject"
-              class="h-full w-full object-cover"
+              class="h-full w-full object-cover transition group-hover/img:scale-105"
             />
             <div v-else class="h-full w-full grid place-items-center text-slate-600">
               pas de photo
             </div>
-          </div>
+          </a>
 
           <div class="space-y-2">
             <div class="text-4xl font-bold tabular-nums">
