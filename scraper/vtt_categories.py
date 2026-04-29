@@ -2,8 +2,7 @@
 
 Categories (alignees sur l'enum SQL `vtt_category`) :
 - xc            : 100-120 mm, course, leger
-- trail         : 120-140 mm, polyvalent leger
-- all_mountain  : 140-150 mm, le couteau suisse
+- all_mountain  : 120-150 mm, polyvalent (englobe ce qui etait appele "trail")
 - enduro        : 150-170 mm, descente engagee + montee
 - dh            : 180-200 mm, descente / freeride / bike-park
 - dirt          : VTT dirt jump / pumptrack (rare en occasion)
@@ -20,7 +19,7 @@ import re
 from typing import Optional
 
 # Type alias
-VttCategory = str  # "xc" | "trail" | "all_mountain" | "enduro" | "dh" | "dirt"
+VttCategory = str  # "xc" | "all_mountain" | "enduro" | "dh" | "dirt"
 
 
 def _norm(s: str) -> str:
@@ -57,7 +56,7 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     # --- Specialized ---
     ("specialized", "epic"): "xc",
     ("specialized", "chisel"): "xc",
-    ("specialized", "fuse"): "trail",          # hardtail trail
+    ("specialized", "fuse"): "all_mountain",          # hardtail trail
     ("specialized", "stumpjumper"): "all_mountain",  # 140-150mm en general
     ("specialized", "stumpjumperevo"): "enduro",     # version EVO 160mm
     ("specialized", "enduro"): "enduro",
@@ -73,8 +72,8 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     # --- Trek ---
     ("trek", "supercaliber"): "xc",
     ("trek", "topfuel"): "xc",
-    ("trek", "fuelex"): "trail",
-    ("trek", "fuelexe"): "trail",              # VAE trail
+    ("trek", "fuelex"): "all_mountain",
+    ("trek", "fuelexe"): "all_mountain",              # VAE trail
     ("trek", "rail"): "all_mountain",          # VAE AM
     ("trek", "remedy"): "all_mountain",
     ("trek", "slash"): "enduro",
@@ -84,15 +83,15 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     # --- Santa Cruz ---
     ("santacruz", "blur"): "xc",
     ("santacruz", "highball"): "xc",
-    ("santacruz", "tallboy"): "trail",
-    ("santacruz", "5010"): "trail",
+    ("santacruz", "tallboy"): "all_mountain",
+    ("santacruz", "5010"): "all_mountain",
     ("santacruz", "hightower"): "all_mountain",
     ("santacruz", "bronson"): "all_mountain",
     ("santacruz", "bullit"): "enduro",         # VAE enduro
     ("santacruz", "megatower"): "enduro",
     ("santacruz", "nomad"): "enduro",
     ("santacruz", "v10"): "dh",
-    ("santacruz", "vala"): "trail",            # VAE trail recent
+    ("santacruz", "vala"): "all_mountain",            # VAE trail recent
     ("santacruz", "heckler"): "all_mountain",  # VAE AM
 
     # --- Commencal ---
@@ -129,7 +128,7 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
 
     # --- Canyon ---
     ("canyon", "lux"): "xc",
-    ("canyon", "neuron"): "trail",
+    ("canyon", "neuron"): "all_mountain",
     ("canyon", "spectral"): "all_mountain",
     ("canyon", "torque"): "enduro",
     ("canyon", "strive"): "enduro",
@@ -137,21 +136,21 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     ("canyon", "stitched"): "dirt",
 
     # --- Nukeproof ---
-    ("nukeproof", "scout"): "trail",
+    ("nukeproof", "scout"): "all_mountain",
     ("nukeproof", "reactor"): "all_mountain",
     ("nukeproof", "mega"): "enduro",
     ("nukeproof", "giga"): "enduro",
     ("nukeproof", "dissent"): "dh",
 
     # --- YT (defaut enduro mais specifie) ---
-    ("yt", "izzo"): "trail",
+    ("yt", "izzo"): "all_mountain",
     ("yt", "jeffsy"): "all_mountain",
     ("yt", "capra"): "enduro",
     ("yt", "tues"): "dh",
 
     # --- Giant ---
     ("giant", "anthem"): "xc",
-    ("giant", "stance"): "trail",
+    ("giant", "stance"): "all_mountain",
     ("giant", "trance"): "all_mountain",
     ("giant", "reign"): "enduro",
     ("giant", "glory"): "dh",
@@ -165,8 +164,8 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
 
     # --- Norco ---
     ("norco", "revolver"): "xc",
-    ("norco", "fluid"): "trail",
-    ("norco", "optic"): "trail",
+    ("norco", "fluid"): "all_mountain",
+    ("norco", "optic"): "all_mountain",
     ("norco", "sight"): "all_mountain",
     ("norco", "range"): "enduro",
     ("norco", "shore"): "enduro",
@@ -182,14 +181,14 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     # --- Mondraker ---
     ("mondraker", "podium"): "xc",
     ("mondraker", "chrono"): "xc",
-    ("mondraker", "raze"): "trail",
+    ("mondraker", "raze"): "all_mountain",
     ("mondraker", "foxy"): "all_mountain",
     ("mondraker", "superfoxy"): "enduro",
     ("mondraker", "dune"): "enduro",
     ("mondraker", "summum"): "dh",
 
     # --- Kona ---
-    ("kona", "honzo"): "trail",                # hardtail trail
+    ("kona", "honzo"): "all_mountain",                # hardtail trail
     ("kona", "process"): "all_mountain",
     ("kona", "operator"): "dh",
     ("kona", "shonky"): "dirt",
@@ -197,12 +196,12 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
     # --- BMC ---
     ("bmc", "fourstroke"): "xc",
     ("bmc", "agonist"): "xc",
-    ("bmc", "speedfox"): "trail",
+    ("bmc", "speedfox"): "all_mountain",
     ("bmc", "trailfox"): "all_mountain",
 
     # --- Rocky Mountain ---
     ("rockymountain", "element"): "xc",
-    ("rockymountain", "growler"): "trail",
+    ("rockymountain", "growler"): "all_mountain",
     ("rockymountain", "instinct"): "all_mountain",
     ("rockymountain", "altitude"): "all_mountain",
     ("rockymountain", "slayer"): "enduro",
@@ -210,25 +209,25 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
 
     # --- Vitus ---
     ("vitus", "rapide"): "xc",
-    ("vitus", "mythique"): "trail",
+    ("vitus", "mythique"): "all_mountain",
     ("vitus", "escarpe"): "all_mountain",
     ("vitus", "sommet"): "enduro",
 
     # --- Whyte ---
-    ("whyte", "905"): "trail",
+    ("whyte", "905"): "all_mountain",
     ("whyte", "g160"): "enduro",
     ("whyte", "g170"): "enduro",
     ("whyte", "t160"): "enduro",
 
     # --- Decathlon (BTWIN / Rockrider) ---
-    ("btwin", "rockrider"): "trail",
-    ("btwin", "rockraider"): "trail",
-    ("rockrider", "st"): "trail",              # ST120, ST520
-    ("rockrider", "exp"): "trail",
+    ("btwin", "rockrider"): "all_mountain",
+    ("btwin", "rockraider"): "all_mountain",
+    ("rockrider", "st"): "all_mountain",              # ST120, ST520
+    ("rockrider", "exp"): "all_mountain",
     ("rockrider", "race"): "xc",
     ("rockrider", "all"): "all_mountain",      # ALL MOUNTAIN
     ("rockrider", "am"): "all_mountain",
-    ("rockrider", "e"): "trail",               # E-ST, E-Expl
+    ("rockrider", "e"): "all_mountain",               # E-ST, E-Expl
 
     # --- Marques DH/freeride pures ---
     ("intense", "m"): "dh",                    # M16, M9, M279
@@ -237,7 +236,7 @@ MODEL_MAPPING: dict[tuple[str, str], VttCategory] = {
 
     # --- Polygon (auto enduro) ---
     ("polygon", "siskiu"): "all_mountain",
-    ("polygon", "xtrada"): "trail",
+    ("polygon", "xtrada"): "all_mountain",
 }
 
 

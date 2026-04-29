@@ -48,8 +48,7 @@ async function handleHideClick(e: MouseEvent) {
 
 const VTT_CATEGORY_LABELS: Record<string, string> = {
   xc: "XC",
-  trail: "Trail",
-  all_mountain: "All-mountain",
+  all_mountain: "Trail / AM",
   enduro: "Enduro",
   dh: "DH",
   dirt: "Dirt",

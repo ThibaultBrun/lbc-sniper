@@ -213,7 +213,11 @@ def update_enrichment(
     mapped = classify_by_model(brand, model_name)
     vtt_cat = mapped if mapped else enriched.get("vtt_category")
     # Garde-fou : valeurs valides de l'enum SQL
-    valid_cats = {"xc", "trail", "all_mountain", "enduro", "dh", "dirt"}
+    valid_cats = {"xc", "all_mountain", "enduro", "dh", "dirt"}
+    # Migration douce : si l'IA renvoie encore "trail" (ancienne valeur enum),
+    # on remappe vers all_mountain qui les a fusionnees.
+    if vtt_cat == "trail":
+        vtt_cat = "all_mountain"
     if vtt_cat not in valid_cats:
         vtt_cat = None
 

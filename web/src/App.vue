@@ -62,10 +62,10 @@ const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 
 // Categories d'usage VTT (cle = valeur enum SQL, label = ce qu'on affiche).
+// Trail et all-mountain sont fusionnees en pratique sur le marche FR.
 const VTT_CATEGORY_OPTIONS = [
   { value: "xc", label: "XC / Cross-country" },
-  { value: "trail", label: "Trail" },
-  { value: "all_mountain", label: "All-mountain" },
+  { value: "all_mountain", label: "Trail / All-mountain" },
   { value: "enduro", label: "Enduro" },
   { value: "dh", label: "DH / Descente" },
   { value: "dirt", label: "Dirt" },

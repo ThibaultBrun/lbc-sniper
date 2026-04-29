@@ -56,7 +56,7 @@ SCHEMA = {
         # impossible a determiner depuis l'annonce.
         "vtt_category": {
             "type": ["string", "null"],
-            "enum": ["xc", "trail", "all_mountain", "enduro", "dh", "dirt", None],
+            "enum": ["xc", "all_mountain", "enduro", "dh", "dirt", None],
         },
         "condition_score": {"type": "integer", "minimum": 0, "maximum": 100},
         "estimated_market_eur": {"type": "number"},
@@ -111,9 +111,8 @@ Si modele anterieur a 2018, particuliere vigilance : ne PAS surestimer la cote.
 
 CLASSIFICATION vtt_category (renvoie une de ces valeurs, ou null si impossible) :
 - "xc"           : 100-120 mm debattement, course/marathon, leger (Specialized Epic, Trek Supercaliber, Scott Spark, BMC Fourstroke, Cannondale Scalpel)
-- "trail"        : 120-140 mm, polyvalent leger (Trek Fuel EX, Specialized Stumpjumper Comp, Norco Optic, Vitus Mythique)
-- "all_mountain" : 140-150 mm, le couteau suisse (Lapierre Zesty, Specialized Stumpjumper Evo, Trek Remedy, Cube Stereo, Santa Cruz Hightower/Bronson, Canyon Spectral, Commencal Meta TR/HT)
-- "enduro"       : 150-170 mm, descente engagee + montee (Lapierre Spicy, Specialized Enduro, Canyon Torque/Strive, Nukeproof Mega/Giga, YT Capra, Santa Cruz Megatower/Nomad, Commencal Meta AM/Clash, Trek Slash, Mondraker Dune)
+- "all_mountain" : 120-150 mm, polyvalent (englobe l'ancien "trail" : Trek Fuel EX, Lapierre Zesty, Specialized Stumpjumper, Cube Stereo, Santa Cruz Hightower/Bronson, Canyon Spectral, Commencal Meta TR/HT, Norco Optic/Sight, Vitus Mythique)
+- "enduro"       : 150-170 mm, descente engagee + montee (Lapierre Spicy, Specialized Enduro/Stumpjumper Evo, Canyon Torque/Strive, Nukeproof Mega/Giga, YT Capra, Santa Cruz Megatower/Nomad, Commencal Meta AM/Clash, Trek Slash, Mondraker Dune)
 - "dh"           : 180-200 mm, descente pure / freeride (Specialized Demo, Trek Session, Commencal Supreme/Furious, Santa Cruz V10, YT Tues, Canyon Sender, GT Fury, Intense M16/M29, Mondraker Summum, Norco Aurum)
 - "dirt"         : VTT dirt jump / pumptrack, hardtail rigide (Specialized P.1/P.3, Commencal Absolut, NS Bikes, Canyon Stitched)
 

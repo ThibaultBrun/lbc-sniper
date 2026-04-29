@@ -84,5 +84,5 @@ export type Ad = {
   gearbox: string | null;
   regyear: number | null;
   admin_hidden?: boolean;
-  vtt_category?: "xc" | "trail" | "all_mountain" | "enduro" | "dh" | "dirt" | null;
+  vtt_category?: "xc" | "all_mountain" | "enduro" | "dh" | "dirt" | null;
 };
