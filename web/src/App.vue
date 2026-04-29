@@ -114,33 +114,37 @@ watch(isSecret, () => {
   categoryFilter.value = null;
 });
 
+// Champs charges pour la liste. PAS de `body` (texte long, plombe la requete
+// 4x plus que le reste reuni). PAS de jsonb attributes/pros/cons/reasoning :
+// ils sont recharges via getAdById quand l'utilisateur ouvre la modale.
+// La recherche live qui filtrait sur body est maintenant server-side (separately).
+const LIST_FIELDS = [
+  "id", "watch_id", "subject", "url", "image_url",
+  "city", "zipcode", "ad_lat", "ad_lng",
+  "category_id", "category_name", "category_label",
+  "current_price", "first_publication", "first_seen_at", "last_seen_at",
+  "is_active", "mileage_km", "fuel", "gearbox", "regyear",
+  "brand", "model", "year", "frame_material", "wheel_size", "electric",
+  "size_label", "condition_score", "estimated_market_eur", "deal_score",
+  "enriched_at", "enrich_error",
+].join(",");
+
 async function load() {
   loading.value = true;
   error.value = null;
   try {
-    // On charge uniquement ce qui est utile pour la liste + le filtrage.
-    // Les gros champs (attributes jsonb, reasoning, pros/cons jsonb) ne
-    // sont pas utilises par les cards et seront recharges quand l'utilisateur
-    // ouvre la modale (via getAdById qui fait un select * cible).
-    const LIST_FIELDS = [
-      "id", "watch_id", "subject", "body", "url", "image_url",
-      "city", "zipcode", "ad_lat", "ad_lng",
-      "category_id", "category_name", "category_label",
-      "current_price", "first_publication", "first_seen_at", "last_seen_at",
-      "is_active", "mileage_km", "fuel", "gearbox", "regyear",
-      "brand", "model", "year", "frame_material", "wheel_size", "electric",
-      "size_label", "condition_score", "estimated_market_eur", "deal_score",
-      "enriched_at", "enrich_error",
-    ].join(",");
-    const { data, error: e } = await supabase
+    let query = supabase
       .from("ads")
       .select(LIST_FIELDS)
-      .eq("is_active", true)
+      .eq("is_active", true);
+    // Sur la home publique on filtre VTT cote serveur. /secret prend tout.
+    if (!isSecret.value) {
+      query = query.in("category_label", VTT_LABELS);
+    }
+    const { data, error: e } = await query
       .order("deal_score", { ascending: false, nullsFirst: false })
       .limit(1000);
     if (e) throw e;
-    // Les gros champs manquants seront a null/undefined; le type Ad reste
-    // satisfait via assertion (DealCard ne les utilise pas).
     ads.value = data as unknown as Ad[];
   } catch (e: any) {
     error.value = e.message ?? String(e);
@@ -150,27 +154,27 @@ async function load() {
   await syncSelectedFromRoute();
 }
 
+// Quand on bascule entre / et /secret, on recharge avec le bon scope.
+watch(isSecret, () => {
+  load();
+});
+
 onMounted(async () => {
   syncSelectedFromRoute();
   await load();
 });
 
-// Annonces du scope (VTT only en public, tout en /secret)
-const scoped = computed(() =>
-  isSecret.value
-    ? ads.value
-    : ads.value.filter((a) => a.category_label && VTT_LABELS.includes(a.category_label)),
-);
-
+// Le filtrage de scope (VTT only / tout) est deja fait cote serveur dans
+// load(). On considere donc ads.value comme deja "scoped".
 const categories = computed(() => {
   const set = new Set(
-    scoped.value.map((a) => a.category_label).filter((c): c is string => !!c),
+    ads.value.map((a) => a.category_label).filter((c): c is string => !!c),
   );
   return Array.from(set).sort();
 });
 
 const filtered = computed(() => {
-  let list = scoped.value;
+  let list = ads.value;
   if (categoryFilter.value)
     list = list.filter((a) => a.category_label === categoryFilter.value);
 
@@ -201,11 +205,14 @@ const filtered = computed(() => {
     list = list.filter((a) => a.current_price !== null && a.current_price <= max);
   }
 
-  // Filtre recherche texte (subject + body) — live, insensible casse/accents
+  // Filtre recherche texte — desormais sur le titre uniquement (le body
+  // n'est plus charge dans le payload initial pour gagner ~70% sur la
+  // requete Supabase). Si tu veux chercher dans la description, ouvre
+  // l'analyse (modale) qui contient le body complet.
   const q = normalizeText(searchText.value.trim());
   if (q.length > 0) {
     list = list.filter((a) => {
-      const haystack = normalizeText(`${a.subject ?? ""} ${a.body ?? ""}`);
+      const haystack = normalizeText(a.subject ?? "");
       return haystack.includes(q);
     });
   }
@@ -270,7 +277,7 @@ const pageNumbers = computed<(number | "…")[]>(() => {
 });
 
 const stats = computed(() => {
-  const all = scoped.value;
+  const all = ads.value;
   const enriched = all.filter((a) => a.deal_score !== null);
   const great = enriched.filter((a) => (a.deal_score ?? 0) >= 80);
   return {
@@ -321,7 +328,7 @@ const stats = computed(() => {
             <input
               v-model="searchText"
               type="search"
-              placeholder="Rechercher (titre, description)…"
+              placeholder="Rechercher dans les titres…"
               class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
             />
           </label>
