@@ -21,6 +21,11 @@ const routes: RouteRecordRaw[] = [
   { path: "/cgu", name: "tos", component: placeholder },
   // Admin (visible uniquement aux users avec role='admin', controle cote AdminUsers.vue)
   { path: "/admin/utilisateurs", name: "admin-users", component: placeholder },
+  // Guides editoriaux (longue traine SEO + value-add pour AdSense)
+  { path: "/guides", name: "guides-index", component: placeholder },
+  { path: "/guides/comment-choisir-vtt-occasion", name: "guide-choisir", component: placeholder },
+  { path: "/guides/enduro-vs-dh-vs-all-mountain", name: "guide-enduro-vs-dh", component: placeholder },
+  { path: "/guides/decrypter-annonce-leboncoin", name: "guide-decrypter", component: placeholder },
 ];
 
 export const router = createRouter({

@@ -31,7 +31,11 @@ if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
     except Exception:
         pass
 
-import resend
+import smtplib
+import ssl
+from email.message import EmailMessage
+from email.utils import formataddr
+
 from dotenv import load_dotenv
 
 from .db import get_client
@@ -43,11 +47,18 @@ load_dotenv()
 # CONFIG
 # ----------------------------------------------------------------------------
 
-FROM_ADDRESS = "Trouve Ton VTT <bonjour@trouvetonvtt.fr>"
+# Identite expediteur (decomposee : nom + email pour formataddr).
+FROM_NAME = "Trouve Ton VTT"
+FROM_EMAIL = os.environ.get("SMTP_FROM", "bonjour@trouvetonvtt.fr")
 SITE_URL = "https://trouvetonvtt.fr"
 DAILY_DIGEST_INTERVAL_HOURS = 24
 
-resend.api_key = os.environ.get("RESEND_API_KEY")
+# SMTP OVH par defaut (peut etre override via .env si on bascule plus tard).
+# Port 465 = SSL implicite ; 587 = STARTTLS. OVH supporte les deux.
+SMTP_HOST = os.environ.get("SMTP_HOST", "ssl0.ovh.net")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "465"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
 
 
 # ----------------------------------------------------------------------------
@@ -176,26 +187,87 @@ def _wrap_email(title: str, intro_html: str, body_html: str) -> str:
 
 
 # ----------------------------------------------------------------------------
-# ENVOI MAIL VIA RESEND
+# ENVOI MAIL VIA SMTP (OVH par defaut)
 # ----------------------------------------------------------------------------
+#
+# On garde un singleton de connexion sur la duree d'un run du notifier : ouvrir
+# une connexion SSL + login a chaque mail serait lent (et OVH peut tag spam si
+# on hammer le SMTP). On reutilise donc la meme session pour tous les envois.
+
+_smtp_conn: Optional[smtplib.SMTP] = None
+
+
+def _get_smtp() -> Optional[smtplib.SMTP]:
+    """Connecte au SMTP. Choisit SSL implicite (port 465) ou STARTTLS (587/25)
+    selon le port. OVH supporte les deux ; en pratique 587 est plus tolerant
+    sur les chaines de certs."""
+    global _smtp_conn
+    if _smtp_conn is not None:
+        return _smtp_conn
+    if not SMTP_USER or not SMTP_PASS:
+        print("  ERROR: SMTP_USER/SMTP_PASS not configured", file=sys.stderr)
+        return None
+    try:
+        # On essaie d'abord avec verif TLS stricte. Si l'utilisateur a un
+        # antivirus / proxy d'entreprise qui fait du SSL inspection (cas
+        # frequent sur Windows pro), la chaine de cert est injectee par cet
+        # outil et la verif echoue ("self-signed certificate in chain").
+        # Dans ce cas on retombe sur un contexte permissif : risque faible
+        # pour du SMTP outbound (on ne lit pas de donnees sensibles depuis
+        # le serveur, on envoie juste un mail signe DKIM cote OVH).
+        # SMTP_INSECURE=1 dans .env force directement le mode permissif.
+        if os.environ.get("SMTP_INSECURE") == "1":
+            ctx = ssl._create_unverified_context()
+        else:
+            try:
+                import certifi
+                ctx = ssl.create_default_context(cafile=certifi.where())
+            except ImportError:
+                ctx = ssl.create_default_context()
+        if SMTP_PORT == 465:
+            conn = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=ctx, timeout=20)
+        else:
+            conn = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+            conn.ehlo()
+            conn.starttls(context=ctx)
+            conn.ehlo()
+        conn.login(SMTP_USER, SMTP_PASS)
+        _smtp_conn = conn
+        return conn
+    except Exception as e:
+        print(f"  ERROR: SMTP connection to {SMTP_HOST}:{SMTP_PORT} failed: {e}", file=sys.stderr)
+        return None
+
+
+def close_smtp() -> None:
+    global _smtp_conn
+    if _smtp_conn is not None:
+        try:
+            _smtp_conn.quit()
+        except Exception:
+            pass
+        _smtp_conn = None
+
 
 def send_mail(to: str, subject: str, html: str, dry_run: bool = False) -> bool:
     if dry_run:
         print(f"  [DRY-RUN] would send to {to}: {subject!r}")
         return True
-    if not resend.api_key:
-        print(f"  ERROR: RESEND_API_KEY not configured", file=sys.stderr)
+    conn = _get_smtp()
+    if conn is None:
         return False
     try:
-        resend.Emails.send({
-            "from": FROM_ADDRESS,
-            "to": [to],
-            "subject": subject,
-            "html": html,
-        })
+        msg = EmailMessage()
+        msg["From"] = formataddr((FROM_NAME, FROM_EMAIL))
+        msg["To"] = to
+        msg["Subject"] = subject
+        # Plain text fallback (les clients sans HTML / antispam aiment ca).
+        msg.set_content("Ce mail necessite un client compatible HTML.")
+        msg.add_alternative(html, subtype="html")
+        conn.send_message(msg)
         return True
     except Exception as e:
-        print(f"  Resend send failed for {to}: {e}", file=sys.stderr)
+        print(f"  SMTP send failed for {to}: {e}", file=sys.stderr)
         return False
 
 
@@ -339,7 +411,8 @@ def main(dry_run: bool = False) -> int:
     db = get_client()
     print("=== Notifier ===")
     print(f"  dry_run: {dry_run}")
-    print(f"  api key: {'OK' if resend.api_key else 'MISSING'}")
+    smtp_ok = bool(SMTP_USER and SMTP_PASS)
+    print(f"  smtp:    {SMTP_HOST}:{SMTP_PORT} ({'OK' if smtp_ok else 'MISSING credentials'})")
 
     print("\n[1/2] Price drops on favorites...")
     sent_price, detected = process_price_drops(db, dry_run=dry_run)
@@ -349,6 +422,7 @@ def main(dry_run: bool = False) -> int:
     sent_search, processed = process_saved_searches(db, dry_run=dry_run)
     print(f"  processed {processed} searches, sent {sent_search} mail(s)")
 
+    close_smtp()
     total = sent_price + sent_search
     print(f"\n=== Notifier done: {total} mail(s) sent ===")
     return 0

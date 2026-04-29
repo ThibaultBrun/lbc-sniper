@@ -8,6 +8,10 @@ import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
 import LegalPage from "./components/LegalPage.vue";
 import AdminUsers from "./components/AdminUsers.vue";
+import GuidesIndex from "./components/guides/GuidesIndex.vue";
+import GuideChoisirVtt from "./components/guides/GuideChoisirVtt.vue";
+import GuideEnduroVsDh from "./components/guides/GuideEnduroVsDh.vue";
+import GuideDecrypterAnnonce from "./components/guides/GuideDecrypterAnnonce.vue";
 import SavedSearchesBar from "./components/SavedSearchesBar.vue";
 import type { SavedSearchFilters } from "./saved-searches";
 import { useFavorites } from "./favorites";
@@ -25,6 +29,11 @@ const isLegalPage = computed(() =>
 );
 
 const isAdminPage = computed(() => route.name === "admin-users");
+
+const isGuidesIndex = computed(() => route.name === "guides-index");
+const isGuideChoisir = computed(() => route.name === "guide-choisir");
+const isGuideEnduroVsDh = computed(() => route.name === "guide-enduro-vs-dh");
+const isGuideDecrypter = computed(() => route.name === "guide-decrypter");
 
 const isFavoritesPage = computed(() => route.name === "favorites");
 
@@ -387,6 +396,10 @@ const stats = computed(() => ({
 <template>
   <LegalPage v-if="isLegalPage" />
   <AdminUsers v-else-if="isAdminPage" />
+  <GuidesIndex v-else-if="isGuidesIndex" />
+  <GuideChoisirVtt v-else-if="isGuideChoisir" />
+  <GuideEnduroVsDh v-else-if="isGuideEnduroVsDh" />
+  <GuideDecrypterAnnonce v-else-if="isGuideDecrypter" />
   <div v-else class="min-h-screen flex flex-col">
     <header class="surface-header">
       <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-baseline gap-4 justify-between">
@@ -401,6 +414,9 @@ const stats = computed(() => ({
           </p>
         </div>
         <div class="flex items-center gap-4 text-xs text-muted">
+          <router-link to="/guides" class="font-medium hover:opacity-80" style="color: var(--color-accent-hover)">
+            📘 Guides
+          </router-link>
           <span v-if="filtered.length === stats.total">{{ stats.total }} annonces</span>
           <span v-else>{{ filtered.length }} / {{ stats.total }} annonces</span>
           <span>{{ stats.enriched }} analysées</span>
@@ -553,6 +569,7 @@ const stats = computed(() => ({
 
     <footer class="surface-footer">
       <div class="space-x-4">
+        <router-link to="/guides" class="hover:opacity-80">Guides</router-link>
         <router-link to="/a-propos" class="hover:opacity-80">À propos</router-link>
         <router-link to="/mentions-legales" class="hover:opacity-80">Mentions légales</router-link>
         <router-link to="/confidentialite" class="hover:opacity-80">Confidentialité</router-link>

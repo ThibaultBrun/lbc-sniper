@@ -281,6 +281,13 @@ function buildSitemap(ads) {
   const today = new Date().toISOString().slice(0, 10);
   const urls = [
     { loc: SITE_URL, priority: 1.0, changefreq: "daily" },
+    // Guides editoriaux : priorite haute (longue traine SEO + base de
+    // contenu original pour AdSense). changefreq monthly car le contenu
+    // est evergreen mais peut etre mis a jour.
+    { loc: `${SITE_URL}/guides`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/comment-choisir-vtt-occasion`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/enduro-vs-dh-vs-all-mountain`, priority: 0.8, changefreq: "monthly" },
+    { loc: `${SITE_URL}/guides/decrypter-annonce-leboncoin`, priority: 0.8, changefreq: "monthly" },
     { loc: `${SITE_URL}/a-propos`, priority: 0.5, changefreq: "monthly" },
     { loc: `${SITE_URL}/mentions-legales`, priority: 0.3, changefreq: "yearly" },
     { loc: `${SITE_URL}/confidentialite`, priority: 0.3, changefreq: "yearly" },
