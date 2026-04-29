@@ -124,9 +124,9 @@ watch(isSecret, () => {
 });
 
 // Champs charges pour la liste. PAS de `body` (texte long, plombe la requete
-// 4x plus que le reste reuni). PAS de jsonb attributes/pros/cons/reasoning :
-// ils sont recharges via getAdById quand l'utilisateur ouvre la modale.
-// La recherche live qui filtrait sur body est maintenant server-side (separately).
+// 4x plus que le reste reuni). PAS de jsonb attributes/pros/cons/reasoning
+// ni enriched_at/enrich_error : tout ca est recharge via getAdById quand
+// l'utilisateur ouvre la modale.
 const LIST_FIELDS = [
   "id", "watch_id", "subject", "url", "image_url",
   "city", "zipcode", "ad_lat", "ad_lng",
@@ -135,7 +135,6 @@ const LIST_FIELDS = [
   "is_active", "mileage_km", "fuel", "gearbox", "regyear",
   "brand", "model", "year", "frame_material", "wheel_size", "electric",
   "size_label", "condition_score", "estimated_market_eur", "deal_score",
-  "enriched_at", "enrich_error",
 ].join(",");
 
 async function load() {
@@ -152,7 +151,7 @@ async function load() {
     }
     const { data, error: e } = await query
       .order("deal_score", { ascending: false, nullsFirst: false })
-      .limit(1000);
+      .limit(50);
     if (e) throw e;
     ads.value = data as unknown as Ad[];
   } catch (e: any) {
