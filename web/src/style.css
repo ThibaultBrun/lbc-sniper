@@ -59,32 +59,48 @@
   --shadow-card: 0 1px 3px rgb(15 23 42 / 0.04), 0 1px 2px rgb(15 23 42 / 0.06);
   --shadow-card-hover: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.06);
   --shadow-elevated: 0 10px 30px rgb(15 23 42 / 0.12), 0 4px 12px rgb(15 23 42 / 0.06);
+
+  /* Surfaces semi-transparentes (header sticky, backdrop modale) */
+  --color-bg-header: rgb(255 255 255 / 0.85);
+  --color-bg-backdrop: rgb(15 23 42 / 0.4);
 }
 
-/* Theme sombre disponible via data-theme="dark" sur <html> (option future) */
+/* Theme sombre — pas trop sombre : on part de slate-800 (pas slate-950) pour
+   un look plus doux, "soir confortable" plutot que "terminal hacker". */
 [data-theme="dark"] {
-  --color-bg-page: theme(colors.slate.950);
-  --color-bg-card: theme(colors.slate.900 / 60%);
-  --color-bg-elevated: theme(colors.slate.900);
-  --color-bg-muted: theme(colors.slate.800 / 50%);
-  --color-bg-input: theme(colors.slate.800);
-  --color-bg-input-hover: theme(colors.slate.700);
+  --color-bg-page: theme(colors.slate.800);              /* fond pas trop noir */
+  --color-bg-card: theme(colors.slate.700 / 70%);
+  --color-bg-elevated: theme(colors.slate.700);
+  --color-bg-muted: theme(colors.slate.600 / 40%);
+  --color-bg-input: theme(colors.slate.700);
+  --color-bg-input-hover: theme(colors.slate.600);
 
-  --color-border: theme(colors.slate.800);
-  --color-border-subtle: theme(colors.slate.800 / 60%);
-  --color-border-strong: theme(colors.slate.700);
+  --color-border: theme(colors.slate.600);
+  --color-border-subtle: theme(colors.slate.600 / 50%);
+  --color-border-strong: theme(colors.slate.500);
 
   --color-text: theme(colors.slate.100);
-  --color-text-strong: theme(colors.slate.50);
-  --color-text-muted: theme(colors.slate.400);
-  --color-text-subtle: theme(colors.slate.500);
-  --color-text-faint: theme(colors.slate.600);
+  --color-text-strong: white;
+  --color-text-muted: theme(colors.slate.300);
+  --color-text-subtle: theme(colors.slate.400);
+  --color-text-faint: theme(colors.slate.500);
 
-  --color-accent: theme(colors.emerald.500);
-  --color-accent-hover: theme(colors.emerald.400);
-  --color-accent-on: theme(colors.slate.950);
+  --color-accent: theme(colors.emerald.400);             /* + clair pour bon contraste sur fond sombre */
+  --color-accent-hover: theme(colors.emerald.300);
+  --color-accent-soft: theme(colors.emerald.500 / 15%);
+  --color-accent-soft-border: theme(colors.emerald.400 / 35%);
+  --color-accent-on: theme(colors.slate.900);
 
   --color-danger-text: theme(colors.rose.300);
+
+  /* Ombres plus fortes pour ressortir sur fond sombre */
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.2), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-card-hover: 0 4px 12px rgb(0 0 0 / 0.35), 0 2px 4px rgb(0 0 0 / 0.25);
+  --shadow-elevated: 0 10px 30px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.25);
+
+  /* Surfaces semi-transparentes (header sticky, backdrop modale) */
+  --color-bg-header: rgb(30 41 59 / 0.85);               /* slate-800 translucide */
+  --color-bg-backdrop: rgb(0 0 0 / 0.6);
 }
 
 /* Body de base */
@@ -219,6 +235,25 @@ html, body {
     text-decoration: underline;
   }
 
+  /* ----- Theme toggle (segmented control 3 options) ----- */
+  .theme-toggle {
+    @apply inline-flex rounded-lg p-0.5;
+    background-color: var(--color-bg-input);
+    border: 1px solid var(--color-border);
+  }
+  .theme-toggle-btn {
+    @apply w-7 h-7 grid place-items-center text-sm rounded transition;
+    color: var(--color-text-muted);
+  }
+  .theme-toggle-btn:hover {
+    color: var(--color-text);
+  }
+  .theme-toggle-btn-active {
+    background-color: var(--color-bg-elevated);
+    color: var(--color-accent);
+    box-shadow: var(--shadow-card);
+  }
+
   /* ----- Dropdown menu ----- */
   .dropdown-menu {
     @apply absolute right-0 top-full mt-1 w-56 rounded shadow-lg py-1 z-30;
@@ -318,7 +353,7 @@ html, body {
   /* ----- Header (sticky en haut) ----- */
   .surface-header {
     @apply sticky top-0 z-10 backdrop-blur;
-    background-color: rgb(255 255 255 / 0.85);
+    background-color: var(--color-bg-header);
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -352,14 +387,14 @@ html, body {
     color: var(--color-danger-text);
   }
 
-  /* ----- Modal backdrop : assombrissement leger pour theme clair ----- */
+  /* ----- Modal backdrop ----- */
   .modal-backdrop {
     @apply fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm;
-    background-color: rgb(15 23 42 / 0.4);
+    background-color: var(--color-bg-backdrop);
   }
   .modal-backdrop-scroll {
     @apply fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto backdrop-blur-sm;
-    background-color: rgb(15 23 42 / 0.4);
+    background-color: var(--color-bg-backdrop);
   }
 
   /* ----- Modal ----- */

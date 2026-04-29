@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useAuth } from "../auth";
+import { useTheme } from "../theme";
 
 const { user, profile, isAuthenticated, isAdmin, signInWithGoogle, signOut } = useAuth();
+const { theme } = useTheme();
 
 const menuOpen = ref(false);
 const signingIn = ref(false);
@@ -23,6 +25,29 @@ async function handleSignOut() {
 </script>
 
 <template>
+  <div class="flex items-center gap-2">
+    <!-- Theme toggle : visible meme sans compte -->
+    <div class="theme-toggle" role="group" aria-label="Theme">
+      <button
+        @click="theme = 'light'"
+        :class="['theme-toggle-btn', theme === 'light' ? 'theme-toggle-btn-active' : '']"
+        title="Theme clair"
+        aria-label="Theme clair"
+      >☀</button>
+      <button
+        @click="theme = 'auto'"
+        :class="['theme-toggle-btn', theme === 'auto' ? 'theme-toggle-btn-active' : '']"
+        title="Auto (suit le systeme)"
+        aria-label="Theme automatique"
+      >◐</button>
+      <button
+        @click="theme = 'dark'"
+        :class="['theme-toggle-btn', theme === 'dark' ? 'theme-toggle-btn-active' : '']"
+        title="Theme sombre"
+        aria-label="Theme sombre"
+      >☾</button>
+    </div>
+
   <div class="relative">
     <button
       v-if="!isAuthenticated"
@@ -85,5 +110,6 @@ async function handleSignOut() {
       class="fixed inset-0 z-20"
       @click="menuOpen = false"
     ></div>
+  </div>
   </div>
 </template>
