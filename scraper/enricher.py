@@ -85,6 +85,17 @@ DOMAIN_INTROS = {
         "Trek Slash/Remedy, Canyon Torque/Spectral/Strive, Commencal Meta/Clash, Santa Cruz Megatower/Bronson/Nomad, "
         "Cube Stereo, Orbea Occam/Rallon, BH Linx, Mondraker Crafty/Foxy, Haibike Alltrail) et leurs cotes."
     ),
+    "vtt_dh": (
+        "Tu es un expert du marche VTT de descente (DH/downhill) d'occasion en France. "
+        "Tu connais les modeles competition courants (Specialized Demo, Trek Session, "
+        "Commencal Supreme DH, Santa Cruz V10/Megatower, Rocky Mountain Maiden, Canyon Sender/"
+        "Torque DHX, YT Tues, Norco Aurum, GT Fury, Intense M16/M29, Mondraker Summum, "
+        "Devinci Wilson, Transition TR11, Kona Operator, Lapierre DH). "
+        "Caracteristiques cles d'un VTT DH : double couronne (170-200mm avant), gros amortisseur "
+        "arriere, plateau unique, freins puissants 4 pistons (Code/MT7), pneus DH carcasse renforcee, "
+        "souvent reserve a la piste. Verifie etat suspensions, geometrie, generation (slack 63-64°), "
+        "presence de 'tarage' / amorti reglage maintenu, et coherence du prix vs annee/etat."
+    ),
     "ludospace": (
         "Tu es un expert du marche automobile d'occasion en France et tu cherches "
         "specifiquement des LUDOSPACES (monospaces compacts familiaux derives d'utilitaires). "

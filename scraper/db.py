@@ -85,6 +85,8 @@ def upsert_ads(
             "image_url": a.image,
             "city": a.city,
             "zipcode": a.zipcode,
+            "ad_lat": a.lat,
+            "ad_lng": a.lng,
             "category_id": a.category_id,
             "category_name": a.category_name,
             "current_price": a.price,

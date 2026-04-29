@@ -27,7 +27,7 @@ class Watch:
     label: str
     category: str
     text: Optional[str]
-    location: WatchLocation
+    location: Optional[WatchLocation]
     price_max: Optional[int]
     limit: int
     accept_category_ids: Optional[list[str]] = None
@@ -37,25 +37,32 @@ class Watch:
     # Etiquette UI : plusieurs watches partageant la meme valeur sont groupes
     # ensemble dans le filtre du site (ex: "Voitures" pour 22 watches modele).
     category_label: Optional[str] = None
+    # Si defini : on pagine sur LBC jusqu'a tomber sur une annonce plus vieille
+    # que cette fenetre (en heures). Utile pour les watches denses ou `limit`
+    # ne suffit pas a couvrir les nouvelles annonces des dernieres 24h.
+    incremental_hours: Optional[int] = None
 
 
 def load_config(path: Path | str = "config.yaml") -> list[Watch]:
     raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     watches = []
     for w in raw["watches"]:
-        loc = w["location"]
+        loc = w.get("location")
+        watch_location = None
+        if loc:
+            watch_location = WatchLocation(
+                city=loc["city"],
+                radius_km=loc["radius_km"],
+                lat=loc.get("lat"),
+                lng=loc.get("lng"),
+            )
         watches.append(
             Watch(
                 id=w["id"],
                 label=w["label"],
                 category=w["category"],
                 text=w.get("text"),
-                location=WatchLocation(
-                    city=loc["city"],
-                    radius_km=loc["radius_km"],
-                    lat=loc.get("lat"),
-                    lng=loc.get("lng"),
-                ),
+                location=watch_location,
                 price_max=w.get("price_max"),
                 limit=int(w.get("limit", 100)),
                 accept_category_ids=(
@@ -74,6 +81,7 @@ def load_config(path: Path | str = "config.yaml") -> list[Watch]:
                 ),
                 search_in_title_only=bool(w.get("search_in_title_only", False)),
                 category_label=w.get("category_label"),
+                incremental_hours=w.get("incremental_hours"),
             )
         )
     return watches
