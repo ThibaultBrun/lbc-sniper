@@ -45,31 +45,63 @@ def _contains_word(haystack_padded: str, needle: str) -> bool:
     return f" {needle} " in haystack_padded
 
 
+# Termes qui qualifient indubitablement "VTT" (montagne, off-road).
+# Au moins UN de ces termes doit etre present pour qu'un nom de modele
+# isole comme 'element' / 'titan' / 'capra' soit pris au serieux.
+_VTT_QUALIFIERS = {
+    "vtt", "vttae", "vttea", "mtb", "mountain bike", "mountainbike", "vtc",
+    "tout suspendu", "all mountain", "allmountain",
+    "enduro", "freeride", "downhill", "descente", "dh",
+    "trail bike", "endurigide", "hardtail",
+    "vae mtb", "vae vtt", "e-mtb", "emtb",
+    "tout-terrain", "tout terrain",
+}
+
+
+def _has_vtt_qualifier(padded: str) -> bool:
+    return any(_contains_word(padded, q) for q in _VTT_QUALIFIERS)
+
+
 def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     """Cherche un signal enduro/DH dans le titre+body normalises.
     Retourne 'VTT DH', 'VTT enduro', ou None si l'annonce n'est pas
     un VTT enduro/AM/trail/DH/freeride/e-MTB de cette famille.
     DH a priorite (un velo qualifie pour les 2 = DH).
 
-    Le matching se fait sur des mots entiers (avec word boundary),
-    pas en substring : 'dh' ne matche pas dans 'adherence'."""
+    Strategie en 2 etapes pour eviter les faux positifs :
+    1. Les mots-cles 'enduro' / 'dh' / 'descente' / etc. qualifient seuls.
+    2. Les noms de modeles ou marques pure-MTB ne qualifient QUE si on
+       trouve aussi un signal 'vtt' / 'mtb' / 'mountain' / etc. dans le texte.
+       Ca evite que 'element' ou 'titan' (mots francais courants ou modeles
+       polyvalents) declenchent un faux positif sur un velo de route.
+    """
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
 
+    # Niveau 1 : mots-cles qui qualifient seuls (DH a priorite).
     for kw in GENERIC_DH:
         if _contains_word(padded, kw):
-            return "VTT DH"
-    for term in DH_TERMS:
-        if _contains_word(padded, term):
             return "VTT DH"
     for kw in GENERIC_ENDURO:
         if _contains_word(padded, kw):
             return "VTT enduro"
-    for term in ENDURO_TERMS:
-        if _contains_word(padded, term):
-            return "VTT enduro"
+
+    # Niveau 2 : marques 100% MTB — qualifient SEULES (pas besoin de 'vtt').
+    # YT Industries / Commencal / Mondraker / etc. ne fabriquent que du MTB.
     for brand in BRANDS_ENDURO_PURE:
         if _contains_word(padded, brand):
+            return "VTT enduro"
+
+    # Niveau 3 : nom de modele tout seul (potentiellement ambigu : 'titan',
+    # 'element', 'capra'). Demande un qualifier 'vtt'/'mtb'/etc. dans le texte.
+    if not _has_vtt_qualifier(padded):
+        return None
+
+    for term in DH_TERMS:
+        if _contains_word(padded, term):
+            return "VTT DH"
+    for term in ENDURO_TERMS:
+        if _contains_word(padded, term):
             return "VTT enduro"
     return None
 
