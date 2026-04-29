@@ -52,11 +52,23 @@ def run(watch_id_filter: str | None = None) -> int:
             new, updated = upsert_ads(db, watch.id, ads, category_label=watch.category_label)
             print(f"  upsert: {new} new, {updated} updated")
 
-            # Cleanup : désactive les annonces disparues de LBC. Si LBC nous a
-            # renvoyé moins que la limite, c'est exhaustif → on désactive direct.
-            # Sinon on tolère 3 jours d'absence avant désactivation.
+            # Cleanup : désactive les annonces disparues de LBC.
+            #
+            # Cas 1 (incremental_hours défini) : le fetch ne couvre QUE la fenêtre
+            # demandée (ex: 24h glissantes). Les annonces plus anciennes mais
+            # toujours actives ne sont pas dans `seen_ids`. On NE PEUT PAS conclure
+            # à leur disparition. On utilise donc TOUJOURS le grace period.
+            #
+            # Cas 2 (pas d'incremental_hours, et fetch < limit) : LBC a renvoyé
+            # moins que la limite, donc on a tout vu → désactivation immédiate
+            # de ce qui n'apparait pas.
+            #
+            # Cas 3 (pas d'incremental_hours, fetch == limit) : liste tronquée,
+            # grace period.
             seen_ids = [a.id for a in ads]
-            fetch_was_complete = len(ads) < watch.limit
+            fetch_was_complete = (
+                watch.incremental_hours is None and len(ads) < watch.limit
+            )
             stale = deactivate_stale_ads(
                 db, watch.id, seen_ids, fetch_was_complete=fetch_was_complete
             )
