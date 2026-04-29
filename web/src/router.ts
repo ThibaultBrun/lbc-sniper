@@ -12,6 +12,8 @@ const routes: RouteRecordRaw[] = [
   // Modale d'annonce, ouvrable depuis n'importe quelle vue
   { path: "/ad/:id(\\d+)", name: "ad", component: placeholder },
   { path: "/secret/ad/:id(\\d+)", name: "secret-ad", component: placeholder },
+  // Page favoris (auth required cote app, pas cote routing)
+  { path: "/favoris", name: "favorites", component: placeholder },
   // Pages statiques
   { path: "/a-propos", name: "about", component: placeholder },
   { path: "/mentions-legales", name: "legal", component: placeholder },

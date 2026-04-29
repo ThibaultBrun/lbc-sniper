@@ -7,6 +7,9 @@ import DealCard from "./components/DealCard.vue";
 import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
 import LegalPage from "./components/LegalPage.vue";
+import SavedSearchesBar from "./components/SavedSearchesBar.vue";
+import type { SavedSearchFilters } from "./saved-searches";
+import { useFavorites } from "./favorites";
 import { haversineKm } from "./geo";
 
 const route = useRoute();
@@ -19,6 +22,11 @@ const isSecret = computed(() => route.path.startsWith("/secret"));
 const isLegalPage = computed(() =>
   ["about", "legal", "privacy", "tos"].includes(String(route.name)),
 );
+
+const isFavoritesPage = computed(() => route.name === "favorites");
+
+// Favoris : filtre les ads qu'on affiche aux ID en favori du user.
+const { favoriteIds } = useFavorites();
 
 const VTT_LABELS = ["VTT enduro", "VTT DH"];
 
@@ -174,8 +182,34 @@ const categories = computed(() => {
   return Array.from(set).sort();
 });
 
+const currentFilters = computed<SavedSearchFilters>(() => ({
+  categoryFilter: categoryFilter.value,
+  geo: geo.value,
+  radiusKm: radiusKm.value,
+  electricFilter: electricFilter.value,
+  priceMin: priceMin.value,
+  priceMax: priceMax.value,
+  searchText: searchText.value,
+  sortBy: sortBy.value,
+}));
+
+function applySavedSearch(f: SavedSearchFilters) {
+  categoryFilter.value = f.categoryFilter;
+  geo.value = f.geo;
+  radiusKm.value = f.radiusKm ?? 50;
+  electricFilter.value = f.electricFilter ?? "all";
+  priceMin.value = f.priceMin ?? null;
+  priceMax.value = f.priceMax ?? null;
+  searchText.value = f.searchText ?? "";
+  sortBy.value = f.sortBy ?? "deal";
+}
+
 const filtered = computed(() => {
   let list = ads.value;
+  // Page /favoris : on garde uniquement les annonces favorites du user
+  if (isFavoritesPage.value) {
+    list = list.filter((a) => favoriteIds.value.has(a.id));
+  }
   if (categoryFilter.value)
     list = list.filter((a) => a.category_label === categoryFilter.value);
 
@@ -320,8 +354,35 @@ const stats = computed(() => {
     </header>
 
     <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+      <!-- Banniere /favoris -->
+      <div
+        v-if="isFavoritesPage"
+        class="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 flex items-center justify-between"
+      >
+        <div>
+          <div class="text-lg font-bold text-rose-300">♥ Mes favoris</div>
+          <div class="text-xs text-rose-400/70">
+            Annonces que tu as marquées avec le cœur. Tu seras notifié si leur prix baisse.
+          </div>
+        </div>
+        <router-link
+          to="/"
+          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-sm text-slate-200"
+        >
+          ← Retour à toutes les annonces
+        </router-link>
+      </div>
+
       <!-- Filtres -->
       <div class="space-y-3 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+
+        <!-- Recherches sauvegardees + bouton "Sauvegarder" -->
+        <div class="flex flex-wrap items-center justify-end gap-2 pb-2 border-b border-slate-800/50">
+          <SavedSearchesBar
+            :current-filters="currentFilters"
+            @apply="applySavedSearch"
+          />
+        </div>
 
         <!-- Ligne 1 : recherche texte + ville/position/rayon -->
         <div class="flex flex-wrap items-center gap-4">

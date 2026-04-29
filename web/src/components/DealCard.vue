@@ -1,9 +1,34 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { useFavorites } from "../favorites";
+import { useAuth } from "../auth";
 import type { Ad } from "../supabase";
 
 const props = defineProps<{ ad: Ad }>();
 const emit = defineEmits<{ open: [Ad] }>();
+
+const { isFavorite, toggle } = useFavorites();
+const { isAuthenticated, signInWithGoogle } = useAuth();
+const favPending = ref(false);
+
+const isFav = computed(() => isFavorite(props.ad.id));
+
+async function handleFavClick(e: MouseEvent) {
+  e.stopPropagation();
+  if (!isAuthenticated.value) {
+    // Pas connecte -> on lance le login Google
+    await signInWithGoogle();
+    return;
+  }
+  favPending.value = true;
+  try {
+    await toggle(props.ad.id, props.ad.current_price);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    favPending.value = false;
+  }
+}
 
 const score = computed(() => props.ad.deal_score ?? 0);
 
@@ -96,25 +121,44 @@ const hasAnalysis = computed(
     </div>
 
     <!-- IMAGE — ouvre l'analyse (la modale), pas LBC -->
-    <button
-      type="button"
-      @click="emit('open', ad)"
-      class="block w-full text-left"
-      :aria-label="`Voir l'analyse de ${ad.subject}`"
-    >
-      <div class="aspect-[4/3] w-full bg-slate-800 overflow-hidden">
-        <img
-          v-if="ad.image_url"
-          :src="ad.image_url"
-          :alt="ad.subject"
-          class="h-full w-full object-cover hover:scale-105 transition"
-          loading="lazy"
-        />
-        <div v-else class="h-full w-full grid place-items-center text-slate-600 text-xs">
-          pas de photo
+    <div class="relative">
+      <button
+        type="button"
+        @click="emit('open', ad)"
+        class="block w-full text-left"
+        :aria-label="`Voir l'analyse de ${ad.subject}`"
+      >
+        <div class="aspect-[4/3] w-full bg-slate-800 overflow-hidden">
+          <img
+            v-if="ad.image_url"
+            :src="ad.image_url"
+            :alt="ad.subject"
+            class="h-full w-full object-cover hover:scale-105 transition"
+            loading="lazy"
+          />
+          <div v-else class="h-full w-full grid place-items-center text-slate-600 text-xs">
+            pas de photo
+          </div>
         </div>
-      </div>
-    </button>
+      </button>
+      <!-- Bouton favori en overlay -->
+      <button
+        type="button"
+        @click="handleFavClick"
+        :disabled="favPending"
+        :class="[
+          'absolute top-2 right-2 w-9 h-9 rounded-full grid place-items-center text-lg transition shadow-lg',
+          isFav
+            ? 'bg-rose-500 text-white hover:bg-rose-400'
+            : 'bg-black/60 text-slate-200 hover:bg-black/80',
+        ]"
+        :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+        :title="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+      >
+        <span v-if="isFav">♥</span>
+        <span v-else>♡</span>
+      </button>
+    </div>
 
     <!-- INFOS -->
     <div class="p-3 space-y-1.5 flex-1 flex flex-col">

@@ -70,9 +70,16 @@ async function handleSignOut() {
         Connecté en tant que<br>
         <span class="text-slate-200">{{ user?.email }}</span>
       </div>
+      <router-link
+        to="/favoris"
+        @click="menuOpen = false"
+        class="block px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+      >
+        ♥ Mes favoris
+      </router-link>
       <button
         @click="handleSignOut"
-        class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
+        class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 border-t border-slate-800"
       >
         Se déconnecter
       </button>
