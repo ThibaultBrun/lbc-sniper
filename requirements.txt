@@ -1,7 +1,4 @@
-# lbc 1.1.2 est patchee localement (VEHICULES_VELOS = "55" au lieu de "1002").
-# Voir https://github.com/etienne-hd/lbc/pull/9. Tant que la PR n'est pas mergee,
-# on pin la version pour eviter qu'un upgrade ne reecrase le patch local.
-lbc==1.1.2
+lbc>=1.1.2
 supabase>=2.9
 pyyaml>=6.0
 python-dotenv>=1.0

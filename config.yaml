@@ -13,7 +13,7 @@ watches:
   - id: vtt-enduro-france
     label: "VTT Enduro - France entiere"
     category_label: "VTT enduro"
-    category: VEHICULES_VELOS
+    category: LOISIRS_VELOS
     text: "enduro"
     search_in_title_only: true
     limit: 100
@@ -23,7 +23,7 @@ watches:
   - id: vtt-dh-france
     label: "VTT DH (descente) - France entiere"
     category_label: "VTT DH"
-    category: VEHICULES_VELOS
+    category: LOISIRS_VELOS
     text: "dh"
     search_in_title_only: true
     limit: 100
