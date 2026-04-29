@@ -444,8 +444,18 @@ const pageNumbers = computed<(number | "…")[]>(() => {
   return result;
 });
 
-// Stats globales, pas calculees depuis ads.value (qui est tronque a 50)
-// mais depuis les count queries lancees dans load().
+// Stats globales (count queries server-side) + stats filtrees (calculees
+// localement sur `filtered`) pour afficher "X / Y" dans le header quand un
+// filtre est actif. Note : "filtered" peut etre tronque tant que le 2e load
+// (background, jusqu'a 1000 ads) n'est pas fini -> les chiffres se completent
+// progressivement, c'est OK.
+const filteredEnriched = computed(() =>
+  filtered.value.filter((a) => a.deal_score !== null && a.deal_score !== undefined).length,
+);
+const filteredGreat = computed(() =>
+  filtered.value.filter((a) => (a.deal_score ?? 0) >= 80).length,
+);
+
 const stats = computed(() => ({
   total: totalCount.value,
   enriched: enrichedCount.value,
@@ -476,16 +486,24 @@ const stats = computed(() => ({
         <div class="flex items-center gap-2 sm:gap-4 text-xs text-muted flex-wrap justify-end">
           <!-- Stats : forme compacte sur mobile, detaillee en desktop -->
           <span class="sm:hidden text-[11px]">
-            <span class="font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }}</span>
-            / {{ stats.enriched }} ex.
+            <span class="font-semibold" style="color: var(--color-accent-hover)">
+              {{ hasActiveFilters ? filteredGreat : stats.great }}
+            </span>
+            / {{ hasActiveFilters ? filteredEnriched : stats.enriched }} ex.
           </span>
           <router-link to="/guides" class="font-medium hover:opacity-80 hidden lg:inline" style="color: var(--color-accent-hover)">
             📘 Guides
           </router-link>
-          <span class="hidden sm:inline" v-if="filtered.length === stats.total">{{ stats.total }} annonces</span>
+          <span class="hidden sm:inline" v-if="!hasActiveFilters">{{ stats.total }} annonces</span>
           <span class="hidden sm:inline" v-else>{{ filtered.length }} / {{ stats.total }} annonces</span>
-          <span class="hidden md:inline">{{ stats.enriched }} analysées</span>
-          <span class="hidden sm:inline font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }} excellentes</span>
+          <span class="hidden md:inline" v-if="!hasActiveFilters">{{ stats.enriched }} analysées</span>
+          <span class="hidden md:inline" v-else>{{ filteredEnriched }} / {{ stats.enriched }} analysées</span>
+          <span class="hidden sm:inline font-semibold" style="color: var(--color-accent-hover)" v-if="!hasActiveFilters">
+            {{ stats.great }} excellentes
+          </span>
+          <span class="hidden sm:inline font-semibold" style="color: var(--color-accent-hover)" v-else>
+            {{ filteredGreat }} / {{ stats.great }} excellentes
+          </span>
           <button @click="load" class="btn btn-ghost" aria-label="Recharger">
             <span class="sm:hidden">↻</span>
             <span class="hidden sm:inline">↻ Recharger</span>
