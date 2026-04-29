@@ -503,11 +503,7 @@ const stats = computed(() => ({
       </div>
     </main>
 
-    <div
-      v-if="selectedAdLoading"
-      class="fixed inset-0 z-50 grid place-items-center backdrop-blur-sm"
-      style="background-color: rgb(0 0 0 / 0.8)"
-    >
+    <div v-if="selectedAdLoading" class="modal-backdrop">
       <div class="text-muted">Chargement de l'annonce…</div>
     </div>
 

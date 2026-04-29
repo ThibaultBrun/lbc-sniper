@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Fond vert emerald arrondi -->
+  <rect width="64" height="64" rx="14" fill="#10b981"/>
+  <!-- VTT stylise : 2 roues + cadre triangulaire -->
+  <g fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Roue arriere -->
+    <circle cx="18" cy="42" r="10"/>
+    <!-- Roue avant -->
+    <circle cx="46" cy="42" r="10"/>
+    <!-- Cadre triangulaire : pedalier (centre bas) -> selle (haut gauche) -> guidon (haut droit) -> pedalier -->
+    <path d="M32 42 L24 26 L42 26 L32 42"/>
+    <!-- Tube de selle -->
+    <path d="M24 26 L20 18"/>
+    <!-- Guidon -->
+    <path d="M42 26 L48 22"/>
+    <!-- Selle -->
+    <path d="M17 18 L23 18"/>
+  </g>
+</svg>

@@ -125,12 +125,7 @@ function notifyLabel(mode: "off" | "instant" | "daily"): string {
     </button>
 
     <!-- Dialogue de sauvegarde -->
-    <div
-      v-if="showSaveDialog"
-      class="fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm"
-      style="background-color: rgb(0 0 0 / 0.8)"
-      @click.self="showSaveDialog = false"
-    >
+    <div v-if="showSaveDialog" class="modal-backdrop" @click.self="showSaveDialog = false">
       <div class="modal-shell-sm">
         <h2 class="text-lg font-bold">Sauvegarder cette recherche</h2>
 

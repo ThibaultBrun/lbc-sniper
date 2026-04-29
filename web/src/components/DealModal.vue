@@ -66,11 +66,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    class="fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto backdrop-blur-sm"
-    style="background-color: rgb(0 0 0 / 0.8)"
-    @click.self="emit('close')"
-  >
+  <div class="modal-backdrop-scroll" @click.self="emit('close')">
     <div class="modal-shell" @click.stop>
       <!-- Bandeau verdict -->
       <div :class="['px-8 py-6 flex items-center justify-between gap-4', headerTierClass]">

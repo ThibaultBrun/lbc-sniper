@@ -9,7 +9,60 @@
    ============================================================================ */
 
 :root {
-  /* Surfaces */
+  /* Surfaces — fond doux pas blanc agressif, cartes blanches qui ressortent */
+  --color-bg-page: #f7f8fa;                              /* gris tres clair tirant bleu */
+  --color-bg-card: white;
+  --color-bg-elevated: white;
+  --color-bg-muted: theme(colors.slate.100);             /* placeholder photo, etc. */
+  --color-bg-input: white;
+  --color-bg-input-hover: theme(colors.slate.50);
+
+  /* Bordures — discretes pour laisser respirer */
+  --color-border: theme(colors.slate.200);
+  --color-border-subtle: theme(colors.slate.200 / 60%);
+  --color-border-strong: theme(colors.slate.300);
+
+  /* Texte — slate-800 plutot que noir pur (moins agressif) */
+  --color-text: theme(colors.slate.800);
+  --color-text-strong: theme(colors.slate.900);
+  --color-text-muted: theme(colors.slate.600);
+  --color-text-subtle: theme(colors.slate.500);
+  --color-text-faint: theme(colors.slate.400);
+
+  /* Accents — emerald conserve (parle aux cyclistes : nature/montagne) */
+  --color-accent: theme(colors.emerald.600);             /* + sature en theme clair */
+  --color-accent-hover: theme(colors.emerald.700);
+  --color-accent-soft: theme(colors.emerald.500 / 10%);
+  --color-accent-soft-border: theme(colors.emerald.600 / 25%);
+  --color-accent-on: white;
+
+  /* States */
+  --color-success: theme(colors.emerald.600);
+  --color-warning: theme(colors.amber.600);
+  --color-danger: theme(colors.rose.500);
+  --color-danger-soft: theme(colors.rose.500 / 10%);
+  --color-danger-soft-border: theme(colors.rose.500 / 30%);
+  --color-danger-text: theme(colors.rose.700);
+
+  /* Score tiers (deal_score) — utilises pour les bandeaux DealCard / DealModal */
+  --color-score-great: theme(colors.emerald.500);
+  --color-score-good: theme(colors.emerald.600);
+  --color-score-fair: theme(colors.slate.500);
+  --color-score-poor: theme(colors.amber.600);
+  --color-score-bad: theme(colors.rose.700);
+
+  /* Radius / Shadow */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --shadow-card: 0 1px 3px rgb(15 23 42 / 0.04), 0 1px 2px rgb(15 23 42 / 0.06);
+  --shadow-card-hover: 0 4px 12px rgb(15 23 42 / 0.08), 0 2px 4px rgb(15 23 42 / 0.06);
+  --shadow-elevated: 0 10px 30px rgb(15 23 42 / 0.12), 0 4px 12px rgb(15 23 42 / 0.06);
+}
+
+/* Theme sombre disponible via data-theme="dark" sur <html> (option future) */
+[data-theme="dark"] {
   --color-bg-page: theme(colors.slate.950);
   --color-bg-card: theme(colors.slate.900 / 60%);
   --color-bg-elevated: theme(colors.slate.900);
@@ -17,67 +70,21 @@
   --color-bg-input: theme(colors.slate.800);
   --color-bg-input-hover: theme(colors.slate.700);
 
-  /* Bordures */
   --color-border: theme(colors.slate.800);
   --color-border-subtle: theme(colors.slate.800 / 60%);
   --color-border-strong: theme(colors.slate.700);
 
-  /* Texte */
   --color-text: theme(colors.slate.100);
   --color-text-strong: theme(colors.slate.50);
   --color-text-muted: theme(colors.slate.400);
   --color-text-subtle: theme(colors.slate.500);
   --color-text-faint: theme(colors.slate.600);
 
-  /* Accents */
   --color-accent: theme(colors.emerald.500);
   --color-accent-hover: theme(colors.emerald.400);
-  --color-accent-soft: theme(colors.emerald.500 / 10%);
-  --color-accent-soft-border: theme(colors.emerald.500 / 30%);
   --color-accent-on: theme(colors.slate.950);
 
-  /* States */
-  --color-success: theme(colors.emerald.500);
-  --color-warning: theme(colors.amber.500);
-  --color-danger: theme(colors.rose.500);
-  --color-danger-soft: theme(colors.rose.500 / 10%);
-  --color-danger-soft-border: theme(colors.rose.500 / 40%);
   --color-danger-text: theme(colors.rose.300);
-
-  /* Score tiers (deal_score) */
-  --color-score-great: theme(colors.emerald.500);
-  --color-score-good: theme(colors.emerald.700);
-  --color-score-fair: theme(colors.slate.700);
-  --color-score-poor: theme(colors.amber.700);
-  --color-score-bad: theme(colors.rose.900);
-
-  /* Radius / Shadow */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-}
-
-/* Theme clair (active via data-theme="light" sur <html>) */
-[data-theme="light"] {
-  --color-bg-page: theme(colors.slate.50);
-  --color-bg-card: white;
-  --color-bg-elevated: white;
-  --color-bg-muted: theme(colors.slate.100);
-  --color-bg-input: white;
-  --color-bg-input-hover: theme(colors.slate.50);
-
-  --color-border: theme(colors.slate.200);
-  --color-border-subtle: theme(colors.slate.200 / 60%);
-  --color-border-strong: theme(colors.slate.300);
-
-  --color-text: theme(colors.slate.900);
-  --color-text-strong: theme(colors.slate.950);
-  --color-text-muted: theme(colors.slate.600);
-  --color-text-subtle: theme(colors.slate.500);
-  --color-text-faint: theme(colors.slate.400);
-
-  --color-accent-on: white;
 }
 
 /* Body de base */
@@ -115,15 +122,17 @@ html, body {
     color: var(--color-text-muted);
   }
 
-  /* ----- Cards ----- */
+  /* ----- Cards : ombres douces > bordures pour un look plus aerien ----- */
   .card {
     @apply rounded-xl overflow-hidden flex flex-col transition;
     background-color: var(--color-bg-card);
     border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
   }
 
   .card-hover:hover {
     @apply -translate-y-0.5;
+    box-shadow: var(--shadow-card-hover);
   }
 
   /* ----- Buttons ----- */
@@ -250,51 +259,53 @@ html, body {
     background-color: var(--color-bg-input-hover);
   }
 
-  /* ----- Score tiers (DealCard header) ----- */
+  /* ----- Score tiers (DealCard header / DealModal bandeau) -----
+     Theme clair : couleurs vibrantes mais pas saturees, bon contraste blanc */
   .tier-great {
-    background: linear-gradient(to right, theme(colors.emerald.600), theme(colors.emerald.500));
-    color: theme(colors.slate.950);
+    background: linear-gradient(to right, theme(colors.emerald.500), theme(colors.emerald.400));
+    color: white;
   }
   .tier-good {
-    background: linear-gradient(to right, theme(colors.emerald.700), theme(colors.emerald.600));
-    color: theme(colors.slate.50);
+    background: linear-gradient(to right, theme(colors.emerald.600), theme(colors.emerald.500));
+    color: white;
   }
   .tier-fair {
-    background: linear-gradient(to right, theme(colors.slate.700), theme(colors.slate.600));
-    color: theme(colors.slate.100);
+    background: linear-gradient(to right, theme(colors.slate.400), theme(colors.slate.300));
+    color: theme(colors.slate.900);
   }
   .tier-poor {
-    background: linear-gradient(to right, theme(colors.amber.700), theme(colors.amber.600));
-    color: theme(colors.slate.50);
+    background: linear-gradient(to right, theme(colors.amber.500), theme(colors.amber.400));
+    color: theme(colors.slate.900);
   }
   .tier-bad {
-    background: linear-gradient(to right, theme(colors.rose.900), theme(colors.rose.800));
-    color: theme(colors.rose.100);
+    background: linear-gradient(to right, theme(colors.rose.500), theme(colors.rose.400));
+    color: white;
   }
 
-  .tier-border-great { border-color: theme(colors.emerald.500 / 70%); box-shadow: 0 4px 12px theme(colors.emerald.500 / 10%); }
-  .tier-border-good  { border-color: theme(colors.emerald.700 / 60%); }
-  .tier-border-fair  { border-color: var(--color-border); }
-  .tier-border-poor  { border-color: theme(colors.amber.700 / 40%); }
-  .tier-border-bad   { border-color: theme(colors.rose.800 / 40%); opacity: 0.8; }
+  /* Bordures tier : tres legeres ombres colorees pour highlight les bonnes affaires */
+  .tier-border-great { border-color: theme(colors.emerald.500 / 50%); box-shadow: 0 4px 16px theme(colors.emerald.500 / 15%); }
+  .tier-border-good  { border-color: theme(colors.emerald.500 / 30%); box-shadow: var(--shadow-card); }
+  .tier-border-fair  { border-color: var(--color-border); box-shadow: var(--shadow-card); }
+  .tier-border-poor  { border-color: theme(colors.amber.500 / 30%); box-shadow: var(--shadow-card); }
+  .tier-border-bad   { border-color: theme(colors.rose.500 / 25%); box-shadow: var(--shadow-card); opacity: 0.85; }
 
-  /* ----- Pros / Cons (analyse IA) ----- */
+  /* ----- Pros / Cons (panneaux) ----- */
   .panel-pros {
     @apply rounded p-2 space-y-1;
-    background-color: theme(colors.emerald.500 / 5%);
-    border: 1px solid theme(colors.emerald.500 / 20%);
+    background-color: theme(colors.emerald.50);
+    border: 1px solid theme(colors.emerald.200);
   }
   .panel-cons {
     @apply rounded p-2 space-y-1;
-    background-color: theme(colors.amber.500 / 5%);
-    border: 1px solid theme(colors.amber.500 / 20%);
+    background-color: theme(colors.amber.50);
+    border: 1px solid theme(colors.amber.200);
   }
 
   /* ----- Banner (favoris, info contextuelle) ----- */
   .banner-info {
     @apply rounded-xl p-4 flex items-center justify-between;
-    background-color: var(--color-danger-soft);
-    border: 1px solid var(--color-danger-soft-border);
+    background-color: theme(colors.rose.50);
+    border: 1px solid theme(colors.rose.200);
   }
 
   /* ----- Surface filtres (encadre des controles) ----- */
@@ -307,7 +318,7 @@ html, body {
   /* ----- Header (sticky en haut) ----- */
   .surface-header {
     @apply sticky top-0 z-10 backdrop-blur;
-    background-color: var(--color-bg-card);
+    background-color: rgb(255 255 255 / 0.85);
     border-bottom: 1px solid var(--color-border);
   }
 
@@ -341,18 +352,30 @@ html, body {
     color: var(--color-danger-text);
   }
 
+  /* ----- Modal backdrop : assombrissement leger pour theme clair ----- */
+  .modal-backdrop {
+    @apply fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm;
+    background-color: rgb(15 23 42 / 0.4);
+  }
+  .modal-backdrop-scroll {
+    @apply fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto backdrop-blur-sm;
+    background-color: rgb(15 23 42 / 0.4);
+  }
+
   /* ----- Modal ----- */
   .modal-shell {
-    @apply relative w-full max-w-7xl rounded-2xl shadow-2xl shadow-black/60 overflow-hidden my-8;
+    @apply relative w-full max-w-7xl rounded-2xl overflow-hidden my-8;
     background-color: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--color-border);
     color: var(--color-text);
+    box-shadow: var(--shadow-elevated);
   }
   .modal-shell-sm {
     @apply w-full max-w-md rounded-xl p-6 space-y-4;
     background-color: var(--color-bg-elevated);
-    border: 1px solid var(--color-border-strong);
+    border: 1px solid var(--color-border);
     color: var(--color-text);
+    box-shadow: var(--shadow-elevated);
   }
 
   .modal-col-divider {
@@ -360,25 +383,29 @@ html, body {
     border-color: var(--color-border);
   }
 
-  /* ----- Modal action buttons (bandeau colore) ----- */
+  /* ----- Modal action buttons (bandeau colore) -----
+     Place sur un bandeau tier-* (vert/orange/rouge/gris). Fond blanc transparent
+     pour rester lisible peu importe la couleur du bandeau dessous. */
   .icon-btn-pill {
     @apply rounded-full px-3 h-10 text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5;
-    background-color: rgb(0 0 0 / 0.2);
+    background-color: rgb(255 255 255 / 0.25);
+    color: inherit;
   }
   .icon-btn-pill:hover {
-    background-color: rgb(0 0 0 / 0.4);
+    background-color: rgb(255 255 255 / 0.4);
   }
   .icon-btn-pill-success {
-    background-color: var(--color-accent-hover) !important;
-    color: var(--color-accent-on);
+    background-color: white !important;
+    color: var(--color-accent-hover);
   }
 
   .icon-btn-circle {
     @apply rounded-full w-10 h-10 grid place-items-center text-2xl leading-none transition;
-    background-color: rgb(0 0 0 / 0.2);
+    background-color: rgb(255 255 255 / 0.25);
+    color: inherit;
   }
   .icon-btn-circle:hover {
-    background-color: rgb(0 0 0 / 0.4);
+    background-color: rgb(255 255 255 / 0.4);
   }
 
   /* ----- Section titles (modal) ----- */
@@ -403,14 +430,14 @@ html, body {
   /* ----- Pros / Cons items (lignes individuelles dans modal) ----- */
   .panel-pros-item {
     @apply flex gap-3 text-sm rounded-lg p-3 leading-relaxed;
-    background-color: theme(colors.emerald.500 / 10%);
-    border: 1px solid theme(colors.emerald.500 / 30%);
-    color: theme(colors.emerald.50);
+    background-color: theme(colors.emerald.50);
+    border: 1px solid theme(colors.emerald.200);
+    color: theme(colors.emerald.900);
   }
   .panel-cons-item {
     @apply flex gap-3 text-sm rounded-lg p-3 leading-relaxed;
-    background-color: theme(colors.amber.500 / 10%);
-    border: 1px solid theme(colors.amber.500 / 30%);
-    color: theme(colors.amber.50);
+    background-color: theme(colors.amber.50);
+    border: 1px solid theme(colors.amber.200);
+    color: theme(colors.amber.900);
   }
 }
