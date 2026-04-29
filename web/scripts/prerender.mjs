@@ -15,7 +15,7 @@
  * Variables d'env attendues:
  *   VITE_SUPABASE_URL
  *   VITE_SUPABASE_ANON_KEY
- *   SITE_URL  (optionnel, defaut: https://trouve-ton-vtt.pista.bike)
+ *   SITE_URL  (optionnel, defaut: https://trouvetonvtt.fr)
  */
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs/promises";
@@ -25,7 +25,7 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DIST = path.resolve(__dirname, "..", "dist");
-const SITE_URL = process.env.SITE_URL || "https://trouve-ton-vtt.pista.bike";
+const SITE_URL = process.env.SITE_URL || "https://trouvetonvtt.fr";
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY;

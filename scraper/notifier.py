@@ -43,8 +43,8 @@ load_dotenv()
 # CONFIG
 # ----------------------------------------------------------------------------
 
-FROM_ADDRESS = "Trouve Ton VTT <bonjour@pista.bike>"
-SITE_URL = "https://trouve-ton-vtt.pista.bike"
+FROM_ADDRESS = "Trouve Ton VTT <bonjour@trouvetonvtt.fr>"
+SITE_URL = "https://trouvetonvtt.fr"
 DAILY_DIGEST_INTERVAL_HOURS = 24
 
 resend.api_key = os.environ.get("RESEND_API_KEY")

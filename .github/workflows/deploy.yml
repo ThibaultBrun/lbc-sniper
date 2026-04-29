@@ -52,7 +52,7 @@ jobs:
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
-          SITE_URL: https://trouve-ton-vtt.pista.bike
+          SITE_URL: https://trouvetonvtt.fr
         run: node scripts/prerender.mjs
 
       - name: SPA fallback

@@ -75,7 +75,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Une question, un retour ?</h2>
           <p>
-            Écris-nous à <a href="mailto:contact@pista.bike" class="link-accent">contact@pista.bike</a>. On lit tout, on répond quand on peut.
+            Écris-nous à <a href="mailto:contact@trouvetonvtt.fr" class="link-accent">contact@trouvetonvtt.fr</a>. On lit tout, on répond quand on peut.
           </p>
         </section>
       </article>
@@ -91,7 +91,7 @@ const lastUpdate = "29 avril 2026";
             Le site <strong>Trouve Ton VTT</strong> est édité par <strong>Shredlab</strong>.
           </p>
           <p>
-            Contact : <a href="mailto:contact@pista.bike" class="link-accent">contact@pista.bike</a>
+            Contact : <a href="mailto:contact@trouvetonvtt.fr" class="link-accent">contact@trouvetonvtt.fr</a>
           </p>
         </section>
 
@@ -162,7 +162,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Vos droits</h2>
           <p>
-            Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'opposition concernant vos données. Comme nous ne collectons pas de données personnelles identifiables, ces droits sont sans objet pour la consultation du site. Pour toute question : <a href="mailto:contact@pista.bike" class="link-accent">contact@pista.bike</a>.
+            Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et d'opposition concernant vos données. Comme nous ne collectons pas de données personnelles identifiables, ces droits sont sans objet pour la consultation du site. Pour toute question : <a href="mailto:contact@trouvetonvtt.fr" class="link-accent">contact@trouvetonvtt.fr</a>.
           </p>
         </section>
       </article>
