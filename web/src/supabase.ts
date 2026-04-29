@@ -9,7 +9,18 @@ if (!url || !anonKey) {
   );
 }
 
-export const supabase = createClient(url, anonKey);
+// Note : on neutralise le `lock` du SDK auth (Web Locks API). Sinon le SDK
+// emet "Lock was released because another request stole it" en console
+// quand plusieurs onglets/HMR/refresh-token se synchronisent — c'est un
+// warning sans impact fonctionnel mais qui pollue la console et stresse
+// inutilement (vu en prod par l'utilisateur). On execute `fn` directement
+// sans aucune coordination cross-tab : pas critique pour notre usage
+// (les rares concurrences se resolvent naturellement cote serveur).
+export const supabase = createClient(url, anonKey, {
+  auth: {
+    lock: async (_name, _acquireTimeout, fn) => fn(),
+  },
+});
 
 export async function getAdById(id: number): Promise<Ad | null> {
   const { data, error } = await supabase
