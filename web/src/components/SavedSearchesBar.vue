@@ -81,26 +81,21 @@ function notifyLabel(mode: "off" | "instant" | "daily"): string {
   <div class="flex items-center gap-2">
     <!-- Mes recherches (dropdown) -->
     <div v-if="isAuthenticated && searches.length > 0" class="relative">
-      <button
-        @click="showList = !showList"
-        class="flex items-center gap-1.5 rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-sm text-slate-200 transition"
-      >
+      <button @click="showList = !showList" class="btn btn-ghost">
         <span>⭐</span>
         <span>Mes recherches</span>
-        <span class="text-xs text-slate-500">({{ searches.length }})</span>
+        <span class="text-xs text-subtle">({{ searches.length }})</span>
       </button>
-      <div
-        v-if="showList"
-        class="absolute right-0 top-full mt-1 w-80 max-h-96 overflow-y-auto bg-slate-900 border border-slate-700 rounded shadow-lg py-1 z-30"
-      >
+      <div v-if="showList" class="dropdown-menu w-80 max-h-96 overflow-y-auto">
         <button
           v-for="s in searches"
           :key="s.id"
           @click="applySearch(s)"
-          class="block w-full text-left px-3 py-2 hover:bg-slate-800 border-b border-slate-800/50 last:border-b-0"
+          class="dropdown-item w-full text-left"
+          style="border-bottom: 1px solid var(--color-border-subtle)"
         >
           <div class="flex items-center justify-between gap-2">
-            <span class="text-sm text-slate-100 font-medium truncate">{{ s.name }}</span>
+            <span class="text-sm font-medium truncate">{{ s.name }}</span>
             <div class="flex items-center gap-1 shrink-0">
               <button
                 @click="toggleNotifyMode(s, $event)"
@@ -111,24 +106,18 @@ function notifyLabel(mode: "off" | "instant" | "daily"): string {
               </button>
               <button
                 @click="handleRemove(s, $event)"
-                class="text-slate-500 hover:text-rose-400 transition px-1"
+                class="text-subtle hover:text-rose-400 transition px-1"
                 title="Supprimer"
               >×</button>
             </div>
           </div>
         </button>
       </div>
-      <div
-        v-if="showList"
-        class="fixed inset-0 z-20"
-        @click="showList = false"
-      ></div>
+      <div v-if="showList" class="fixed inset-0 z-20" @click="showList = false"></div>
     </div>
 
     <!-- Bouton "Sauvegarder cette recherche" -->
-    <button
-      @click="handleSaveClick"
-      class="flex items-center gap-1.5 rounded bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-sm font-medium text-slate-950 transition"
+    <button @click="handleSaveClick" class="btn btn-primary"
       title="Sauvegarder les filtres actuels en recherche favorite"
     >
       <span>⭐</span>
@@ -138,54 +127,45 @@ function notifyLabel(mode: "off" | "instant" | "daily"): string {
     <!-- Dialogue de sauvegarde -->
     <div
       v-if="showSaveDialog"
-      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm grid place-items-center p-4"
+      class="fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm"
+      style="background-color: rgb(0 0 0 / 0.8)"
       @click.self="showSaveDialog = false"
     >
-      <div class="w-full max-w-md bg-slate-900 rounded-xl border border-slate-700 p-6 space-y-4">
-        <h2 class="text-lg font-bold text-slate-100">Sauvegarder cette recherche</h2>
+      <div class="modal-shell-sm">
+        <h2 class="text-lg font-bold">Sauvegarder cette recherche</h2>
 
-        <div class="text-xs text-slate-400 bg-slate-800/50 rounded p-2 leading-relaxed">
-          <span class="font-semibold text-slate-300">Filtres :</span> {{ summary }}
+        <div class="text-xs text-muted rounded p-2 leading-relaxed surface-muted">
+          <span class="font-semibold text-strong">Filtres :</span> {{ summary }}
         </div>
 
         <label class="block">
-          <span class="text-sm text-slate-300">Nom</span>
+          <span class="text-sm">Nom</span>
           <input
             v-model="newName"
             type="text"
             placeholder="Ex: VTT enduro Bayonne 50km"
-            class="mt-1 w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none"
+            class="input-base mt-1 w-full py-2"
             @keydown.enter="handleSave"
           />
         </label>
 
         <label class="block">
-          <span class="text-sm text-slate-300">Alerte mail</span>
-          <select
-            v-model="newNotifyMode"
-            class="mt-1 w-full bg-slate-800 border border-slate-700 rounded px-3 py-2 text-slate-100"
-          >
+          <span class="text-sm">Alerte mail</span>
+          <select v-model="newNotifyMode" class="input-base mt-1 w-full py-2">
             <option value="off">Pas d'alerte</option>
             <option value="daily">Digest journalier</option>
             <option value="instant">À chaque nouvelle annonce</option>
           </select>
-          <p class="mt-1 text-xs text-slate-500">
+          <p class="mt-1 text-xs text-subtle">
             On t'enverra un mail quand une nouvelle annonce correspond à cette recherche.
           </p>
         </label>
 
         <div class="flex justify-end gap-2 pt-2">
-          <button
-            @click="showSaveDialog = false"
-            class="rounded bg-slate-800 hover:bg-slate-700 px-4 py-2 text-sm text-slate-200"
-          >
+          <button @click="showSaveDialog = false" class="btn btn-ghost px-4 py-2">
             Annuler
           </button>
-          <button
-            @click="handleSave"
-            :disabled="!newName.trim() || saving"
-            class="rounded bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 px-4 py-2 text-sm font-bold text-slate-950"
-          >
+          <button @click="handleSave" :disabled="!newName.trim() || saving" class="btn btn-primary px-4 py-2 font-bold">
             {{ saving ? "..." : "Sauvegarder" }}
           </button>
         </div>

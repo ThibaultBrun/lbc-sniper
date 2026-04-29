@@ -200,6 +200,55 @@ html, body {
   .text-faint {
     color: var(--color-text-faint);
   }
+  .text-strong {
+    color: var(--color-text-strong);
+  }
+  .link-accent {
+    color: var(--color-accent-hover);
+  }
+  .link-accent:hover {
+    text-decoration: underline;
+  }
+
+  /* ----- Dropdown menu ----- */
+  .dropdown-menu {
+    @apply absolute right-0 top-full mt-1 w-56 rounded shadow-lg py-1 z-30;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong);
+  }
+  .dropdown-floating {
+    @apply absolute top-full left-0 right-0 mt-1 rounded shadow-lg max-h-72 overflow-y-auto z-20;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong);
+  }
+  .dropdown-item {
+    @apply block px-3 py-2 text-sm transition;
+    color: var(--color-text);
+  }
+  .dropdown-item:hover {
+    background-color: var(--color-bg-input);
+  }
+
+  /* ----- Chips (filtre actif / inactif, ville selectionnee) ----- */
+  .chip-accent {
+    @apply rounded px-2 py-1 text-sm flex items-center gap-1;
+    background-color: var(--color-accent-soft);
+    border: 1px solid var(--color-accent-soft-border);
+    color: var(--color-accent-hover);
+  }
+  .chip-active {
+    @apply rounded px-2.5 py-1 text-xs font-semibold tabular-nums transition;
+    background-color: var(--color-accent);
+    color: var(--color-accent-on);
+  }
+  .chip-inactive {
+    @apply rounded px-2.5 py-1 text-xs font-semibold tabular-nums transition disabled:opacity-40 disabled:cursor-not-allowed;
+    background-color: var(--color-bg-input);
+    color: var(--color-text-muted);
+  }
+  .chip-inactive:hover:not(:disabled) {
+    background-color: var(--color-bg-input-hover);
+  }
 
   /* ----- Score tiers (DealCard header) ----- */
   .tier-great {
@@ -290,5 +339,78 @@ html, body {
     background-color: var(--color-danger-soft);
     border: 1px solid var(--color-danger-soft-border);
     color: var(--color-danger-text);
+  }
+
+  /* ----- Modal ----- */
+  .modal-shell {
+    @apply relative w-full max-w-7xl rounded-2xl shadow-2xl shadow-black/60 overflow-hidden my-8;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+  .modal-shell-sm {
+    @apply w-full max-w-md rounded-xl p-6 space-y-4;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+
+  .modal-col-divider {
+    @apply border-b lg:border-b-0 lg:border-r;
+    border-color: var(--color-border);
+  }
+
+  /* ----- Modal action buttons (bandeau colore) ----- */
+  .icon-btn-pill {
+    @apply rounded-full px-3 h-10 text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5;
+    background-color: rgb(0 0 0 / 0.2);
+  }
+  .icon-btn-pill:hover {
+    background-color: rgb(0 0 0 / 0.4);
+  }
+  .icon-btn-pill-success {
+    background-color: var(--color-accent-hover) !important;
+    color: var(--color-accent-on);
+  }
+
+  .icon-btn-circle {
+    @apply rounded-full w-10 h-10 grid place-items-center text-2xl leading-none transition;
+    background-color: rgb(0 0 0 / 0.2);
+  }
+  .icon-btn-circle:hover {
+    background-color: rgb(0 0 0 / 0.4);
+  }
+
+  /* ----- Section titles (modal) ----- */
+  .section-title {
+    @apply text-xs font-bold uppercase tracking-widest mb-2;
+    color: var(--color-text-muted);
+  }
+  .section-title-pros {
+    color: var(--color-accent-hover);
+  }
+  .section-title-cons {
+    color: var(--color-warning);
+  }
+
+  /* ----- Tag electrique (accentue) ----- */
+  .tag-electric {
+    @apply rounded text-xs font-bold px-2 py-1;
+    background-color: theme(colors.blue.500);
+    color: white;
+  }
+
+  /* ----- Pros / Cons items (lignes individuelles dans modal) ----- */
+  .panel-pros-item {
+    @apply flex gap-3 text-sm rounded-lg p-3 leading-relaxed;
+    background-color: theme(colors.emerald.500 / 10%);
+    border: 1px solid theme(colors.emerald.500 / 30%);
+    color: theme(colors.emerald.50);
+  }
+  .panel-cons-item {
+    @apply flex gap-3 text-sm rounded-lg p-3 leading-relaxed;
+    background-color: theme(colors.amber.500 / 10%);
+    border: 1px solid theme(colors.amber.500 / 30%);
+    color: theme(colors.amber.50);
   }
 }

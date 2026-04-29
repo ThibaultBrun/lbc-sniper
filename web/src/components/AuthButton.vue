@@ -28,7 +28,7 @@ async function handleSignOut() {
       v-if="!isAuthenticated"
       @click="handleSignIn"
       :disabled="signingIn"
-      class="flex items-center gap-2 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-50 px-3 py-1.5 text-sm text-slate-200 transition"
+      class="btn btn-ghost"
     >
       <svg viewBox="0 0 24 24" class="w-4 h-4" aria-hidden="true">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -42,7 +42,7 @@ async function handleSignOut() {
     <button
       v-else
       @click="menuOpen = !menuOpen"
-      class="flex items-center gap-2 rounded bg-slate-800 hover:bg-slate-700 px-2 py-1 text-sm text-slate-200 transition"
+      class="btn btn-ghost"
     >
       <img
         v-if="profile?.avatar_url"
@@ -54,32 +54,26 @@ async function handleSignOut() {
       <span class="hidden sm:inline max-w-[140px] truncate">
         {{ profile?.display_name ?? user?.email }}
       </span>
-      <span
-        v-if="isAdmin"
-        class="text-[10px] font-bold uppercase tracking-wider bg-rose-500/20 border border-rose-500/40 text-rose-300 px-1.5 py-0.5 rounded"
-      >Admin</span>
-      <span class="text-slate-500 text-xs">▾</span>
+      <span v-if="isAdmin" class="badge-admin">Admin</span>
+      <span class="text-subtle text-xs">▾</span>
     </button>
 
     <div
       v-if="menuOpen && isAuthenticated"
-      class="absolute right-0 top-full mt-1 w-56 bg-slate-900 border border-slate-700 rounded shadow-lg py-1 z-30"
+      class="dropdown-menu"
       @click.outside="menuOpen = false"
     >
-      <div class="px-3 py-2 text-xs text-slate-500 border-b border-slate-800">
+      <div class="px-3 py-2 text-xs text-subtle" style="border-bottom: 1px solid var(--color-border)">
         Connecté en tant que<br>
-        <span class="text-slate-200">{{ user?.email }}</span>
+        <span class="text-strong">{{ user?.email }}</span>
       </div>
-      <router-link
-        to="/favoris"
-        @click="menuOpen = false"
-        class="block px-3 py-2 text-sm text-slate-300 hover:bg-slate-800"
-      >
+      <router-link to="/favoris" @click="menuOpen = false" class="dropdown-item">
         ♥ Mes favoris
       </router-link>
       <button
         @click="handleSignOut"
-        class="w-full text-left px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 border-t border-slate-800"
+        class="dropdown-item w-full text-left"
+        style="border-top: 1px solid var(--color-border)"
       >
         Se déconnecter
       </button>
