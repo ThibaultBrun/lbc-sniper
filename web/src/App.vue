@@ -32,6 +32,14 @@ const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
+const searchText = ref("");
+
+function normalizeText(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
 
 // Pagination : 5 lignes d'annonces par page. Le nombre de colonnes (donc la
 // taille de page) suit les breakpoints Tailwind utilises sur la grille.
@@ -172,6 +180,15 @@ const filtered = computed(() => {
     list = list.filter((a) => a.current_price !== null && a.current_price <= max);
   }
 
+  // Filtre recherche texte (subject + body) — live, insensible casse/accents
+  const q = normalizeText(searchText.value.trim());
+  if (q.length > 0) {
+    list = list.filter((a) => {
+      const haystack = normalizeText(`${a.subject ?? ""} ${a.body ?? ""}`);
+      return haystack.includes(q);
+    });
+  }
+
   if (sortBy.value === "deal") {
     list = [...list].sort((a, b) => (b.deal_score ?? -1) - (a.deal_score ?? -1));
   } else if (sortBy.value === "price") {
@@ -198,7 +215,7 @@ const paginated = computed(() => {
 
 // Reset a la page 1 quand les filtres changent ou que la taille de page bouge.
 watch(
-  [categoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize],
+  [categoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize, searchText],
   () => {
     currentPage.value = 1;
   },
@@ -275,6 +292,16 @@ const stats = computed(() => {
     <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
       <!-- Filtres -->
       <div class="flex flex-wrap items-center gap-4 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+        <label class="flex items-center gap-2 flex-1 min-w-[220px]">
+          <span class="text-slate-400 whitespace-nowrap">🔎</span>
+          <input
+            v-model="searchText"
+            type="search"
+            placeholder="Rechercher (titre, description)…"
+            class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+          />
+        </label>
+
         <GeoFilter
           v-model="geo"
           v-model:radius-km="radiusKm"
