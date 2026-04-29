@@ -161,14 +161,17 @@ async function load() {
     if (!isSecret.value) {
       listQuery = listQuery.in("category_label", VTT_LABELS);
     }
-    // 4 requetes en parallele : la liste (50 ads) + 3 count globaux.
-    // Les counts utilisent head:true => Postgres ne renvoie aucune ligne,
-    // juste l'aggregat dans le header Content-Range. Tres rapide grace a
-    // l'index partiel (category_label, deal_score) where is_active = true.
+    // 4 requetes en parallele : la liste + 3 count globaux.
+    // - La liste charge jusqu'a 1000 ads pour la pagination client-side
+    //   (filtres + tri + pagination locale = fluide). Avec l'index partiel
+    //   (category_label, deal_score desc) where is_active = true et le
+    //   SELECT light (sans body / enrich_*), c'est rapide.
+    // - Les counts utilisent head:true => Postgres ne renvoie aucune ligne,
+    //   juste l'aggregat dans le header Content-Range.
     const [listRes, totalRes, enrichedRes, greatRes] = await Promise.all([
       listQuery
         .order("deal_score", { ascending: false, nullsFirst: false })
-        .limit(50),
+        .limit(1000),
       scopedQuery(),
       scopedQuery().not("deal_score", "is", null),
       scopedQuery().gte("deal_score", 80),
