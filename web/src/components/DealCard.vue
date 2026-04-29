@@ -50,25 +50,8 @@ const tierLabel = computed(() =>
   })[tier.value],
 );
 
-const cardBorder = computed(() =>
-  ({
-    great: "border-emerald-500/70 shadow-emerald-500/10 shadow-lg",
-    good: "border-emerald-700/60",
-    fair: "border-slate-700",
-    poor: "border-amber-700/40",
-    bad: "border-rose-800/40 opacity-80",
-  })[tier.value],
-);
-
-const headerBg = computed(() =>
-  ({
-    great: "bg-gradient-to-r from-emerald-600 to-emerald-500 text-slate-950",
-    good: "bg-gradient-to-r from-emerald-700 to-emerald-600 text-slate-50",
-    fair: "bg-gradient-to-r from-slate-700 to-slate-600 text-slate-100",
-    poor: "bg-gradient-to-r from-amber-700 to-amber-600 text-slate-50",
-    bad: "bg-gradient-to-r from-rose-900 to-rose-800 text-rose-100",
-  })[tier.value],
-);
+const cardBorderClass = computed(() => `tier-border-${tier.value}`);
+const headerTierClass = computed(() => `tier-${tier.value}`);
 
 const priceFmt = (v: number | null) =>
   v == null ? "?" : v.toLocaleString("fr-FR");
@@ -98,14 +81,9 @@ const hasAnalysis = computed(
 </script>
 
 <template>
-  <article
-    :class="[
-      'rounded-xl border bg-slate-900/60 overflow-hidden flex flex-col transition hover:translate-y-[-2px]',
-      cardBorder,
-    ]"
-  >
-    <!-- HEADER : verdict IA en couleur -->
-    <div :class="['px-4 py-2.5 flex items-center justify-between gap-2', headerBg]">
+  <article :class="['card card-hover', cardBorderClass]">
+    <!-- HEADER : verdict IA en couleur (gradient defini par tier-XXX) -->
+    <div :class="['px-4 py-2.5 flex items-center justify-between gap-2', headerTierClass]">
       <div class="flex items-baseline gap-2 min-w-0">
         <span class="text-2xl font-black tabular-nums leading-none">{{ score }}</span>
         <span class="text-xs font-bold uppercase tracking-wider opacity-90 truncate">
@@ -128,7 +106,7 @@ const hasAnalysis = computed(
         class="block w-full text-left"
         :aria-label="`Voir l'analyse de ${ad.subject}`"
       >
-        <div class="aspect-[4/3] w-full bg-slate-800 overflow-hidden">
+        <div class="aspect-[4/3] w-full overflow-hidden surface-muted">
           <img
             v-if="ad.image_url"
             :src="ad.image_url"
@@ -136,7 +114,7 @@ const hasAnalysis = computed(
             class="h-full w-full object-cover hover:scale-105 transition"
             loading="lazy"
           />
-          <div v-else class="h-full w-full grid place-items-center text-slate-600 text-xs">
+          <div v-else class="h-full w-full grid place-items-center text-faint text-xs">
             pas de photo
           </div>
         </div>
@@ -150,7 +128,7 @@ const hasAnalysis = computed(
           'absolute top-2 right-2 w-9 h-9 rounded-full grid place-items-center text-lg transition shadow-lg',
           isFav
             ? 'bg-rose-500 text-white hover:bg-rose-400'
-            : 'bg-black/60 text-slate-200 hover:bg-black/80',
+            : 'bg-black/60 text-white hover:bg-black/80',
         ]"
         :aria-label="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'"
         :title="isFav ? 'Retirer des favoris' : 'Ajouter aux favoris'"
@@ -172,45 +150,32 @@ const hasAnalysis = computed(
         </div>
       </div>
 
-      <div v-if="ad.brand || ad.model" class="text-sm text-slate-200 font-medium truncate">
+      <div v-if="ad.brand || ad.model" class="text-sm font-medium truncate">
         {{ [ad.brand, ad.model, ad.year].filter(Boolean).join(" ") }}
       </div>
 
-      <div class="flex flex-wrap gap-1 text-[10px]">
-        <span v-if="ad.regyear" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 font-semibold">
-          {{ ad.regyear }}
-        </span>
-        <span v-if="ad.mileage_km" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300 tabular-nums">
+      <div class="flex flex-wrap gap-1">
+        <span v-if="ad.regyear" class="tag-strong tabular-nums">{{ ad.regyear }}</span>
+        <span v-if="ad.mileage_km" class="tag tabular-nums">
           {{ ad.mileage_km.toLocaleString("fr-FR") }} km
         </span>
-        <span v-if="ad.fuel" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
-          {{ ad.fuel }}
-        </span>
-        <span v-if="ad.gearbox" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
-          {{ ad.gearbox }}
-        </span>
-        <span v-if="ad.size_label" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
-          {{ ad.size_label }}
-        </span>
-        <span v-if="ad.wheel_size" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
-          {{ ad.wheel_size }}
-        </span>
-        <span v-if="ad.frame_material" class="rounded bg-slate-800 px-1.5 py-0.5 text-slate-400">
-          {{ ad.frame_material }}
-        </span>
+        <span v-if="ad.fuel" class="tag">{{ ad.fuel }}</span>
+        <span v-if="ad.gearbox" class="tag">{{ ad.gearbox }}</span>
+        <span v-if="ad.size_label" class="tag">{{ ad.size_label }}</span>
+        <span v-if="ad.wheel_size" class="tag">{{ ad.wheel_size }}</span>
+        <span v-if="ad.frame_material" class="tag">{{ ad.frame_material }}</span>
       </div>
 
-      <div class="text-xs text-slate-500 line-clamp-2 mt-auto pt-1">
-        {{ ad.subject }}
-      </div>
-      <div class="text-[10px] text-slate-600">{{ ad.city ?? "?" }}</div>
+      <div class="text-xs text-subtle line-clamp-2 mt-auto pt-1">{{ ad.subject }}</div>
+      <div class="text-[10px] text-faint">{{ ad.city ?? "?" }}</div>
     </div>
 
     <!-- CTA : ouvrir l'analyse -->
     <button
       v-if="hasAnalysis"
       @click="emit('open', ad)"
-      class="block px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-emerald-600 hover:text-slate-950 text-slate-200 transition border-t border-slate-700/50"
+      class="block px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider btn-ghost rounded-none border-t hover:!bg-emerald-600 hover:!text-slate-950"
+      :style="{ borderColor: 'var(--color-border-subtle)' }"
     >
       Analyser →
     </button>
@@ -219,7 +184,8 @@ const hasAnalysis = computed(
       :href="ad.url"
       target="_blank"
       rel="noopener noreferrer"
-      class="block px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 text-slate-300 transition border-t border-slate-700/50"
+      class="block px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider btn-ghost rounded-none border-t"
+      :style="{ borderColor: 'var(--color-border-subtle)' }"
     >
       Voir sur LeBonCoin →
     </a>

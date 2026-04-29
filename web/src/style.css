@@ -1,3 +1,243 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================================================
+   DESIGN SYSTEM
+   On centralise toutes les decisions visuelles ici. Pour changer le theme,
+   on n'a qu'a modifier les variables CSS — rien dans les composants.
+   ============================================================================ */
+
+:root {
+  /* Surfaces */
+  --color-bg-page: theme(colors.slate.950);
+  --color-bg-card: theme(colors.slate.900 / 60%);
+  --color-bg-elevated: theme(colors.slate.900);
+  --color-bg-muted: theme(colors.slate.800 / 50%);
+  --color-bg-input: theme(colors.slate.800);
+  --color-bg-input-hover: theme(colors.slate.700);
+
+  /* Bordures */
+  --color-border: theme(colors.slate.800);
+  --color-border-subtle: theme(colors.slate.800 / 60%);
+  --color-border-strong: theme(colors.slate.700);
+
+  /* Texte */
+  --color-text: theme(colors.slate.100);
+  --color-text-strong: theme(colors.slate.50);
+  --color-text-muted: theme(colors.slate.400);
+  --color-text-subtle: theme(colors.slate.500);
+  --color-text-faint: theme(colors.slate.600);
+
+  /* Accents */
+  --color-accent: theme(colors.emerald.500);
+  --color-accent-hover: theme(colors.emerald.400);
+  --color-accent-soft: theme(colors.emerald.500 / 10%);
+  --color-accent-soft-border: theme(colors.emerald.500 / 30%);
+  --color-accent-on: theme(colors.slate.950);
+
+  /* States */
+  --color-success: theme(colors.emerald.500);
+  --color-warning: theme(colors.amber.500);
+  --color-danger: theme(colors.rose.500);
+  --color-danger-soft: theme(colors.rose.500 / 10%);
+  --color-danger-soft-border: theme(colors.rose.500 / 40%);
+  --color-danger-text: theme(colors.rose.300);
+
+  /* Score tiers (deal_score) */
+  --color-score-great: theme(colors.emerald.500);
+  --color-score-good: theme(colors.emerald.700);
+  --color-score-fair: theme(colors.slate.700);
+  --color-score-poor: theme(colors.amber.700);
+  --color-score-bad: theme(colors.rose.900);
+
+  /* Radius / Shadow */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/* Theme clair (active via data-theme="light" sur <html>) */
+[data-theme="light"] {
+  --color-bg-page: theme(colors.slate.50);
+  --color-bg-card: white;
+  --color-bg-elevated: white;
+  --color-bg-muted: theme(colors.slate.100);
+  --color-bg-input: white;
+  --color-bg-input-hover: theme(colors.slate.50);
+
+  --color-border: theme(colors.slate.200);
+  --color-border-subtle: theme(colors.slate.200 / 60%);
+  --color-border-strong: theme(colors.slate.300);
+
+  --color-text: theme(colors.slate.900);
+  --color-text-strong: theme(colors.slate.950);
+  --color-text-muted: theme(colors.slate.600);
+  --color-text-subtle: theme(colors.slate.500);
+  --color-text-faint: theme(colors.slate.400);
+
+  --color-accent-on: white;
+}
+
+/* Body de base */
+html, body {
+  background-color: var(--color-bg-page);
+  color: var(--color-text);
+}
+
+/* ============================================================================
+   COMPOSANTS REUTILISABLES (atomes du design)
+   Utiliser via class="card", class="btn btn-primary", etc.
+   ============================================================================ */
+
+@layer components {
+  /* ----- Surfaces ----- */
+  .surface-page {
+    background-color: var(--color-bg-page);
+    color: var(--color-text);
+  }
+
+  .surface-card {
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .surface-elevated {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .surface-muted {
+    background-color: var(--color-bg-muted);
+    color: var(--color-text-muted);
+  }
+
+  /* ----- Cards ----- */
+  .card {
+    @apply rounded-xl overflow-hidden flex flex-col transition;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-hover:hover {
+    @apply -translate-y-0.5;
+  }
+
+  /* ----- Buttons ----- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-1.5 rounded px-3 py-1.5 text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-accent-on);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-accent-hover);
+  }
+
+  .btn-ghost {
+    background-color: var(--color-bg-input);
+    color: var(--color-text);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-bg-input-hover);
+  }
+
+  .btn-cta {
+    @apply rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wider;
+    background-color: var(--color-accent);
+    color: var(--color-accent-on);
+  }
+  .btn-cta:hover:not(:disabled) {
+    background-color: var(--color-accent-hover);
+  }
+
+  /* ----- Inputs ----- */
+  .input-base {
+    @apply rounded px-3 py-1.5 text-sm transition focus:outline-none;
+    background-color: var(--color-bg-input);
+    border: 1px solid var(--color-border-strong);
+    color: var(--color-text);
+  }
+  .input-base::placeholder {
+    color: var(--color-text-faint);
+  }
+  .input-base:focus {
+    border-color: var(--color-accent);
+  }
+
+  /* ----- Badges & Tags ----- */
+  .tag {
+    @apply rounded px-1.5 py-0.5 text-[10px] font-medium;
+    background-color: var(--color-bg-input);
+    color: var(--color-text-muted);
+  }
+
+  .tag-strong {
+    @apply rounded px-1.5 py-0.5 text-[10px] font-semibold;
+    background-color: var(--color-bg-muted);
+    color: var(--color-text);
+  }
+
+  .badge-admin {
+    @apply text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded;
+    background-color: var(--color-danger-soft);
+    border: 1px solid var(--color-danger-soft-border);
+    color: var(--color-danger-text);
+  }
+
+  /* ----- Text helpers ----- */
+  .text-muted {
+    color: var(--color-text-muted);
+  }
+  .text-subtle {
+    color: var(--color-text-subtle);
+  }
+  .text-faint {
+    color: var(--color-text-faint);
+  }
+
+  /* ----- Score tiers (DealCard header) ----- */
+  .tier-great {
+    background: linear-gradient(to right, theme(colors.emerald.600), theme(colors.emerald.500));
+    color: theme(colors.slate.950);
+  }
+  .tier-good {
+    background: linear-gradient(to right, theme(colors.emerald.700), theme(colors.emerald.600));
+    color: theme(colors.slate.50);
+  }
+  .tier-fair {
+    background: linear-gradient(to right, theme(colors.slate.700), theme(colors.slate.600));
+    color: theme(colors.slate.100);
+  }
+  .tier-poor {
+    background: linear-gradient(to right, theme(colors.amber.700), theme(colors.amber.600));
+    color: theme(colors.slate.50);
+  }
+  .tier-bad {
+    background: linear-gradient(to right, theme(colors.rose.900), theme(colors.rose.800));
+    color: theme(colors.rose.100);
+  }
+
+  .tier-border-great { border-color: theme(colors.emerald.500 / 70%); box-shadow: 0 4px 12px theme(colors.emerald.500 / 10%); }
+  .tier-border-good  { border-color: theme(colors.emerald.700 / 60%); }
+  .tier-border-fair  { border-color: var(--color-border); }
+  .tier-border-poor  { border-color: theme(colors.amber.700 / 40%); }
+  .tier-border-bad   { border-color: theme(colors.rose.800 / 40%); opacity: 0.8; }
+
+  /* ----- Pros / Cons (analyse IA) ----- */
+  .panel-pros {
+    @apply rounded p-2 space-y-1;
+    background-color: theme(colors.emerald.500 / 5%);
+    border: 1px solid theme(colors.emerald.500 / 20%);
+  }
+  .panel-cons {
+    @apply rounded p-2 space-y-1;
+    background-color: theme(colors.amber.500 / 5%);
+    border: 1px solid theme(colors.amber.500 / 20%);
+  }
+}
