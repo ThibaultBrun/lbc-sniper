@@ -460,6 +460,43 @@ const stats = computed(() => ({
         <router-link to="/" class="btn btn-ghost">← Retour à toutes les annonces</router-link>
       </div>
 
+      <!-- Encart guides : visible sur la home publique uniquement, pas sur /secret ni /favoris -->
+      <section v-if="!isSecret && !isFavoritesPage" class="guides-banner">
+        <header class="flex items-baseline justify-between gap-4 mb-4">
+          <div>
+            <h2 class="text-base font-bold flex items-center gap-2">
+              📘 Avant d'acheter, lis nos guides
+            </h2>
+            <p class="text-xs text-muted mt-0.5">
+              Conseils pratiques pour choisir, négocier et éviter les arnaques.
+            </p>
+          </div>
+          <router-link to="/guides" class="text-xs font-semibold whitespace-nowrap" style="color: var(--color-accent-hover)">
+            Tous les guides →
+          </router-link>
+        </header>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <router-link to="/guides/comment-choisir-vtt-occasion" class="guide-mini-card">
+            <div class="text-xl">🛒</div>
+            <div class="font-semibold leading-tight">Choisir un VTT d'occasion</div>
+            <div class="text-xs text-muted">Checklist mécanique, signaux d'alerte, négociation.</div>
+            <div class="text-[10px] text-subtle">⏱ 8 min</div>
+          </router-link>
+          <router-link to="/guides/enduro-vs-dh-vs-all-mountain" class="guide-mini-card">
+            <div class="text-xl">🚵</div>
+            <div class="font-semibold leading-tight">Enduro, DH, all-mountain ?</div>
+            <div class="text-xs text-muted">Quelle catégorie pour quel terrain.</div>
+            <div class="text-[10px] text-subtle">⏱ 6 min</div>
+          </router-link>
+          <router-link to="/guides/decrypter-annonce-leboncoin" class="guide-mini-card">
+            <div class="text-xl">🕵</div>
+            <div class="font-semibold leading-tight">Décrypter une annonce LBC</div>
+            <div class="text-xs text-muted">Reconnaître les arnaques et vélos volés.</div>
+            <div class="text-[10px] text-subtle">⏱ 7 min</div>
+          </router-link>
+        </div>
+      </section>
+
       <!-- Filtres -->
       <div class="surface-filters">
 

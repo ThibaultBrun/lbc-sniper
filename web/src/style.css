@@ -345,6 +345,32 @@ html, body {
     border: 1px solid theme(colors.rose.200);
   }
 
+  /* ----- Encart guides sur la home (avant les filtres) ----- */
+  .guides-banner {
+    @apply rounded-xl p-4;
+    background: linear-gradient(135deg,
+      theme(colors.emerald.50),
+      theme(colors.emerald.100 / 50%));
+    border: 1px solid var(--color-accent-soft-border);
+  }
+  .guide-mini-card {
+    @apply rounded-lg p-3 flex flex-col gap-1.5 transition;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+  }
+  .guide-mini-card:hover {
+    @apply -translate-y-0.5;
+    box-shadow: var(--shadow-card-hover);
+    border-color: var(--color-accent-soft-border);
+  }
+
+  /* Variantes dark : gradient adapte au theme sombre */
+  [data-theme="dark"] .guides-banner {
+    background: linear-gradient(135deg,
+      theme(colors.emerald.500 / 12%),
+      theme(colors.emerald.700 / 8%));
+  }
+
   /* ----- Surface filtres (encadre des controles) ----- */
   .surface-filters {
     @apply rounded-xl p-4 space-y-3 text-sm;
