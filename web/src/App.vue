@@ -291,32 +291,38 @@ const stats = computed(() => {
 
     <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
       <!-- Filtres -->
-      <div class="flex flex-wrap items-center gap-4 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-        <label class="flex items-center gap-2 flex-1 min-w-[220px]">
-          <span class="text-slate-400 whitespace-nowrap">🔎</span>
-          <input
-            v-model="searchText"
-            type="search"
-            placeholder="Rechercher (titre, description)…"
-            class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+      <div class="space-y-3 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+
+        <!-- Ligne 1 : recherche texte + ville/position/rayon -->
+        <div class="flex flex-wrap items-center gap-4">
+          <label class="flex items-center gap-2 flex-1 min-w-[260px]">
+            <span class="text-slate-400 whitespace-nowrap">🔎</span>
+            <input
+              v-model="searchText"
+              type="search"
+              placeholder="Rechercher (titre, description)…"
+              class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+            />
+          </label>
+
+          <GeoFilter
+            v-model="geo"
+            v-model:radius-km="radiusKm"
           />
-        </label>
+        </div>
 
-        <GeoFilter
-          v-model="geo"
-          v-model:radius-km="radiusKm"
-        />
-
-        <label v-if="categories.length > 1" class="flex items-center gap-2">
-          <span class="text-slate-400">Catégorie:</span>
-          <select
-            v-model="categoryFilter"
-            class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
-          >
-            <option :value="null">Toutes</option>
-            <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
-          </select>
-        </label>
+        <!-- Ligne 2 : filtres metier -->
+        <div class="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-800/60">
+          <label v-if="categories.length > 1" class="flex items-center gap-2">
+            <span class="text-slate-400">Catégorie:</span>
+            <select
+              v-model="categoryFilter"
+              class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
+            >
+              <option :value="null">Toutes</option>
+              <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </label>
 
         <label class="flex items-center gap-2">
           <span class="text-slate-400">⚡ Électrique:</span>
@@ -362,6 +368,7 @@ const stats = computed(() => {
           </select>
         </label>
 
+        </div>
       </div>
 
       <div v-if="loading" class="text-center text-slate-500 py-12">Chargement…</div>
