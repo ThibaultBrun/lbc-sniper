@@ -42,8 +42,8 @@ const { favoriteIds } = useFavorites();
 
 // Toutes les annonces classifiees comme VTT par le scraper. La home publique
 // les expose toutes ; le filtre UI "Type" (vtt_category) permet ensuite de
-// trier par usage (XC, trail, all-mountain, enduro, DH, dirt).
-const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC"];
+// trier par usage (XC, all-mountain, enduro, DH, dirt).
+const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC", "VTT dirt"];
 
 const ads = ref<Ad[]>([]);
 const loading = ref(true);

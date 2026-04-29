@@ -29,6 +29,20 @@ GENERIC_XC = {
     'race vtt',
 }
 
+# Mots-cles generiques qui qualifient dirt jump / pumptrack / slopestyle.
+# Marche petit en France (~2-5 annonces/jour) mais on capture quand meme.
+GENERIC_DIRT = {
+    'dirt jump',
+    'dirtjump',
+    'dirt-jump',
+    'pumptrack',
+    'pump track',
+    'slopestyle',
+    'street vtt',
+    'vtt dirt',
+    'dirt vtt',
+}
+
 # Mots-cles generiques qui qualifient DH/descente
 GENERIC_DH = {
     'bike park',

@@ -63,22 +63,26 @@ def _has_vtt_qualifier(padded: str) -> bool:
 
 
 def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
-    """Cherche un signal VTT (XC, enduro, DH) dans le titre+body normalises.
-    Retourne 'VTT DH', 'VTT enduro', 'VTT XC', ou None.
+    """Cherche un signal VTT (XC, enduro, DH, dirt) dans le titre+body normalises.
+    Retourne 'VTT DH', 'VTT enduro', 'VTT XC', 'VTT dirt', ou None.
     Priorites :
-      DH > enduro > XC (un VTT qualifie pour plusieurs = celui de plus haute priorite).
+      dirt > DH > enduro > XC (un velo qualifie pour plusieurs = plus haute priorite).
+      Dirt en premier car ce sont des hardtails specifiques, pas confondables avec enduro/DH.
 
     Strategie en 2 etapes pour eviter les faux positifs :
-    1. Les mots-cles 'enduro' / 'dh' / 'xc' / etc. qualifient seuls.
+    1. Les mots-cles 'enduro' / 'dh' / 'dirt' / 'xc' / etc. qualifient seuls.
     2. Les noms de modeles ou marques pure-MTB ne qualifient QUE si on
        trouve aussi un signal 'vtt' / 'mtb' / 'mountain' / etc. dans le texte.
     """
-    from .vtt_models import GENERIC_XC
+    from .vtt_models import GENERIC_XC, GENERIC_DIRT
 
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
 
-    # Niveau 1 : mots-cles qui qualifient seuls (DH > enduro > XC).
+    # Niveau 1 : mots-cles qui qualifient seuls (dirt > DH > enduro > XC).
+    for kw in GENERIC_DIRT:
+        if _contains_word(padded, kw):
+            return "VTT dirt"
     for kw in GENERIC_DH:
         if _contains_word(padded, kw):
             return "VTT DH"
