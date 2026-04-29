@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useFavorites } from "../favorites";
 import { useAuth } from "../auth";
 import { hideAd, type Ad } from "../supabase";
@@ -45,6 +45,39 @@ async function handleHideClick(e: MouseEvent) {
     hidePending.value = false;
   }
 }
+
+// IMAGE LAZY-LOAD : on ne monte le <img> que quand la card entre dans le viewport,
+// et on fade-in quand elle est decodee. Resultat : prix/score/tags s'affichent
+// instantanement, les jpegs LBC suivent dans un 2e temps.
+const imgRef = ref<HTMLDivElement | null>(null);
+const imgVisible = ref(false);  // true = on monte le <img>
+const imgLoaded = ref(false);   // true = decode termine -> fade-in
+
+onMounted(() => {
+  if (!props.ad.image_url || !imgRef.value) return;
+  if (typeof IntersectionObserver === "undefined") {
+    imgVisible.value = true;
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting) {
+          imgVisible.value = true;
+          io.disconnect();
+          break;
+        }
+      }
+    },
+    {
+      // Anticipe le scroll : on commence a charger 200px avant que ca rentre
+      // dans la fenetre, comme ca l'image est prete quand l'utilisateur arrive.
+      rootMargin: "200px 0px",
+    },
+  );
+  io.observe(imgRef.value);
+  onUnmounted(() => io.disconnect());
+});
 
 const VTT_CATEGORY_LABELS: Record<string, string> = {
   xc: "XC",
@@ -132,17 +165,18 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
         class="block w-full text-left"
         :aria-label="`Voir l'analyse de ${ad.subject}`"
       >
-        <div class="aspect-[4/3] w-full overflow-hidden surface-muted">
+        <div ref="imgRef" class="aspect-[4/3] w-full overflow-hidden surface-muted relative">
           <img
-            v-if="ad.image_url"
+            v-if="ad.image_url && imgVisible"
             :src="ad.image_url"
             :alt="ad.subject"
-            class="h-full w-full object-cover hover:scale-105 transition"
-            loading="lazy"
+            :class="['h-full w-full object-cover hover:scale-105 transition', imgLoaded ? 'opacity-100' : 'opacity-0']"
             decoding="async"
             referrerpolicy="no-referrer"
+            @load="imgLoaded = true"
+            style="transition: opacity 0.25s ease, transform 0.3s ease"
           />
-          <div v-else class="h-full w-full grid place-items-center text-faint text-xs">
+          <div v-else-if="!ad.image_url" class="h-full w-full grid place-items-center text-faint text-xs">
             pas de photo
           </div>
         </div>
