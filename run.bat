@@ -46,7 +46,7 @@ if /I "%SCOPE%"=="vtt" (
 )
 
 echo.
-echo === [3/4] Cleanup annonces disparues (verif individuelle non vues >3j) ===
+echo === [3/4] Cleanup annonces disparues ^(verif individuelle non vues ^>3j^) ===
 "%PYTHON%" -m scraper.cleanup
 REM Si cleanup echoue (rate limit Datadome), on continue quand meme l'enrich.
 
