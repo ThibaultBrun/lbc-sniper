@@ -5,6 +5,7 @@ import { getAdById, supabase, type Ad } from "./supabase";
 import DealCard from "./components/DealCard.vue";
 import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
+import LegalPage from "./components/LegalPage.vue";
 import { haversineKm } from "./geo";
 
 const route = useRoute();
@@ -13,6 +14,10 @@ const router = useRouter();
 // Mode "secret" si l'URL commence par /secret. La home publique restreint
 // par defaut aux categories VTT (enduro + DH).
 const isSecret = computed(() => route.path.startsWith("/secret"));
+
+const isLegalPage = computed(() =>
+  ["legal", "privacy", "tos"].includes(String(route.name)),
+);
 
 const VTT_LABELS = ["VTT enduro", "VTT DH"];
 
@@ -170,17 +175,18 @@ const stats = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <LegalPage v-if="isLegalPage" />
+  <div v-else class="min-h-screen flex flex-col">
     <header class="border-b border-slate-800 bg-slate-900/40 backdrop-blur sticky top-0 z-10">
       <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-baseline gap-4 justify-between">
         <div>
           <h1 class="text-xl font-bold tracking-tight">
-            <span class="text-emerald-400">LBC</span> Deals
+            <span class="text-emerald-400">Trouve</span> Ton VTT
             <span v-if="isSecret" class="ml-2 text-xs font-normal text-rose-400 uppercase tracking-wider">[ secret ]</span>
           </h1>
           <p class="text-xs text-slate-400 mt-0.5">
             <span v-if="isSecret">VTT, voitures, motos — analyse IA complète</span>
-            <span v-else>les meilleures affaires VTT du Bon Coin, analysées par IA</span>
+            <span v-else>les meilleures affaires VTT du moment, analysées par IA</span>
           </p>
         </div>
         <div class="flex items-center gap-4 text-xs text-slate-400">
@@ -286,5 +292,16 @@ const stats = computed(() => {
     </div>
 
     <DealModal v-if="selectedAd" :ad="selectedAd" @close="closeAd" />
+
+    <footer class="border-t border-slate-800 mt-auto py-4 text-center text-xs text-slate-500">
+      <div class="space-x-4">
+        <router-link to="/mentions-legales" class="hover:text-slate-300">Mentions légales</router-link>
+        <router-link to="/confidentialite" class="hover:text-slate-300">Confidentialité</router-link>
+        <router-link to="/cgu" class="hover:text-slate-300">CGU</router-link>
+      </div>
+      <p class="mt-2 text-[10px] text-slate-600">
+        Trouve Ton VTT n'est pas affilié à Leboncoin. Analyses générées par IA, à titre indicatif.
+      </p>
+    </footer>
   </div>
 </template>
