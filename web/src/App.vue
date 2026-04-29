@@ -33,6 +33,11 @@ const VTT_LABELS = ["VTT enduro", "VTT DH"];
 const ads = ref<Ad[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+// Compteurs globaux (toutes annonces actives du scope, pas juste les 50 chargees).
+// Charges en parallele du SELECT principal via 3 count queries server-side.
+const totalCount = ref(0);
+const enrichedCount = ref(0);
+const greatCount = ref(0);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const categoryFilter = ref<string | null>(null);
 
@@ -137,23 +142,42 @@ const LIST_FIELDS = [
   "size_label", "condition_score", "estimated_market_eur", "deal_score",
 ].join(",");
 
+// Helper : applique le scope commun (is_active + filtre VTT sur la home).
+function scopedQuery() {
+  let q = supabase.from("ads").select("*", { count: "exact", head: true })
+    .eq("is_active", true);
+  if (!isSecret.value) q = q.in("category_label", VTT_LABELS);
+  return q;
+}
+
 async function load() {
   loading.value = true;
   error.value = null;
   try {
-    let query = supabase
+    let listQuery = supabase
       .from("ads")
       .select(LIST_FIELDS)
       .eq("is_active", true);
-    // Sur la home publique on filtre VTT cote serveur. /secret prend tout.
     if (!isSecret.value) {
-      query = query.in("category_label", VTT_LABELS);
+      listQuery = listQuery.in("category_label", VTT_LABELS);
     }
-    const { data, error: e } = await query
-      .order("deal_score", { ascending: false, nullsFirst: false })
-      .limit(50);
-    if (e) throw e;
-    ads.value = data as unknown as Ad[];
+    // 4 requetes en parallele : la liste (50 ads) + 3 count globaux.
+    // Les counts utilisent head:true => Postgres ne renvoie aucune ligne,
+    // juste l'aggregat dans le header Content-Range. Tres rapide grace a
+    // l'index partiel (category_label, deal_score) where is_active = true.
+    const [listRes, totalRes, enrichedRes, greatRes] = await Promise.all([
+      listQuery
+        .order("deal_score", { ascending: false, nullsFirst: false })
+        .limit(50),
+      scopedQuery(),
+      scopedQuery().not("deal_score", "is", null),
+      scopedQuery().gte("deal_score", 80),
+    ]);
+    if (listRes.error) throw listRes.error;
+    ads.value = listRes.data as unknown as Ad[];
+    totalCount.value = totalRes.count ?? 0;
+    enrichedCount.value = enrichedRes.count ?? 0;
+    greatCount.value = greatRes.count ?? 0;
   } catch (e: any) {
     error.value = e.message ?? String(e);
   } finally {
@@ -310,16 +334,13 @@ const pageNumbers = computed<(number | "…")[]>(() => {
   return result;
 });
 
-const stats = computed(() => {
-  const all = ads.value;
-  const enriched = all.filter((a) => a.deal_score !== null);
-  const great = enriched.filter((a) => (a.deal_score ?? 0) >= 80);
-  return {
-    total: all.length,
-    enriched: enriched.length,
-    great: great.length,
-  };
-});
+// Stats globales, pas calculees depuis ads.value (qui est tronque a 50)
+// mais depuis les count queries lancees dans load().
+const stats = computed(() => ({
+  total: totalCount.value,
+  enriched: enrichedCount.value,
+  great: greatCount.value,
+}));
 </script>
 
 <template>
