@@ -12,7 +12,8 @@ const routes: RouteRecordRaw[] = [
   // Modale d'annonce, ouvrable depuis n'importe quelle vue
   { path: "/ad/:id(\\d+)", name: "ad", component: placeholder },
   { path: "/secret/ad/:id(\\d+)", name: "secret-ad", component: placeholder },
-  // Pages legales
+  // Pages statiques
+  { path: "/a-propos", name: "about", component: placeholder },
   { path: "/mentions-legales", name: "legal", component: placeholder },
   { path: "/confidentialite", name: "privacy", component: placeholder },
   { path: "/cgu", name: "tos", component: placeholder },

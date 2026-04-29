@@ -34,8 +34,59 @@ const lastUpdate = "29 avril 2026";
     </header>
 
     <main class="max-w-3xl mx-auto px-6 py-10 prose prose-invert prose-slate">
+      <!-- ================ A PROPOS ================ -->
+      <article v-if="page === 'about'" class="text-slate-200 space-y-6 leading-relaxed">
+        <h1 class="text-3xl font-bold text-slate-100">À propos</h1>
+
+        <section>
+          <p class="text-lg">
+            <strong class="text-emerald-400">Trouve Ton VTT</strong> t'aide à dénicher les meilleures affaires VTT du moment, sans passer des heures à éplucher des centaines d'annonces.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-bold text-slate-100 mt-6 mb-2">Ce qu'on fait</h2>
+          <p>
+            Plusieurs fois par jour, on consulte les nouvelles annonces VTT (enduro et descente) publiées sur Leboncoin. Pour chacune, une intelligence artificielle :
+          </p>
+          <ul class="list-disc ml-6 space-y-1.5">
+            <li>identifie le modèle, l'année, les caractéristiques (suspension, taille, électrique ou non…)</li>
+            <li>estime un prix de revente cohérent pour ce vélo précis sur le marché de l'occasion</li>
+            <li>note l'annonce de 0 à 100 selon l'écart au prix marché — c'est ton <em>deal score</em></li>
+            <li>liste les points forts et les points de vigilance à connaître avant de contacter le vendeur</li>
+          </ul>
+          <p>
+            Tu vois immédiatement les vraies pépites surligner en vert, et tu peux filtrer par catégorie, électrique ou non, prix, et zone géographique (commune + rayon).
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-bold text-slate-100 mt-6 mb-2">Pour qui ?</h2>
+          <p>
+            Pour quiconque veut s'acheter un VTT d'occasion sans y passer ses soirées et sans se faire avoir sur le prix. Que tu cherches un enduro polyvalent, une bête de descente, une version électrique pour les longues sorties, ou une affaire collector, le service te remonte ce qui mérite ton attention.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-bold text-slate-100 mt-6 mb-2">Important</h2>
+          <p>
+            Les analyses sont générées par une IA et fournies <strong>à titre indicatif</strong>. Elles peuvent se tromper, surtout sur des modèles rares ou des annonces peu détaillées. <strong>Vérifie toujours l'annonce originale, regarde les photos en grand, pose des questions au vendeur, et inspecte le vélo avant achat.</strong> On te donne une longueur d'avance, pas une garantie.
+          </p>
+          <p>
+            Le service est <strong>gratuit</strong> et le restera. Trouve Ton VTT n'est ni partenaire, ni affilié à Leboncoin — c'est un projet indépendant qui s'appuie uniquement sur des annonces publiques.
+          </p>
+        </section>
+
+        <section>
+          <h2 class="text-xl font-bold text-slate-100 mt-6 mb-2">Une question, un retour ?</h2>
+          <p>
+            Écris-nous à <a href="mailto:contact@pista.bike" class="text-emerald-400 hover:underline">contact@pista.bike</a>. On lit tout, on répond quand on peut.
+          </p>
+        </section>
+      </article>
+
       <!-- ================ MENTIONS LEGALES ================ -->
-      <article v-if="page === 'legal'" class="text-slate-200 space-y-6 leading-relaxed">
+      <article v-else-if="page === 'legal'" class="text-slate-200 space-y-6 leading-relaxed">
         <h1 class="text-3xl font-bold text-slate-100">Mentions légales</h1>
         <p class="text-sm text-slate-500">Dernière mise à jour : {{ lastUpdate }}</p>
 

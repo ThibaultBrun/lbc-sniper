@@ -16,7 +16,7 @@ const router = useRouter();
 const isSecret = computed(() => route.path.startsWith("/secret"));
 
 const isLegalPage = computed(() =>
-  ["legal", "privacy", "tos"].includes(String(route.name)),
+  ["about", "legal", "privacy", "tos"].includes(String(route.name)),
 );
 
 const VTT_LABELS = ["VTT enduro", "VTT DH"];
@@ -295,6 +295,7 @@ const stats = computed(() => {
 
     <footer class="border-t border-slate-800 mt-auto py-4 text-center text-xs text-slate-500">
       <div class="space-x-4">
+        <router-link to="/a-propos" class="hover:text-slate-300">À propos</router-link>
         <router-link to="/mentions-legales" class="hover:text-slate-300">Mentions légales</router-link>
         <router-link to="/confidentialite" class="hover:text-slate-300">Confidentialité</router-link>
         <router-link to="/cgu" class="hover:text-slate-300">CGU</router-link>
