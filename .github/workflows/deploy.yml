@@ -4,9 +4,15 @@ on:
   push:
     branches: [master]
     paths:
-      # On ne redeploie que si la partie web change (ou ce workflow)
+      # On ne redeploie sur push QUE si la partie web change (ou ce workflow).
       - "web/**"
       - ".github/workflows/deploy.yml"
+  # Cron : 4 builds par jour (00h / 06h / 12h / 18h Paris).
+  # Note : GitHub Actions cron est en UTC. Paris = UTC+2 en heure d'ete (CEST),
+  # UTC+1 en heure d'hiver (CET). On vise CEST (avr-oct) : 22h / 04h / 10h / 16h UTC.
+  # Le decalage 1h en heure d'hiver est negligeable pour du SEO daily.
+  schedule:
+    - cron: "0 22,4,10,16 * * *"
   workflow_dispatch:
 
 permissions:
@@ -42,11 +48,20 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
+      - name: Pre-render (per-ad HTML + sitemap + robots.txt + SEO meta)
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          SITE_URL: https://trouve-ton-vtt.pista.bike
+        run: node scripts/prerender.mjs
+
       - name: SPA fallback
         # Pour que /ad/:id fonctionne en prod : le serveur GitHub Pages
         # renvoie 404.html sur les routes inconnues, et 404.html charge la
-        # SPA qui lit window.location.pathname normalement.
-        run: cp dist/index.html dist/404.html
+        # SPA qui lit window.location.pathname normalement. Le prerender a
+        # deja mis 404.html en place, c'est juste un garde-fou si le script
+        # change.
+        run: test -f dist/404.html || cp dist/index.html dist/404.html
 
       - uses: actions/configure-pages@v5
 
