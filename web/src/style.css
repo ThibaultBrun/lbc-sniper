@@ -9,17 +9,18 @@
    ============================================================================ */
 
 :root {
-  /* Surfaces — fond doux pas blanc agressif, cartes blanches qui ressortent */
-  --color-bg-page: #f7f8fa;                              /* gris tres clair tirant bleu */
+  /* Surfaces — fond gris-bleu un peu plus marque pour que les cartes blanches
+     ressortent davantage (avant : #f7f8fa trop pres du blanc, manque de profondeur). */
+  --color-bg-page: #eef1f6;                              /* slate-150 maison entre 100 et 200 */
   --color-bg-card: white;
   --color-bg-elevated: white;
   --color-bg-muted: theme(colors.slate.100);             /* placeholder photo, etc. */
   --color-bg-input: white;
   --color-bg-input-hover: theme(colors.slate.50);
 
-  /* Bordures — discretes pour laisser respirer */
+  /* Bordures — un cran plus visibles pour structurer */
   --color-border: theme(colors.slate.200);
-  --color-border-subtle: theme(colors.slate.200 / 60%);
+  --color-border-subtle: theme(colors.slate.200 / 70%);
   --color-border-strong: theme(colors.slate.300);
 
   /* Texte — slate-800 plutot que noir pur (moins agressif) */
@@ -65,27 +66,28 @@
   --color-bg-backdrop: rgb(15 23 42 / 0.4);
 }
 
-/* Theme sombre — pas trop sombre : on part de slate-800 (pas slate-950) pour
-   un look plus doux, "soir confortable" plutot que "terminal hacker". */
+/* Theme sombre — "ardoise douce" : on part de slate-700 (pas slate-800/950)
+   pour un look "soir confortable", lectures longues sans fatigue. Les cartes
+   sont legerement plus claires (slate-600) pour creer de la profondeur. */
 [data-theme="dark"] {
-  --color-bg-page: theme(colors.slate.800);              /* fond pas trop noir */
-  --color-bg-card: theme(colors.slate.700 / 70%);
-  --color-bg-elevated: theme(colors.slate.700);
-  --color-bg-muted: theme(colors.slate.600 / 40%);
-  --color-bg-input: theme(colors.slate.700);
-  --color-bg-input-hover: theme(colors.slate.600);
+  --color-bg-page: theme(colors.slate.700);              /* fond gris-bleu doux */
+  --color-bg-card: theme(colors.slate.600 / 60%);
+  --color-bg-elevated: theme(colors.slate.600);
+  --color-bg-muted: theme(colors.slate.500 / 40%);
+  --color-bg-input: theme(colors.slate.600);
+  --color-bg-input-hover: theme(colors.slate.500);
 
-  --color-border: theme(colors.slate.600);
-  --color-border-subtle: theme(colors.slate.600 / 50%);
-  --color-border-strong: theme(colors.slate.500);
+  --color-border: theme(colors.slate.500);
+  --color-border-subtle: theme(colors.slate.500 / 50%);
+  --color-border-strong: theme(colors.slate.400);
 
-  --color-text: theme(colors.slate.100);
+  --color-text: theme(colors.slate.50);
   --color-text-strong: white;
-  --color-text-muted: theme(colors.slate.300);
-  --color-text-subtle: theme(colors.slate.400);
-  --color-text-faint: theme(colors.slate.500);
+  --color-text-muted: theme(colors.slate.200);
+  --color-text-subtle: theme(colors.slate.300);
+  --color-text-faint: theme(colors.slate.400);
 
-  --color-accent: theme(colors.emerald.400);             /* + clair pour bon contraste sur fond sombre */
+  --color-accent: theme(colors.emerald.400);             /* + clair pour bon contraste sur fond clair-sombre */
   --color-accent-hover: theme(colors.emerald.300);
   --color-accent-soft: theme(colors.emerald.500 / 15%);
   --color-accent-soft-border: theme(colors.emerald.400 / 35%);
@@ -93,14 +95,14 @@
 
   --color-danger-text: theme(colors.rose.300);
 
-  /* Ombres plus fortes pour ressortir sur fond sombre */
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.2), 0 1px 2px rgb(0 0 0 / 0.3);
-  --shadow-card-hover: 0 4px 12px rgb(0 0 0 / 0.35), 0 2px 4px rgb(0 0 0 / 0.25);
-  --shadow-elevated: 0 10px 30px rgb(0 0 0 / 0.4), 0 4px 12px rgb(0 0 0 / 0.25);
+  /* Ombres adoucies (le fond etant moins sombre, on a moins besoin de creuser) */
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.15), 0 1px 2px rgb(0 0 0 / 0.2);
+  --shadow-card-hover: 0 4px 12px rgb(0 0 0 / 0.25), 0 2px 4px rgb(0 0 0 / 0.18);
+  --shadow-elevated: 0 10px 30px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.2);
 
   /* Surfaces semi-transparentes (header sticky, backdrop modale) */
-  --color-bg-header: rgb(30 41 59 / 0.85);               /* slate-800 translucide */
-  --color-bg-backdrop: rgb(0 0 0 / 0.6);
+  --color-bg-header: rgb(51 65 85 / 0.85);               /* slate-700 translucide */
+  --color-bg-backdrop: rgb(0 0 0 / 0.55);
 }
 
 /* Body de base */
