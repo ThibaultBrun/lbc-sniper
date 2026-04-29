@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getAdById, supabase, type Ad } from "./supabase";
 import DealCard from "./components/DealCard.vue";
@@ -32,6 +32,31 @@ const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
+
+// Pagination : 5 lignes d'annonces par page. Le nombre de colonnes (donc la
+// taille de page) suit les breakpoints Tailwind utilises sur la grille.
+const ROWS_PER_PAGE = 5;
+const cols = ref(1);
+const currentPage = ref(1);
+
+function updateCols() {
+  if (typeof window === "undefined") return;
+  const w = window.innerWidth;
+  if (w >= 1280) cols.value = 4;        // xl: 4 colonnes
+  else if (w >= 1024) cols.value = 3;   // lg: 3
+  else if (w >= 640) cols.value = 2;    // sm: 2
+  else cols.value = 1;
+}
+
+const pageSize = computed(() => ROWS_PER_PAGE * cols.value);
+
+onMounted(() => {
+  updateCols();
+  window.addEventListener("resize", updateCols);
+});
+onUnmounted(() => {
+  if (typeof window !== "undefined") window.removeEventListener("resize", updateCols);
+});
 
 const selectedAd = ref<Ad | null>(null);
 const selectedAdLoading = ref(false);
@@ -162,6 +187,50 @@ const filtered = computed(() => {
   return list;
 });
 
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(filtered.value.length / pageSize.value)),
+);
+
+const paginated = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  return filtered.value.slice(start, start + pageSize.value);
+});
+
+// Reset a la page 1 quand les filtres changent ou que la taille de page bouge.
+watch(
+  [categoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize],
+  () => {
+    currentPage.value = 1;
+  },
+);
+
+// Si le total de pages descend en-dessous de la page courante (filtre plus
+// restrictif appliqué), on clamp.
+watch(totalPages, (n) => {
+  if (currentPage.value > n) currentPage.value = n;
+});
+
+function goPage(p: number) {
+  currentPage.value = Math.min(Math.max(1, p), totalPages.value);
+  // Remonter en haut pour que l'utilisateur voie les nouvelles annonces.
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// Compresse la liste des pages affichées : 1 ... 4 5 6 ... 12
+const pageNumbers = computed<(number | "…")[]>(() => {
+  const total = totalPages.value;
+  const cur = currentPage.value;
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const result: (number | "…")[] = [1];
+  if (cur > 3) result.push("…");
+  for (let i = Math.max(2, cur - 1); i <= Math.min(total - 1, cur + 1); i++) {
+    result.push(i);
+  }
+  if (cur < total - 2) result.push("…");
+  result.push(total);
+  return result;
+});
+
 const stats = computed(() => {
   const all = scoped.value;
   const enriched = all.filter((a) => a.deal_score !== null);
@@ -279,8 +348,57 @@ const stats = computed(() => {
         Aucune annonce ne correspond aux filtres.
       </div>
 
-      <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <DealCard v-for="ad in filtered" :key="ad.id" :ad="ad" @open="openAd" />
+      <div v-else>
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <DealCard v-for="ad in paginated" :key="ad.id" :ad="ad" @open="openAd" />
+        </div>
+
+        <!-- Pagination -->
+        <nav
+          v-if="totalPages > 1"
+          class="mt-8 flex items-center justify-center gap-1 text-sm"
+          aria-label="Pagination"
+        >
+          <button
+            @click="goPage(currentPage - 1)"
+            :disabled="currentPage === 1"
+            class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1.5 text-slate-200 transition"
+          >
+            ‹ Précédent
+          </button>
+
+          <template v-for="(p, i) in pageNumbers" :key="`p${i}`">
+            <span
+              v-if="p === '…'"
+              class="px-2 text-slate-500"
+            >…</span>
+            <button
+              v-else
+              @click="goPage(p)"
+              :class="[
+                'rounded px-3 py-1.5 transition tabular-nums',
+                p === currentPage
+                  ? 'bg-emerald-500 text-slate-950 font-bold'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200',
+              ]"
+            >
+              {{ p }}
+            </button>
+          </template>
+
+          <button
+            @click="goPage(currentPage + 1)"
+            :disabled="currentPage === totalPages"
+            class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1.5 text-slate-200 transition"
+          >
+            Suivant ›
+          </button>
+        </nav>
+
+        <p class="mt-3 text-center text-xs text-slate-500 tabular-nums">
+          {{ filtered.length }} annonce{{ filtered.length > 1 ? "s" : "" }}
+          <span v-if="totalPages > 1"> · page {{ currentPage }} / {{ totalPages }}</span>
+        </p>
       </div>
     </main>
 
