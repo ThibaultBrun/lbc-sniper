@@ -162,12 +162,14 @@ async function load() {
       listQuery = listQuery.in("category_label", VTT_LABELS);
     }
     // 4 requetes en parallele : la liste + 3 count globaux.
-    // - La liste charge jusqu'a 1000 ads pour la pagination client-side
-    //   (filtres + tri + pagination locale = fluide). Avec l'index partiel
+    // - La liste charge jusqu'a 1000 ads (cap de securite). Les filtres
+    //   user (geo / electric / prix / categorie / search text) sont ensuite
+    //   appliques cote client sur ce dataset. Avec l'index partiel
     //   (category_label, deal_score desc) where is_active = true et le
-    //   SELECT light (sans body / enrich_*), c'est rapide.
+    //   SELECT light (sans body / enrich_*), c'est rapide (~quelques 10aines
+    //   de ko, <200ms).
     // - Les counts utilisent head:true => Postgres ne renvoie aucune ligne,
-    //   juste l'aggregat dans le header Content-Range.
+    //   juste l'aggregat dans le header Content-Range. Tres rapide.
     const [listRes, totalRes, enrichedRes, greatRes] = await Promise.all([
       listQuery
         .order("deal_score", { ascending: false, nullsFirst: false })
@@ -362,7 +364,8 @@ const stats = computed(() => ({
           </p>
         </div>
         <div class="flex items-center gap-4 text-xs text-muted">
-          <span>{{ stats.total }} annonces</span>
+          <span v-if="filtered.length === stats.total">{{ stats.total }} annonces</span>
+          <span v-else>{{ filtered.length }} / {{ stats.total }} annonces</span>
           <span>{{ stats.enriched }} analysées</span>
           <span class="font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }} excellentes</span>
           <button @click="load" class="btn btn-ghost">↻ Recharger</button>
