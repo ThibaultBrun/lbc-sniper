@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getAdById, supabase, type Ad } from "./supabase";
+import AuthButton from "./components/AuthButton.vue";
 import DealCard from "./components/DealCard.vue";
 import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
@@ -313,6 +314,7 @@ const stats = computed(() => {
           >
             ↻ Recharger
           </button>
+          <AuthButton />
         </div>
       </div>
     </header>
