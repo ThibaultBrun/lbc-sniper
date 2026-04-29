@@ -14,3 +14,6 @@ build/
 supabase/.temp/
 supabase/.branches/
 .claude/
+# 27 MB raw geojson sert de source pour generer web/public/communes.json (light).
+# On committe juste la version legere; on n'a pas besoin du raw.
+web/public/communes.geojson

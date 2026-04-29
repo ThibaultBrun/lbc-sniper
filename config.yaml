@@ -14,7 +14,6 @@ watches:
     label: "VTT Enduro - France entiere"
     category_label: "VTT enduro"
     category: VEHICULES_VELOS
-    accept_category_ids: ["55"]
     text: "enduro"
     search_in_title_only: true
     limit: 100
@@ -25,7 +24,6 @@ watches:
     label: "VTT DH (descente) - France entiere"
     category_label: "VTT DH"
     category: VEHICULES_VELOS
-    accept_category_ids: ["55"]
     text: "dh"
     search_in_title_only: true
     limit: 100

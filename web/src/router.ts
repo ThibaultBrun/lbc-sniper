@@ -1,20 +1,17 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
-// L'app a un seul écran (la liste). Le router sert uniquement à gérer
-// l'historique de l'URL pour permettre de partager le lien d'une analyse.
-// App.vue lit `useRoute()` pour décider si la modale doit s'ouvrir.
+// L'app a un seul ecran (la liste). Le router sert uniquement a gerer
+// l'historique de l'URL pour permettre de partager le lien d'une analyse,
+// et a basculer entre la home publique (VTT seulement) et /secret (tout).
+const placeholder = { template: "<div></div>" };
+
 const routes: RouteRecordRaw[] = [
-  {
-    path: "/",
-    name: "home",
-    // Composant placeholder rendu par <router-view>. App lit la route lui-même.
-    component: { template: "<div></div>" },
-  },
-  {
-    path: "/ad/:id(\\d+)",
-    name: "ad",
-    component: { template: "<div></div>" },
-  },
+  { path: "/", name: "home", component: placeholder },
+  // /secret : meme UI que /, mais affiche toutes les categories
+  { path: "/secret", name: "secret", component: placeholder },
+  // Modale d'annonce, ouvrable depuis n'importe quelle vue
+  { path: "/ad/:id(\\d+)", name: "ad", component: placeholder },
+  { path: "/secret/ad/:id(\\d+)", name: "secret-ad", component: placeholder },
 ];
 
 export const router = createRouter({
