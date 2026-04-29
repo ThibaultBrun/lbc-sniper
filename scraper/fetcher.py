@@ -37,27 +37,39 @@ def _normalize_text(s: Optional[str]) -> str:
     return _WHITESPACE_RE.sub(" ", s).strip()
 
 
+def _contains_word(haystack_padded: str, needle: str) -> bool:
+    """Cherche needle comme mot/groupe-de-mots entier dans haystack_padded.
+    haystack_padded doit deja avoir des espaces en debut+fin pour que les
+    needles 'dh' / 'enduro' ne matchent pas a l'interieur de mots comme
+    'adherence' ou 'gentleman'."""
+    return f" {needle} " in haystack_padded
+
+
 def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     """Cherche un signal enduro/DH dans le titre+body normalises.
     Retourne 'VTT DH', 'VTT enduro', ou None si l'annonce n'est pas
     un VTT enduro/AM/trail/DH/freeride/e-MTB de cette famille.
-    DH a priorite (un velo qualifie pour les 2 = DH)."""
+    DH a priorite (un velo qualifie pour les 2 = DH).
+
+    Le matching se fait sur des mots entiers (avec word boundary),
+    pas en substring : 'dh' ne matche pas dans 'adherence'."""
     text = _normalize_text(f"{subject or ''} {body or ''}")
+    padded = f" {text} "
 
     for kw in GENERIC_DH:
-        if kw in text:
+        if _contains_word(padded, kw):
             return "VTT DH"
     for term in DH_TERMS:
-        if term in text:
+        if _contains_word(padded, term):
             return "VTT DH"
     for kw in GENERIC_ENDURO:
-        if kw in text:
+        if _contains_word(padded, kw):
             return "VTT enduro"
     for term in ENDURO_TERMS:
-        if term in text:
+        if _contains_word(padded, term):
             return "VTT enduro"
     for brand in BRANDS_ENDURO_PURE:
-        if brand in text:
+        if _contains_word(padded, brand):
             return "VTT enduro"
     return None
 
