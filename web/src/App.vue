@@ -346,149 +346,120 @@ const stats = computed(() => ({
 <template>
   <LegalPage v-if="isLegalPage" />
   <div v-else class="min-h-screen flex flex-col">
-    <header class="border-b border-slate-800 bg-slate-900/40 backdrop-blur sticky top-0 z-10">
+    <header class="surface-header">
       <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-baseline gap-4 justify-between">
         <div>
           <h1 class="text-xl font-bold tracking-tight">
-            <span class="text-emerald-400">Trouve</span> Ton VTT
-            <span v-if="isSecret" class="ml-2 text-xs font-normal text-rose-400 uppercase tracking-wider">[ secret ]</span>
+            <span style="color: var(--color-accent-hover)">Trouve</span> Ton VTT
+            <span v-if="isSecret" class="ml-2 text-xs font-normal uppercase tracking-wider" style="color: var(--color-danger-text)">[ secret ]</span>
           </h1>
-          <p class="text-xs text-slate-400 mt-0.5">
+          <p class="text-xs text-muted mt-0.5">
             <span v-if="isSecret">VTT, voitures, motos — analyse IA complète</span>
             <span v-else>les meilleures affaires VTT du moment, analysées par IA</span>
           </p>
         </div>
-        <div class="flex items-center gap-4 text-xs text-slate-400">
+        <div class="flex items-center gap-4 text-xs text-muted">
           <span>{{ stats.total }} annonces</span>
           <span>{{ stats.enriched }} analysées</span>
-          <span class="text-emerald-400 font-semibold">{{ stats.great }} excellentes</span>
-          <button
-            @click="load"
-            class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1 text-slate-200 transition"
-          >
-            ↻ Recharger
-          </button>
+          <span class="font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }} excellentes</span>
+          <button @click="load" class="btn btn-ghost">↻ Recharger</button>
           <AuthButton />
         </div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 w-full">
       <!-- Banniere /favoris -->
-      <div
-        v-if="isFavoritesPage"
-        class="rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 flex items-center justify-between"
-      >
+      <div v-if="isFavoritesPage" class="banner-info">
         <div>
-          <div class="text-lg font-bold text-rose-300">♥ Mes favoris</div>
-          <div class="text-xs text-rose-400/70">
+          <div class="text-lg font-bold" style="color: var(--color-danger-text)">♥ Mes favoris</div>
+          <div class="text-xs" style="color: var(--color-danger-text); opacity: 0.7">
             Annonces que tu as marquées avec le cœur. Tu seras notifié si leur prix baisse.
           </div>
         </div>
-        <router-link
-          to="/"
-          class="rounded bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-sm text-slate-200"
-        >
-          ← Retour à toutes les annonces
-        </router-link>
+        <router-link to="/" class="btn btn-ghost">← Retour à toutes les annonces</router-link>
       </div>
 
       <!-- Filtres -->
-      <div class="space-y-3 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
+      <div class="surface-filters">
 
         <!-- Ligne 1 : recherche texte + ville/position/rayon -->
         <div class="flex flex-wrap items-center gap-4">
           <label class="flex items-center gap-2 flex-1 min-w-[260px]">
-            <span class="text-slate-400 whitespace-nowrap">🔎</span>
+            <span class="text-muted whitespace-nowrap">🔎</span>
             <input
               v-model="searchText"
               type="search"
               placeholder="Rechercher dans les titres…"
-              class="flex-1 bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-slate-100 placeholder:text-slate-500 focus:border-emerald-500 focus:outline-none"
+              class="input-base flex-1"
             />
           </label>
 
-          <GeoFilter
-            v-model="geo"
-            v-model:radius-km="radiusKm"
-          />
+          <GeoFilter v-model="geo" v-model:radius-km="radiusKm" />
         </div>
 
         <!-- Ligne 2 : filtres metier -->
-        <div class="flex flex-wrap items-center gap-4 pt-3 border-t border-slate-800/60">
+        <div class="flex flex-wrap items-center gap-4 pt-3" style="border-top: 1px solid var(--color-border-subtle)">
           <label v-if="categories.length > 1" class="flex items-center gap-2">
-            <span class="text-slate-400">Catégorie:</span>
-            <select
-              v-model="categoryFilter"
-              class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
-            >
+            <span class="text-muted">Catégorie:</span>
+            <select v-model="categoryFilter" class="input-base">
               <option :value="null">Toutes</option>
               <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
 
-        <label class="flex items-center gap-2">
-          <span class="text-slate-400">⚡ Électrique:</span>
-          <select
-            v-model="electricFilter"
-            class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
-          >
-            <option value="all">Tous</option>
-            <option value="yes">Électrique</option>
-            <option value="no">Musculaire</option>
-          </select>
-        </label>
+          <label class="flex items-center gap-2">
+            <span class="text-muted">⚡ Électrique:</span>
+            <select v-model="electricFilter" class="input-base">
+              <option value="all">Tous</option>
+              <option value="yes">Électrique</option>
+              <option value="no">Musculaire</option>
+            </select>
+          </label>
 
-        <label class="flex items-center gap-1.5">
-          <span class="text-slate-400">Prix:</span>
-          <input
-            v-model.number="priceMin"
-            type="number"
-            min="0"
-            placeholder="min"
-            class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100 placeholder:text-slate-500 text-right tabular-nums"
-          />
-          <span class="text-slate-500">–</span>
-          <input
-            v-model.number="priceMax"
-            type="number"
-            min="0"
-            placeholder="max"
-            class="w-24 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100 placeholder:text-slate-500 text-right tabular-nums"
-          />
-          <span class="text-slate-500">€</span>
-        </label>
+          <label class="flex items-center gap-1.5">
+            <span class="text-muted">Prix:</span>
+            <input
+              v-model.number="priceMin"
+              type="number"
+              min="0"
+              placeholder="min"
+              class="input-base w-24 text-right tabular-nums"
+            />
+            <span class="text-subtle">–</span>
+            <input
+              v-model.number="priceMax"
+              type="number"
+              min="0"
+              placeholder="max"
+              class="input-base w-24 text-right tabular-nums"
+            />
+            <span class="text-subtle">€</span>
+          </label>
 
-        <label class="flex items-center gap-2">
-          <span class="text-slate-400">Tri:</span>
-          <select
-            v-model="sortBy"
-            class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-slate-100"
-          >
-            <option value="deal">Score IA ↓</option>
-            <option value="price">Prix ↑</option>
-            <option value="recent">Plus récentes</option>
-          </select>
-        </label>
+          <label class="flex items-center gap-2">
+            <span class="text-muted">Tri:</span>
+            <select v-model="sortBy" class="input-base">
+              <option value="deal">Score IA ↓</option>
+              <option value="price">Prix ↑</option>
+              <option value="recent">Plus récentes</option>
+            </select>
+          </label>
 
-        <div class="ml-auto">
-          <SavedSearchesBar
-            :current-filters="currentFilters"
-            @apply="applySavedSearch"
-          />
-        </div>
-
+          <div class="ml-auto">
+            <SavedSearchesBar :current-filters="currentFilters" @apply="applySavedSearch" />
+          </div>
         </div>
       </div>
 
-      <div v-if="loading" class="text-center text-slate-500 py-12">Chargement…</div>
+      <div v-if="loading" class="text-center text-subtle py-12">Chargement…</div>
 
-      <div v-else-if="error" class="rounded-xl border border-rose-700 bg-rose-900/20 p-4 text-rose-300">
+      <div v-else-if="error" class="panel-error">
         <p class="font-semibold">Erreur Supabase</p>
         <p class="text-sm mt-1">{{ error }}</p>
       </div>
 
-      <div v-else-if="filtered.length === 0" class="text-center text-slate-500 py-12">
+      <div v-else-if="filtered.length === 0" class="text-center text-subtle py-12">
         Aucune annonce ne correspond aux filtres.
       </div>
 
@@ -498,48 +469,28 @@ const stats = computed(() => ({
         </div>
 
         <!-- Pagination -->
-        <nav
-          v-if="totalPages > 1"
-          class="mt-8 flex items-center justify-center gap-1 text-sm"
-          aria-label="Pagination"
-        >
-          <button
-            @click="goPage(currentPage - 1)"
-            :disabled="currentPage === 1"
-            class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1.5 text-slate-200 transition"
-          >
+        <nav v-if="totalPages > 1" class="mt-8 flex items-center justify-center gap-1" aria-label="Pagination">
+          <button @click="goPage(currentPage - 1)" :disabled="currentPage === 1" class="page-btn">
             ‹ Précédent
           </button>
 
           <template v-for="(p, i) in pageNumbers" :key="`p${i}`">
-            <span
-              v-if="p === '…'"
-              class="px-2 text-slate-500"
-            >…</span>
+            <span v-if="p === '…'" class="px-2 text-subtle">…</span>
             <button
               v-else
               @click="goPage(p)"
-              :class="[
-                'rounded px-3 py-1.5 transition tabular-nums',
-                p === currentPage
-                  ? 'bg-emerald-500 text-slate-950 font-bold'
-                  : 'bg-slate-800 hover:bg-slate-700 text-slate-200',
-              ]"
+              :class="p === currentPage ? 'page-btn-active' : 'page-btn'"
             >
               {{ p }}
             </button>
           </template>
 
-          <button
-            @click="goPage(currentPage + 1)"
-            :disabled="currentPage === totalPages"
-            class="rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed px-3 py-1.5 text-slate-200 transition"
-          >
+          <button @click="goPage(currentPage + 1)" :disabled="currentPage === totalPages" class="page-btn">
             Suivant ›
           </button>
         </nav>
 
-        <p class="mt-3 text-center text-xs text-slate-500 tabular-nums">
+        <p class="mt-3 text-center text-xs text-subtle tabular-nums">
           {{ filtered.length }} annonce{{ filtered.length > 1 ? "s" : "" }}
           <span v-if="totalPages > 1"> · page {{ currentPage }} / {{ totalPages }}</span>
         </p>
@@ -548,21 +499,22 @@ const stats = computed(() => ({
 
     <div
       v-if="selectedAdLoading"
-      class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm grid place-items-center"
+      class="fixed inset-0 z-50 grid place-items-center backdrop-blur-sm"
+      style="background-color: rgb(0 0 0 / 0.8)"
     >
-      <div class="text-slate-400">Chargement de l'annonce…</div>
+      <div class="text-muted">Chargement de l'annonce…</div>
     </div>
 
     <DealModal v-if="selectedAd" :ad="selectedAd" @close="closeAd" />
 
-    <footer class="border-t border-slate-800 mt-auto py-4 text-center text-xs text-slate-500">
+    <footer class="surface-footer">
       <div class="space-x-4">
-        <router-link to="/a-propos" class="hover:text-slate-300">À propos</router-link>
-        <router-link to="/mentions-legales" class="hover:text-slate-300">Mentions légales</router-link>
-        <router-link to="/confidentialite" class="hover:text-slate-300">Confidentialité</router-link>
-        <router-link to="/cgu" class="hover:text-slate-300">CGU</router-link>
+        <router-link to="/a-propos" class="hover:opacity-80">À propos</router-link>
+        <router-link to="/mentions-legales" class="hover:opacity-80">Mentions légales</router-link>
+        <router-link to="/confidentialite" class="hover:opacity-80">Confidentialité</router-link>
+        <router-link to="/cgu" class="hover:opacity-80">CGU</router-link>
       </div>
-      <p class="mt-2 text-[10px] text-slate-600">
+      <p class="mt-2 text-[10px] text-faint">
         Trouve Ton VTT n'est pas affilié à Leboncoin. Analyses générées par IA, à titre indicatif.
       </p>
     </footer>

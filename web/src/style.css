@@ -240,4 +240,55 @@ html, body {
     background-color: theme(colors.amber.500 / 5%);
     border: 1px solid theme(colors.amber.500 / 20%);
   }
+
+  /* ----- Banner (favoris, info contextuelle) ----- */
+  .banner-info {
+    @apply rounded-xl p-4 flex items-center justify-between;
+    background-color: var(--color-danger-soft);
+    border: 1px solid var(--color-danger-soft-border);
+  }
+
+  /* ----- Surface filtres (encadre des controles) ----- */
+  .surface-filters {
+    @apply rounded-xl p-4 space-y-3 text-sm;
+    background-color: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+  }
+
+  /* ----- Header (sticky en haut) ----- */
+  .surface-header {
+    @apply sticky top-0 z-10 backdrop-blur;
+    background-color: var(--color-bg-card);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  /* ----- Footer ----- */
+  .surface-footer {
+    @apply mt-auto py-4 text-center text-xs;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-text-subtle);
+  }
+
+  /* ----- Pagination ----- */
+  .page-btn {
+    @apply rounded px-3 py-1.5 text-sm transition tabular-nums disabled:opacity-30 disabled:cursor-not-allowed;
+    background-color: var(--color-bg-input);
+    color: var(--color-text);
+  }
+  .page-btn:hover:not(:disabled) {
+    background-color: var(--color-bg-input-hover);
+  }
+  .page-btn-active {
+    @apply rounded px-3 py-1.5 text-sm font-bold tabular-nums;
+    background-color: var(--color-accent);
+    color: var(--color-accent-on);
+  }
+
+  /* ----- Error panel ----- */
+  .panel-error {
+    @apply rounded-xl p-4;
+    background-color: var(--color-danger-soft);
+    border: 1px solid var(--color-danger-soft-border);
+    color: var(--color-danger-text);
+  }
 }
