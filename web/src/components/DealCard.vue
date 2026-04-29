@@ -139,6 +139,8 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
             :alt="ad.subject"
             class="h-full w-full object-cover hover:scale-105 transition"
             loading="lazy"
+            decoding="async"
+            referrerpolicy="no-referrer"
           />
           <div v-else class="h-full w-full grid place-items-center text-faint text-xs">
             pas de photo
