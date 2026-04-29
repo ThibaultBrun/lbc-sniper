@@ -77,13 +77,41 @@ SCHEMA = {
 }
 
 
+# Regles VTT communes a enduro et DH (decote forte avec l'age, obsolescence techno).
+# Concatenees au debut de chaque DOMAIN_INTRO VTT.
+_VTT_DECOTE_RULES = """
+REGLES DE DECOTE VTT (a appliquer SYSTEMATIQUEMENT) :
+- modele < 4 ans : prix occasion ~ 50-70% du neuf selon etat
+- modele 4-7 ans : prix occasion ~ 25-40% du neuf
+- modele 8-12 ans : prix occasion ~ 12-22% du neuf, FORTE obsolescence techno
+- modele > 12 ans : prix occasion ~ 5-15% du neuf (collectionneurs surtout)
+
+PENALITES TECHNO supplementaires (cumulatives) :
+- Roues 26" (modeles avant ~2015) : -30% vs 27.5/29
+- Suspensions standards anciens (axe 9mm, pas Boost) : -20%
+- Cassette 9V/10V vs 12V actuel : -10% (pieces compromises)
+- Cadre alu defraichi / peinture rayee : -10 a -20%
+
+REPERES de cote reelle occasion sur LBC (a adapter mais comme base) :
+- GIANT Faith 2010 (DH 26", Single Crown) : 250-450 EUR
+- Kona Stinky 2014-2016 (DH 26"/27.5") : 350-700 EUR
+- YT Tues 2.0 2014-2015 (DH carbone 26") : 700-1200 EUR
+- Cube Hanzz 190 2018-2019 (DH alu) : 1200-1800 EUR
+- Specialized Demo 8 2014-2017 (DH alu) : 1000-2000 EUR
+- Lapierre Zesty AM 2014-2016 (enduro alu 27.5) : 500-900 EUR
+- Specialized Stumpjumper 2017-2019 (alu/carbone 29) : 1500-3000 EUR
+
+Si modele anterieur a 2018, particuliere vigilance : ne PAS surestimer la cote.
+"""
+
+
 DOMAIN_INTROS = {
-    "vtt": "Tu es un expert du marche VTT d'occasion en France.",
     "vtt_enduro": (
         "Tu es un expert du marche VTT enduro/all-mountain d'occasion en France. "
         "Tu connais les modeles courants (Lapierre Zesty/Spicy, Specialized Enduro/Stumpjumper, "
         "Trek Slash/Remedy, Canyon Torque/Spectral/Strive, Commencal Meta/Clash, Santa Cruz Megatower/Bronson/Nomad, "
         "Cube Stereo, Orbea Occam/Rallon, BH Linx, Mondraker Crafty/Foxy, Haibike Alltrail) et leurs cotes."
+        + _VTT_DECOTE_RULES
     ),
     "vtt_dh": (
         "Tu es un expert du marche VTT de descente (DH/downhill) d'occasion en France. "
@@ -95,60 +123,71 @@ DOMAIN_INTROS = {
         "arriere, plateau unique, freins puissants 4 pistons (Code/MT7), pneus DH carcasse renforcee, "
         "souvent reserve a la piste. Verifie etat suspensions, geometrie, generation (slack 63-64°), "
         "presence de 'tarage' / amorti reglage maintenu, et coherence du prix vs annee/etat."
-    ),
-    "ludospace": (
-        "Tu es un expert du marche automobile d'occasion en France et tu cherches "
-        "specifiquement des LUDOSPACES (monospaces compacts familiaux derives d'utilitaires). "
-        "Modeles cibles: Citroen Berlingo, Peugeot Partner/Rifter, Renault Kangoo, Fiat Doblo, "
-        "VW Caddy, Opel Combo/Combo Life, Toyota Proace City Verso, Opel Vivaro Life, Nissan NV200, "
-        "Citroen Spacetourer, Peugeot Traveller, VW Caravelle, Mercedes Citan/Vito Tourer. "
-        "REGLE CRITIQUE: si l'annonce n'est PAS un ludospace (berline classique, SUV, sportive, "
-        "fourgon tole utilitaire pur, pickup, etc.), donne un deal_score TRES bas (0-15) et explique-le "
-        "clairement dans reasoning + cons (ex: 'pas un ludospace, c'est une Citroen C3'). "
-        "Pour un vrai ludospace, evalue normalement: cote occasion realiste, kilometrage, motorisation, "
-        "annee, options (climatisation, GPS, attelage), proprete de l'annonce."
-    ),
-    "ludospace_utilitaire": (
-        "Tu es un expert du marche automobile d'occasion en France et tu cherches specifiquement "
-        "des LUDOSPACES en version utilitaire AVEC AU MOINS 4 PLACES (cabine approfondie, banquette "
-        "arriere amovible, type 'Crew Cab' / 'L1 5 places' / 'Multispace' / 'Combi'). "
-        "Modeles cibles: Citroen Berlingo Multispace, Peugeot Partner Tepee/Rifter, Renault Kangoo, "
-        "Fiat Doblo Cargo Combi, VW Caddy Maxi Life, Mercedes Vito Tourer/Mixto, Renault Trafic "
-        "Combi/Passenger, Peugeot Expert Combi, Citroen Jumpy Combi, Opel Vivaro Combi, Ford Transit "
-        "Custom Kombi, Toyota Proace Verso. "
-        "REGLES CRITIQUES: "
-        "(1) Si le vehicule a MOINS de 4 places (fourgon tole 2 ou 3 places sans banquette arriere), "
-        "donne deal_score=0 et explique dans reasoning+cons que c'est exclu. "
-        "(2) Si tu n'es PAS sur du nombre de places (annonce vague), donne un deal_score MAXIMUM de 30 "
-        "et mentionne dans cons 'Nombre de places non confirme, risque utilitaire 2 places'. "
-        "(3) Si c'est confirme 4+ places (banquette arriere, vitres laterales, ceintures arriere), "
-        "evalue normalement le bon plan. "
-        "Indices d'un vrai 4+ places: 'Combi', 'Multispace', 'Tepee', 'Combi Passenger', 'Mixto', "
-        "mention de 5/7/9 places, photos avec banquette arriere visible."
+        + _VTT_DECOTE_RULES
     ),
     "voiture": (
         "Tu es un expert du marche automobile d'occasion en France, specialise dans "
-        "les voitures familiales et utilitaires (ludospaces, monospaces compacts/grands, "
-        "7 places). Tu connais les cotes des modeles courants : Citroen Berlingo, "
-        "Peugeot Partner Tepee/Rifter, Renault Kangoo, Fiat Doblo, VW Caddy, Opel "
-        "Combo/Combo Life, Dacia Dokker, Dacia Jogger, Ford Tourneo Connect/Courier, "
-        "Toyota Proace City Verso, VW Touran/Sharan, Renault Scenic/Grand Scenic/Espace, "
-        "Citroen C4 SpaceTourer, Grand C4 Picasso, Ford S-Max/Galaxy, Seat Alhambra, "
-        "Kia Carens. Pour evaluer le bon plan : verifie l'annee, le kilometrage, "
-        "la motorisation (essence/diesel/hybride/electrique), la boite (manuelle/auto), "
-        "le nombre de portes/places, l'historique entretien, le controle technique. "
-        "Le diesel ancien decote rapidement (ZFE, malus), l'essence/hybride se valorise "
-        "mieux. Donne un deal_score qui reflete UNIQUEMENT l'ecart prix vs cote marche."
+        "les voitures familiales (ludospaces, monospaces compacts/grands 7 places). "
+        "Modeles courants : Citroen Berlingo, Peugeot Partner Tepee/Rifter, Renault Kangoo, "
+        "Fiat Doblo, VW Caddy, Opel Combo/Combo Life, Dacia Dokker, Dacia Jogger, Ford "
+        "Tourneo Connect/Courier, Toyota Proace City Verso, VW Touran/Sharan, Renault "
+        "Scenic/Grand Scenic/Espace, Citroen C4 SpaceTourer, Grand C4 Picasso, Ford S-Max/"
+        "Galaxy, Seat Alhambra, Kia Carens. "
+        "\n\n"
+        "REGLES DE DECOTE AUTO (a appliquer rigoureusement) :\n"
+        "- modele < 3 ans : prix occasion ~ 70-85% du neuf\n"
+        "- modele 3-6 ans : ~ 45-65% du neuf\n"
+        "- modele 7-10 ans : ~ 25-40% du neuf\n"
+        "- modele 11-15 ans : ~ 10-22% du neuf\n"
+        "- > 15 ans : ~ 5-12% du neuf (collection ou epave)\n"
+        "\n"
+        "PENALITES SPECIFIQUES :\n"
+        "- Diesel < Crit'Air 2 (avant 2011) : -25% (interdit zones ZFE Paris/Lyon/etc.)\n"
+        "- Crit'Air 3 diesel (2011-2015) : -15% (interdiction progressive)\n"
+        "- Kilometrage > 200k km : -20%, > 250k km : -35%\n"
+        "- Boite auto sur petites cylindrees (<1.4) : souvent decote (couteux a entretenir)\n"
+        "- CT a refaire / contre-visite mentionnee : -10 a -25% selon ampleur\n"
+        "- Courroie de distri non refaite a >100k km : -15% (cout 600-1200 EUR)\n"
+        "- Vehicule professionnel (taxi/VTC) : -15 a -25% supplementaires\n"
+        "\n"
+        "BONUS :\n"
+        "- Essence/hybride/electrique recent : valorisation +10-20% vs equivalent diesel\n"
+        "- Carnet d'entretien complet, factures : +5-10%\n"
+        "- BVA recente sur grosse cylindrée (>1.6) : neutre/+5%\n"
+        "\n"
+        "Donne un deal_score qui reflete UNIQUEMENT l'ecart prix vs cote marche reelle "
+        "(ce a quoi ce vehicule precis se vend reellement sur LBC, pas l'Argus theorique)."
     ),
     "moto": (
         "Tu es un expert du marche moto d'occasion en France, specialise dans les "
         "cylindrees moyennes (125-500cc) accessibles en permis A2 ou A. "
-        "Tu connais les segments: roadster (MT-07, CB500F, SV650, Z650, Duke 390), "
-        "trail/aventure (V-Strom 250/650, NC750X, Tracer 700, F750GS), sportive "
-        "(R3, Ninja 400/650, RS660), custom (Vulcan S, Rebel 500, Bolt), supermotard "
-        "(Husqvarna 701, KTM 690 SMC), enduro/cross route-legaux (CRF300L, KTM EXC). "
-        "Verifie age + kilometrage + entretien (chaine, pneus, plaquettes) et "
-        "compatibilite permis dans tes pros/cons."
+        "Segments : roadster (MT-07, CB500F, SV650, Z650, Duke 390), trail/aventure "
+        "(V-Strom 250/650, NC750X, Tracer 700, F750GS), sportive (R3, Ninja 400/650, "
+        "RS660), custom (Vulcan S, Rebel 500, Bolt), supermotard (Husqvarna 701, "
+        "KTM 690 SMC), enduro/cross route-legaux (CRF300L, KTM EXC). "
+        "\n\n"
+        "REGLES DE DECOTE MOTO :\n"
+        "- modele < 3 ans : ~ 65-80% du neuf\n"
+        "- modele 3-6 ans : ~ 40-60% du neuf\n"
+        "- modele 7-10 ans : ~ 25-40% du neuf\n"
+        "- modele 11-15 ans : ~ 12-25% du neuf\n"
+        "- > 15 ans : ~ 5-15% du neuf (sauf modeles cultes : MT-07 1ere gen, SV650 carbu)\n"
+        "\n"
+        "PENALITES KILOMETRAGE / ENTRETIEN :\n"
+        "- > 30 000 km : -10% (revisions majeures dues : soupapes, distri si applicable)\n"
+        "- > 60 000 km : -25% (consommables lourds : amortisseurs, suspension)\n"
+        "- Pneus a remplacer (nervures < 50%) : -100 a -300 EUR\n"
+        "- Chaine + couronne en bout de course : -150 a -400 EUR\n"
+        "- Plaquettes / disques avant uses : -100 a -250 EUR\n"
+        "- Pas de carnet entretien : -10%\n"
+        "- Carbu vs injection (avant ~2008) : decote leger sauf marche collection\n"
+        "\n"
+        "BONUS :\n"
+        "- A2-friendly (bridable ou < 47ch d'origine) : +5-10% vs version full power\n"
+        "- ABS de serie : +5% (obligatoire neuf depuis 2017 mais pas sur l'ancien)\n"
+        "- 1ere main avec historique : +5-10%\n"
+        "\n"
+        "Donne un deal_score qui reflete UNIQUEMENT l'ecart prix vs cote marche reelle."
     ),
 }
 
@@ -197,9 +236,19 @@ Ville: {ad.get("city") or "?"}
 Description (texte libre du vendeur) :
 {body or "(vide)"}
 
-Estime le prix de marche actuel pour ce vehicule/objet (en euros, valeur centrale).
+Estime le PRIX REEL DE REVENTE OCCASION en euros (valeur centrale).
 
-Note de bon plan (deal_score) — UNIQUEMENT basee sur l'ecart prix demande vs prix de marche estime :
+ATTENTION — c'est un point critique : on cherche le prix auquel ce vehicule
+specifique se VEND REELLEMENT AUJOURD'HUI sur LeBonCoin / Vinted / forums
+specialises, PAS la cote theorique "neuf - X% par an" type Argus. La realite
+du marche occasion depasse rarement la cote Argus, et descend souvent bien
+en dessous pour les vieux modeles.
+
+Tu trouveras dans l'intro expert ci-dessus les regles de decote specifiques
+au domaine (age, technologie, modele) — applique-les rigoureusement.
+
+Note de bon plan (deal_score) — UNIQUEMENT basee sur l'ecart prix demande vs
+prix de marche occasion REEL estime ci-dessus :
 - 0   = beaucoup plus cher que le marche
 - 30  = un peu cher
 - 50  = au prix du marche
