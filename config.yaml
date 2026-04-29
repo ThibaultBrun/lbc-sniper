@@ -10,25 +10,24 @@ watches:
   # Pas de location -> France entiere. Le filtre geographique se fait cote site.
   # ============================================================================
 
-  - id: vtt-enduro-france
-    label: "VTT Enduro - France entiere"
+  - id: vtt-france
+    label: "VTT (enduro/AM/trail/DH/e-MTB) - France entiere"
+    # category_label sera surcharge par auto_classify_vtt avec
+    # 'VTT enduro' ou 'VTT DH' selon le signal trouve dans titre+body.
     category_label: "VTT enduro"
     category: LOISIRS_VELOS
-    text: "enduro"
-    search_in_title_only: true
+    # Pas de filtre text : on prend toutes les annonces velo cat=55,
+    # puis classify_vtt() trie cote Python pour ne garder que les VTT
+    # enduro/AM/trail/DH/e-MTB (env. 25% du flux, le reste est XC, route, ville,
+    # enfant, etc.). Le grand avantage : on ne rate plus les annonces qui
+    # ne mentionnent pas explicitement 'enduro' ou 'dh' dans le titre.
     limit: 100
     incremental_hours: 24
+    auto_classify_vtt: true
+    # Le domain 'vtt_enduro' sert pour le prompt par defaut. Un VTT DH est
+    # marque differemment dans la DB (category_label) mais utilise le meme
+    # prompt expert; les regles de decote VTT s'appliquent aux deux.
     enrichment_domain: "vtt_enduro"
-
-  - id: vtt-dh-france
-    label: "VTT DH (descente) - France entiere"
-    category_label: "VTT DH"
-    category: LOISIRS_VELOS
-    text: "dh"
-    search_in_title_only: true
-    limit: 100
-    incremental_hours: 24
-    enrichment_domain: "vtt_dh"
 
   # ============================================================================
   # MOTOS A2 (125-500cc, 2010+)

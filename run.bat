@@ -25,7 +25,6 @@ if /I "%FIRST%"=="all" (
 
 if not exist "%PYTHON%" (
   echo ERROR: Python not found at %PYTHON%
-  pause
   exit /b 1
 )
 
@@ -33,20 +32,17 @@ echo === [1/4] Installing/updating dependencies ===
 "%PYTHON%" -m pip install -q --user -r requirements.txt
 if errorlevel 1 (
   echo Failed to install dependencies.
-  pause
   exit /b 1
 )
 
 echo.
 echo === [2/4] Scraping LBC (scope: %SCOPE%) ===
 if /I "%SCOPE%"=="vtt" (
-  "%PYTHON%" -m scraper.main --watch vtt-enduro-france
-  if errorlevel 1 ( echo Scraper VTT enduro failed. & pause & exit /b 1 )
-  "%PYTHON%" -m scraper.main --watch vtt-dh-france
-  if errorlevel 1 ( echo Scraper VTT DH failed. & pause & exit /b 1 )
+  "%PYTHON%" -m scraper.main --watch vtt-france
+  if errorlevel 1 ( echo Scraper VTT failed. & exit /b 1 )
 ) else (
   "%PYTHON%" -m scraper.main
-  if errorlevel 1 ( echo Scraper failed. & pause & exit /b 1 )
+  if errorlevel 1 ( echo Scraper failed. & exit /b 1 )
 )
 
 echo.
@@ -64,4 +60,3 @@ if /I "%MODE%"=="hybrid" (
 
 echo.
 echo === DONE ===
-pause

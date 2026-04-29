@@ -78,7 +78,8 @@ def upsert_ads(
         row: dict = {
             "id": a.id,
             "watch_id": watch_id,
-            "category_label": category_label,
+            # auto_category_label (depuis classify_vtt) override le label du watch
+            "category_label": a.auto_category_label or category_label,
             "subject": a.subject,
             "body": a.body,
             "url": a.url,

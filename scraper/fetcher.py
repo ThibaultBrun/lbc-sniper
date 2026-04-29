@@ -6,9 +6,60 @@ from typing import Optional
 import lbc
 
 from .config import AttributeFilter, Watch
+from .vtt_models import (
+    BRANDS_ENDURO_PURE,
+    DH_TERMS,
+    ENDURO_TERMS,
+    GENERIC_DH,
+    GENERIC_ENDURO,
+)
 
 
 _NUM_RE = re.compile(r"-?\d+")
+_NORMALIZE_RE = re.compile(r"[^a-z0-9 +-]")
+_WHITESPACE_RE = re.compile(r"\s+")
+_ACCENTS = str.maketrans({
+    "é": "e", "è": "e", "ê": "e", "ë": "e",
+    "î": "i", "ï": "i",
+    "ô": "o", "ö": "o",
+    "û": "u", "ù": "u", "ü": "u",
+    "à": "a", "â": "a", "ä": "a",
+    "ç": "c",
+})
+
+
+def _normalize_text(s: Optional[str]) -> str:
+    """Lowercase, retire accents, ne garde que [a-z0-9 +-], espaces normalises."""
+    if not s:
+        return ""
+    s = s.lower().translate(_ACCENTS)
+    s = _NORMALIZE_RE.sub(" ", s)
+    return _WHITESPACE_RE.sub(" ", s).strip()
+
+
+def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
+    """Cherche un signal enduro/DH dans le titre+body normalises.
+    Retourne 'VTT DH', 'VTT enduro', ou None si l'annonce n'est pas
+    un VTT enduro/AM/trail/DH/freeride/e-MTB de cette famille.
+    DH a priorite (un velo qualifie pour les 2 = DH)."""
+    text = _normalize_text(f"{subject or ''} {body or ''}")
+
+    for kw in GENERIC_DH:
+        if kw in text:
+            return "VTT DH"
+    for term in DH_TERMS:
+        if term in text:
+            return "VTT DH"
+    for kw in GENERIC_ENDURO:
+        if kw in text:
+            return "VTT enduro"
+    for term in ENDURO_TERMS:
+        if term in text:
+            return "VTT enduro"
+    for brand in BRANDS_ENDURO_PURE:
+        if brand in text:
+            return "VTT enduro"
+    return None
 
 
 def _extract_first_int(s: Optional[str]) -> Optional[int]:
@@ -53,6 +104,9 @@ class FetchedAd:
     category_id: Optional[str]
     category_name: Optional[str]
     attributes: dict[str, str]
+    # Classification facultative (calculee par classify_vtt() si watch.auto_classify_vtt).
+    # Override le watch.category_label au moment de l'upsert.
+    auto_category_label: Optional[str] = None
 
 
 def _ad_to_fetched(ad: lbc.Ad) -> FetchedAd:
@@ -100,6 +154,15 @@ def _apply_filters(fetched: list[FetchedAd], watch: Watch) -> list[FetchedAd]:
             a for a in fetched
             if _ad_passes_attribute_filters(a.attributes, watch.attribute_filters)
         ]
+    if watch.auto_classify_vtt:
+        kept: list[FetchedAd] = []
+        for a in fetched:
+            label = classify_vtt(a.subject, a.body)
+            if label is None:
+                continue
+            a.auto_category_label = label
+            kept.append(a)
+        fetched = kept
     return fetched
 
 

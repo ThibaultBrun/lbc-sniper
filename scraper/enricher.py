@@ -358,7 +358,16 @@ def _reset_failed_burst(db, pending: list, current_index: int, burst_size: int) 
 def _process_one(db, ad: dict, watches: dict, model: str) -> bool:
     """Enrichit une annonce. Retourne True si succes, False si echec."""
     watch = watches.get(ad["watch_id"])
-    domain = watch.enrichment_domain if watch else None
+    # Pour les VTT, le category_label de l'annonce ('VTT enduro' ou 'VTT DH')
+    # surclasse l'enrichment_domain du watch — un seul watch large peut produire
+    # les deux categories selon classify_vtt().
+    cat_label = (ad.get("category_label") or "").strip()
+    if cat_label == "VTT DH":
+        domain = "vtt_dh"
+    elif cat_label == "VTT enduro":
+        domain = "vtt_enduro"
+    else:
+        domain = watch.enrichment_domain if watch else None
     prompt = build_prompt(ad, domain)
     try:
         result = call_claude(prompt, model=model)

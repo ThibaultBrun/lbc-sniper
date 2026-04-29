@@ -41,6 +41,10 @@ class Watch:
     # que cette fenetre (en heures). Utile pour les watches denses ou `limit`
     # ne suffit pas a couvrir les nouvelles annonces des dernieres 24h.
     incremental_hours: Optional[int] = None
+    # Si True : applique classify_vtt() apres fetch. Garde uniquement les VTT
+    # enduro/DH/AM/trail/e-MTB de cette famille, et override category_label
+    # avec "VTT enduro" ou "VTT DH" selon le signal trouve dans titre+body.
+    auto_classify_vtt: bool = False
 
 
 def load_config(path: Path | str = "config.yaml") -> list[Watch]:
@@ -82,6 +86,7 @@ def load_config(path: Path | str = "config.yaml") -> list[Watch]:
                 search_in_title_only=bool(w.get("search_in_title_only", False)),
                 category_label=w.get("category_label"),
                 incremental_hours=w.get("incremental_hours"),
+                auto_classify_vtt=bool(w.get("auto_classify_vtt", False)),
             )
         )
     return watches
