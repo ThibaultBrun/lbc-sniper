@@ -223,7 +223,7 @@ def process_price_drops(db, dry_run: bool = False) -> tuple[int, int]:
 
         detected += 1
         # Recupere l'email de l'utilisateur via la table profiles
-        prof = db.table("profiles").select("email").eq("id", r["user_id"]).maybeSingle().execute().data
+        prof = db.table("profiles").select("email").eq("id", r["user_id"]).maybe_single().execute().data
         if not prof or not prof.get("email"):
             continue
 
@@ -302,7 +302,7 @@ def process_saved_searches(db, dry_run: bool = False) -> tuple[int, int]:
             continue
 
         # Recupere l'email
-        prof = db.table("profiles").select("email").eq("id", search["user_id"]).maybeSingle().execute().data
+        prof = db.table("profiles").select("email").eq("id", search["user_id"]).maybe_single().execute().data
         if not prof or not prof.get("email"):
             continue
 
