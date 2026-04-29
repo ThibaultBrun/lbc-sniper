@@ -113,14 +113,30 @@ async function load() {
   loading.value = true;
   error.value = null;
   try {
+    // On charge uniquement ce qui est utile pour la liste + le filtrage.
+    // Les gros champs (attributes jsonb, reasoning, pros/cons jsonb) ne
+    // sont pas utilises par les cards et seront recharges quand l'utilisateur
+    // ouvre la modale (via getAdById qui fait un select * cible).
+    const LIST_FIELDS = [
+      "id", "watch_id", "subject", "body", "url", "image_url",
+      "city", "zipcode", "ad_lat", "ad_lng",
+      "category_id", "category_name", "category_label",
+      "current_price", "first_publication", "first_seen_at", "last_seen_at",
+      "is_active", "mileage_km", "fuel", "gearbox", "regyear",
+      "brand", "model", "year", "frame_material", "wheel_size", "electric",
+      "size_label", "condition_score", "estimated_market_eur", "deal_score",
+      "enriched_at", "enrich_error",
+    ].join(",");
     const { data, error: e } = await supabase
       .from("ads")
-      .select("*")
+      .select(LIST_FIELDS)
       .eq("is_active", true)
       .order("deal_score", { ascending: false, nullsFirst: false })
       .limit(1000);
     if (e) throw e;
-    ads.value = data as Ad[];
+    // Les gros champs manquants seront a null/undefined; le type Ad reste
+    // satisfait via assertion (DealCard ne les utilise pas).
+    ads.value = data as unknown as Ad[];
   } catch (e: any) {
     error.value = e.message ?? String(e);
   } finally {
