@@ -6,6 +6,7 @@ import type { GeoFilterValue } from "./components/GeoFilter.vue";
 // Snapshot de tous les filtres UI courants. Stocke en jsonb.
 export type SavedSearchFilters = {
   categoryFilter: string | null;
+  vttCategoryFilter?: string | null;   // xc | trail | all_mountain | enduro | dh | dirt
   geo: GeoFilterValue | null;
   radiusKm: number;
   electricFilter: "all" | "yes" | "no";

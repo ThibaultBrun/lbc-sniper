@@ -17,6 +17,18 @@ GENERIC_ENDURO = {
     'trail',
 }
 
+# Mots-cles generiques qui qualifient XC / cross-country / marathon
+GENERIC_XC = {
+    'cross country',
+    'crosscountry',
+    'cross-country',
+    'xc',
+    'xco',
+    'xcm',
+    'marathon vtt',
+    'race vtt',
+}
+
 # Mots-cles generiques qui qualifient DH/descente
 GENERIC_DH = {
     'bike park',

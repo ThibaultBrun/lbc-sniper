@@ -46,6 +46,19 @@ async function handleHideClick(e: MouseEvent) {
   }
 }
 
+const VTT_CATEGORY_LABELS: Record<string, string> = {
+  xc: "XC",
+  trail: "Trail",
+  all_mountain: "All-mountain",
+  enduro: "Enduro",
+  dh: "DH",
+  dirt: "Dirt",
+};
+const vttCategoryLabel = computed(() => {
+  const c = props.ad.vtt_category;
+  return c ? VTT_CATEGORY_LABELS[c] ?? null : null;
+});
+
 const score = computed(() => props.ad.deal_score ?? 0);
 
 const tier = computed(() => {
@@ -183,6 +196,7 @@ const hasAnalysis = computed(
       </div>
 
       <div class="flex flex-wrap gap-1">
+        <span v-if="vttCategoryLabel" class="tag-vtt-category">{{ vttCategoryLabel }}</span>
         <span v-if="ad.regyear" class="tag-strong tabular-nums">{{ ad.regyear }}</span>
         <span v-if="ad.mileage_km" class="tag tabular-nums">
           {{ ad.mileage_km.toLocaleString("fr-FR") }} km

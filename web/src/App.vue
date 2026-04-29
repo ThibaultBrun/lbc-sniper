@@ -40,7 +40,10 @@ const isFavoritesPage = computed(() => route.name === "favorites");
 // Favoris : filtre les ads qu'on affiche aux ID en favori du user.
 const { favoriteIds } = useFavorites();
 
-const VTT_LABELS = ["VTT enduro", "VTT DH"];
+// Toutes les annonces classifiees comme VTT par le scraper. La home publique
+// les expose toutes ; le filtre UI "Type" (vtt_category) permet ensuite de
+// trier par usage (XC, trail, all-mountain, enduro, DH, dirt).
+const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC"];
 
 const ads = ref<Ad[]>([]);
 const loading = ref(true);
@@ -52,10 +55,21 @@ const enrichedCount = ref(0);
 const greatCount = ref(0);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const categoryFilter = ref<string | null>(null);
+const vttCategoryFilter = ref<string | null>(null);
 
 const geo = ref<GeoFilterValue | null>(null);
 const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
+
+// Categories d'usage VTT (cle = valeur enum SQL, label = ce qu'on affiche).
+const VTT_CATEGORY_OPTIONS = [
+  { value: "xc", label: "XC / Cross-country" },
+  { value: "trail", label: "Trail" },
+  { value: "all_mountain", label: "All-mountain" },
+  { value: "enduro", label: "Enduro" },
+  { value: "dh", label: "DH / Descente" },
+  { value: "dirt", label: "Dirt" },
+];
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
 const searchText = ref("");
@@ -158,7 +172,7 @@ const LIST_FIELDS = [
   "current_price", "first_publication", "first_seen_at", "last_seen_at",
   "is_active", "mileage_km", "fuel", "gearbox", "regyear",
   "brand", "model", "year", "frame_material", "wheel_size", "electric",
-  "size_label", "condition_score", "estimated_market_eur", "deal_score",
+  "size_label", "vtt_category", "condition_score", "estimated_market_eur", "deal_score",
 ].join(",");
 
 // Helper : applique le scope commun (is_active + admin_hidden=false + VTT).
@@ -235,6 +249,7 @@ const categories = computed(() => {
 
 const currentFilters = computed<SavedSearchFilters>(() => ({
   categoryFilter: categoryFilter.value,
+  vttCategoryFilter: vttCategoryFilter.value,
   geo: geo.value,
   radiusKm: radiusKm.value,
   electricFilter: electricFilter.value,
@@ -246,6 +261,7 @@ const currentFilters = computed<SavedSearchFilters>(() => ({
 
 function applySavedSearch(f: SavedSearchFilters) {
   categoryFilter.value = f.categoryFilter;
+  vttCategoryFilter.value = f.vttCategoryFilter ?? null;
   geo.value = f.geo;
   radiusKm.value = f.radiusKm ?? 50;
   electricFilter.value = f.electricFilter ?? "all";
@@ -257,6 +273,7 @@ function applySavedSearch(f: SavedSearchFilters) {
 
 function resetFilters() {
   categoryFilter.value = null;
+  vttCategoryFilter.value = null;
   geo.value = null;
   radiusKm.value = 50;
   electricFilter.value = "all";
@@ -269,6 +286,7 @@ function resetFilters() {
 // True des qu'au moins un filtre est actif (utilise pour afficher le bouton reset).
 const hasActiveFilters = computed(() =>
   categoryFilter.value !== null
+  || vttCategoryFilter.value !== null
   || geo.value !== null
   || electricFilter.value !== "all"
   || priceMin.value !== null
@@ -285,6 +303,9 @@ const filtered = computed(() => {
   }
   if (categoryFilter.value)
     list = list.filter((a) => a.category_label === categoryFilter.value);
+
+  if (vttCategoryFilter.value)
+    list = list.filter((a) => a.vtt_category === vttCategoryFilter.value);
 
   // Filtre geographique : Haversine si geo est defini
   if (geo.value) {
@@ -351,7 +372,7 @@ const paginated = computed(() => {
 
 // Reset a la page 1 quand les filtres changent ou que la taille de page bouge.
 watch(
-  [categoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize, searchText],
+  [categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize, searchText],
   () => {
     currentPage.value = 1;
   },
@@ -464,6 +485,16 @@ const stats = computed(() => ({
             <select v-model="categoryFilter" class="input-base">
               <option :value="null">Toutes</option>
               <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
+            </select>
+          </label>
+
+          <label class="flex items-center gap-2">
+            <span class="text-muted">🚵 Type:</span>
+            <select v-model="vttCategoryFilter" class="input-base">
+              <option :value="null">Tous</option>
+              <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
+                {{ o.label }}
+              </option>
             </select>
           </label>
 

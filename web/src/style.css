@@ -464,6 +464,14 @@ html, body {
     color: white;
   }
 
+  /* ----- Tag categorie VTT (XC, trail, enduro, DH...) ----- */
+  .tag-vtt-category {
+    @apply rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide;
+    background-color: var(--color-accent-soft);
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent-soft-border);
+  }
+
   /* ----- Pros / Cons items (lignes individuelles dans modal) ----- */
   .panel-pros-item {
     @apply flex gap-3 text-sm rounded-lg p-3 leading-relaxed;

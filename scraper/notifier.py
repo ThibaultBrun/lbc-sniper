@@ -207,33 +207,48 @@ def _get_smtp() -> Optional[smtplib.SMTP]:
     if not SMTP_USER or not SMTP_PASS:
         print("  ERROR: SMTP_USER/SMTP_PASS not configured", file=sys.stderr)
         return None
-    try:
-        # On essaie d'abord avec verif TLS stricte. Si l'utilisateur a un
-        # antivirus / proxy d'entreprise qui fait du SSL inspection (cas
-        # frequent sur Windows pro), la chaine de cert est injectee par cet
-        # outil et la verif echoue ("self-signed certificate in chain").
-        # Dans ce cas on retombe sur un contexte permissif : risque faible
-        # pour du SMTP outbound (on ne lit pas de donnees sensibles depuis
-        # le serveur, on envoie juste un mail signe DKIM cote OVH).
-        # SMTP_INSECURE=1 dans .env force directement le mode permissif.
-        if os.environ.get("SMTP_INSECURE") == "1":
-            ctx = ssl._create_unverified_context()
-        else:
-            try:
-                import certifi
-                ctx = ssl.create_default_context(cafile=certifi.where())
-            except ImportError:
-                ctx = ssl.create_default_context()
+    # Fonction interne : tente la connexion avec un contexte SSL donne.
+    def _try_connect(ctx: Optional[ssl.SSLContext]) -> Optional[smtplib.SMTP]:
         if SMTP_PORT == 465:
-            conn = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=ctx, timeout=20)
+            c = smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=ctx, timeout=20)
         else:
-            conn = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
-            conn.ehlo()
-            conn.starttls(context=ctx)
-            conn.ehlo()
-        conn.login(SMTP_USER, SMTP_PASS)
-        _smtp_conn = conn
-        return conn
+            c = smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20)
+            c.ehlo()
+            c.starttls(context=ctx)
+            c.ehlo()
+        c.login(SMTP_USER, SMTP_PASS)
+        return c
+
+    insecure_forced = os.environ.get("SMTP_INSECURE") == "1"
+    try:
+        if insecure_forced:
+            # Mode permissif explicitement demande (ex : poste avec antivirus
+            # d'entreprise qui fait du SSL inspection -> chaine de cert injectee).
+            ctx = ssl._create_unverified_context()
+            _smtp_conn = _try_connect(ctx)
+            return _smtp_conn
+
+        # Sinon : strict d'abord (avec certifi si dispo) puis fallback automatique
+        # si on detecte que c'est un proxy MITM qui pourrit la chaine.
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            ctx = ssl.create_default_context()
+        try:
+            _smtp_conn = _try_connect(ctx)
+            return _smtp_conn
+        except ssl.SSLCertVerificationError as e:
+            # "self-signed certificate in certificate chain" = signe d'un AV/proxy
+            # local. Aucun risque a desactiver la verif pour du SMTP outbound,
+            # le mail sera de toute facon signe DKIM par OVH a la sortie.
+            msg = str(e)
+            if "self-signed" in msg.lower() or "self signed" in msg.lower():
+                print(f"  WARN: TLS chain looks intercepted by local AV/proxy, retrying insecure", file=sys.stderr)
+                ctx = ssl._create_unverified_context()
+                _smtp_conn = _try_connect(ctx)
+                return _smtp_conn
+            raise
     except Exception as e:
         print(f"  ERROR: SMTP connection to {SMTP_HOST}:{SMTP_PORT} failed: {e}", file=sys.stderr)
         return None

@@ -63,31 +63,33 @@ def _has_vtt_qualifier(padded: str) -> bool:
 
 
 def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
-    """Cherche un signal enduro/DH dans le titre+body normalises.
-    Retourne 'VTT DH', 'VTT enduro', ou None si l'annonce n'est pas
-    un VTT enduro/AM/trail/DH/freeride/e-MTB de cette famille.
-    DH a priorite (un velo qualifie pour les 2 = DH).
+    """Cherche un signal VTT (XC, enduro, DH) dans le titre+body normalises.
+    Retourne 'VTT DH', 'VTT enduro', 'VTT XC', ou None.
+    Priorites :
+      DH > enduro > XC (un VTT qualifie pour plusieurs = celui de plus haute priorite).
 
     Strategie en 2 etapes pour eviter les faux positifs :
-    1. Les mots-cles 'enduro' / 'dh' / 'descente' / etc. qualifient seuls.
+    1. Les mots-cles 'enduro' / 'dh' / 'xc' / etc. qualifient seuls.
     2. Les noms de modeles ou marques pure-MTB ne qualifient QUE si on
        trouve aussi un signal 'vtt' / 'mtb' / 'mountain' / etc. dans le texte.
-       Ca evite que 'element' ou 'titan' (mots francais courants ou modeles
-       polyvalents) declenchent un faux positif sur un velo de route.
     """
+    from .vtt_models import GENERIC_XC
+
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
 
-    # Niveau 1 : mots-cles qui qualifient seuls (DH a priorite).
+    # Niveau 1 : mots-cles qui qualifient seuls (DH > enduro > XC).
     for kw in GENERIC_DH:
         if _contains_word(padded, kw):
             return "VTT DH"
     for kw in GENERIC_ENDURO:
         if _contains_word(padded, kw):
             return "VTT enduro"
+    for kw in GENERIC_XC:
+        if _contains_word(padded, kw):
+            return "VTT XC"
 
     # Niveau 2 : marques 100% MTB — qualifient SEULES (pas besoin de 'vtt').
-    # YT Industries / Commencal / Mondraker / etc. ne fabriquent que du MTB.
     for brand in BRANDS_ENDURO_PURE:
         if _contains_word(padded, brand):
             return "VTT enduro"

@@ -199,16 +199,34 @@ def update_enrichment(
     enriched: dict,
     model: str,
 ) -> None:
-    """Met à jour les colonnes enriched_* d'une annonce."""
+    """Met à jour les colonnes enriched_* d'une annonce.
+
+    Pour vtt_category : on prefere TOUJOURS le mapping marque/modele (fiable,
+    deterministe) a la classification IA. L'IA ne sert que de fallback si on
+    n'a pas le couple dans le mapping.
+    """
+    # Import local pour eviter cycle d'import si vtt_categories est etendu
+    from .vtt_categories import classify_by_model
+
+    brand = enriched.get("brand")
+    model_name = enriched.get("model")
+    mapped = classify_by_model(brand, model_name)
+    vtt_cat = mapped if mapped else enriched.get("vtt_category")
+    # Garde-fou : valeurs valides de l'enum SQL
+    valid_cats = {"xc", "trail", "all_mountain", "enduro", "dh", "dirt"}
+    if vtt_cat not in valid_cats:
+        vtt_cat = None
+
     db.table("ads").update(
         {
-            "brand": enriched.get("brand"),
-            "model": enriched.get("model"),
+            "brand": brand,
+            "model": model_name,
             "year": enriched.get("year"),
             "frame_material": enriched.get("frame_material"),
             "wheel_size": enriched.get("wheel_size"),
             "electric": enriched.get("electric"),
             "size_label": enriched.get("size_label"),
+            "vtt_category": vtt_cat,
             "condition_score": enriched.get("condition_score"),
             "estimated_market_eur": enriched.get("estimated_market_eur"),
             "deal_score": enriched.get("deal_score"),

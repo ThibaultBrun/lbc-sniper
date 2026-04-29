@@ -52,6 +52,12 @@ SCHEMA = {
         "wheel_size": {"type": ["string", "null"]},
         "electric": {"type": ["boolean", "null"]},
         "size_label": {"type": ["string", "null"]},
+        # Categorie d'usage VTT (ne s'applique qu'aux annonces VTT). NULL si
+        # impossible a determiner depuis l'annonce.
+        "vtt_category": {
+            "type": ["string", "null"],
+            "enum": ["xc", "trail", "all_mountain", "enduro", "dh", "dirt", None],
+        },
         "condition_score": {"type": "integer", "minimum": 0, "maximum": 100},
         "estimated_market_eur": {"type": "number"},
         "deal_score": {"type": "integer", "minimum": 0, "maximum": 100},
@@ -102,6 +108,16 @@ REPERES de cote reelle occasion sur LBC (a adapter mais comme base) :
 - Specialized Stumpjumper 2017-2019 (alu/carbone 29) : 1500-3000 EUR
 
 Si modele anterieur a 2018, particuliere vigilance : ne PAS surestimer la cote.
+
+CLASSIFICATION vtt_category (renvoie une de ces valeurs, ou null si impossible) :
+- "xc"           : 100-120 mm debattement, course/marathon, leger (Specialized Epic, Trek Supercaliber, Scott Spark, BMC Fourstroke, Cannondale Scalpel)
+- "trail"        : 120-140 mm, polyvalent leger (Trek Fuel EX, Specialized Stumpjumper Comp, Norco Optic, Vitus Mythique)
+- "all_mountain" : 140-150 mm, le couteau suisse (Lapierre Zesty, Specialized Stumpjumper Evo, Trek Remedy, Cube Stereo, Santa Cruz Hightower/Bronson, Canyon Spectral, Commencal Meta TR/HT)
+- "enduro"       : 150-170 mm, descente engagee + montee (Lapierre Spicy, Specialized Enduro, Canyon Torque/Strive, Nukeproof Mega/Giga, YT Capra, Santa Cruz Megatower/Nomad, Commencal Meta AM/Clash, Trek Slash, Mondraker Dune)
+- "dh"           : 180-200 mm, descente pure / freeride (Specialized Demo, Trek Session, Commencal Supreme/Furious, Santa Cruz V10, YT Tues, Canyon Sender, GT Fury, Intense M16/M29, Mondraker Summum, Norco Aurum)
+- "dirt"         : VTT dirt jump / pumptrack, hardtail rigide (Specialized P.1/P.3, Commencal Absolut, NS Bikes, Canyon Stitched)
+
+Renvoie null si l'annonce ne donne pas assez d'info pour trancher (ex: "VTT 27.5 bon etat" sans modele identifiable).
 """
 
 
