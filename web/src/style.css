@@ -345,6 +345,22 @@ html, body {
     border: 1px solid theme(colors.rose.200);
   }
 
+  /* ----- Skeleton (chargement) : shimmer effet doux ----- */
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--color-bg-muted) 0%,
+      var(--color-bg-input-hover) 50%,
+      var(--color-bg-muted) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
   /* ----- Encart guides sur la home (avant les filtres) ----- */
   .guides-banner {
     @apply rounded-xl p-4;

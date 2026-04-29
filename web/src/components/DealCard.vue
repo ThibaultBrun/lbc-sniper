@@ -100,12 +100,10 @@ const discountColor = computed(() => {
   return "text-rose-400";
 });
 
-const hasAnalysis = computed(
-  () =>
-    !!props.ad.reasoning ||
-    (props.ad.pros && props.ad.pros.length > 0) ||
-    (props.ad.cons && props.ad.cons.length > 0),
-);
+// Proxy : si on a un deal_score, l'enricher a aussi ecrit reasoning+pros+cons
+// (c'est dans la meme transaction). Permet de savoir si une analyse existe
+// sans charger les jsonb arrays dans le SELECT light de la liste.
+const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal_score !== undefined);
 </script>
 
 <template>

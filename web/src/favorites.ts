@@ -7,18 +7,33 @@ const favoriteIds = ref<Set<number>>(new Set());
 const loaded = ref(false);
 
 let initialized = false;
+// Dedup : on memorise le dernier userId charge. Si Supabase Auth declenche
+// 2-3 ticks reactifs sur le meme user (getSession puis onAuthStateChange
+// puis re-trigger), on ne refait pas la requete a chaque fois.
+let loadedForUserId: string | null = null;
+let loadInflight: Promise<void> | null = null;
 
 async function load(userId: string) {
-  const { data, error } = await supabase
-    .from("favorites")
-    .select("ad_id")
-    .eq("user_id", userId);
-  if (error) {
-    console.error("Failed to load favorites", error);
-    return;
+  if (loadedForUserId === userId) return;
+  if (loadInflight) return loadInflight;
+  loadInflight = (async () => {
+    const { data, error } = await supabase
+      .from("favorites")
+      .select("ad_id")
+      .eq("user_id", userId);
+    if (error) {
+      console.error("Failed to load favorites", error);
+      return;
+    }
+    favoriteIds.value = new Set((data ?? []).map((r) => r.ad_id));
+    loaded.value = true;
+    loadedForUserId = userId;
+  })();
+  try {
+    await loadInflight;
+  } finally {
+    loadInflight = null;
   }
-  favoriteIds.value = new Set((data ?? []).map((r) => r.ad_id));
-  loaded.value = true;
 }
 
 function ensureInit() {
@@ -26,15 +41,15 @@ function ensureInit() {
   initialized = true;
 
   const { user } = useAuth();
-  // Recharge les favoris quand l'user change (login / logout).
   watch(
-    user,
-    async (u) => {
-      if (u) {
-        await load(u.id);
+    () => user.value?.id ?? null,
+    async (uid) => {
+      if (uid) {
+        await load(uid);
       } else {
         favoriteIds.value = new Set();
         loaded.value = false;
+        loadedForUserId = null;
       }
     },
     { immediate: true },

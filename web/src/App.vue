@@ -8,6 +8,7 @@ import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
 import LegalPage from "./components/LegalPage.vue";
 import AdminUsers from "./components/AdminUsers.vue";
+import DealCardSkeleton from "./components/DealCardSkeleton.vue";
 import GuidesIndex from "./components/guides/GuidesIndex.vue";
 import GuideChoisirVtt from "./components/guides/GuideChoisirVtt.vue";
 import GuideEnduroVsDh from "./components/guides/GuideEnduroVsDh.vue";
@@ -44,6 +45,13 @@ const { favoriteIds } = useFavorites();
 // les expose toutes ; le filtre UI "Type" (vtt_category) permet ensuite de
 // trier par usage (XC, all-mountain, enduro, DH, dirt).
 const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC", "VTT dirt"];
+
+// Encart guides : replie par defaut sur mobile (gain de place), deplie sur desktop.
+// L'utilisateur peut basculer manuellement.
+const guidesOpen = ref(typeof window !== "undefined" && window.innerWidth >= 640);
+function toggleGuides() {
+  guidesOpen.value = !guidesOpen.value;
+}
 
 const ads = ref<Ad[]>([]);
 const loading = ref(true);
@@ -161,18 +169,20 @@ watch(isSecret, () => {
   categoryFilter.value = null;
 });
 
-// Champs charges pour la liste. PAS de `body` (texte long, plombe la requete
-// 4x plus que le reste reuni). PAS de jsonb attributes/pros/cons/reasoning
-// ni enriched_at/enrich_error : tout ca est recharge via getAdById quand
-// l'utilisateur ouvre la modale.
+// Champs strict minimum pour la liste / DealCard / filtres geo+prix+electric.
+// On EXCLUT explicitement (rechargees via getAdById a l'ouverture de la modale) :
+//   - body (texte long, plombe la requete 4x plus que le reste)
+//   - reasoning, pros, cons (jsonb arrays, ~500o-2ko par ad)
+//   - attributes (jsonb), enriched_at, enrich_error, enrich_model
+//   - watch_id, category_id, category_name (admin uniquement)
+//   - zipcode, first_publication, last_seen_at, condition_score, is_active (pas affiche)
 const LIST_FIELDS = [
-  "id", "watch_id", "subject", "url", "image_url",
-  "city", "zipcode", "ad_lat", "ad_lng",
-  "category_id", "category_name", "category_label",
-  "current_price", "first_publication", "first_seen_at", "last_seen_at",
-  "is_active", "mileage_km", "fuel", "gearbox", "regyear",
+  "id", "subject", "url", "image_url", "city",
+  "ad_lat", "ad_lng", "category_label",
+  "current_price", "first_seen_at", "estimated_market_eur",
+  "mileage_km", "fuel", "gearbox", "regyear",
   "brand", "model", "year", "frame_material", "wheel_size", "electric",
-  "size_label", "vtt_category", "condition_score", "estimated_market_eur", "deal_score",
+  "size_label", "vtt_category", "deal_score",
 ].join(",");
 
 // Helper : applique le scope commun (is_active + admin_hidden=false + VTT).
@@ -186,31 +196,33 @@ function scopedQuery() {
   return q;
 }
 
+// Page initiale chargee tres vite (100 ads = 5 lignes en xl). Les filtres
+// client-side ne fonctionnent que sur ce qu'on a charge — on complete en
+// background avec _loadRest pour avoir le dataset entier.
+const INITIAL_PAGE_SIZE = 100;
+const FULL_PAGE_SIZE = 1000;
+
+function buildListQuery() {
+  let q = supabase
+    .from("listings")
+    .select(LIST_FIELDS)
+    .eq("is_active", true)
+    .eq("admin_hidden", false);
+  if (!isSecret.value) q = q.in("category_label", VTT_LABELS);
+  return q.order("deal_score", { ascending: false, nullsFirst: false });
+}
+
+const fullDatasetLoaded = ref(false);
+
 async function load() {
   loading.value = true;
   error.value = null;
+  fullDatasetLoaded.value = false;
   try {
-    let listQuery = supabase
-      .from("listings")
-      .select(LIST_FIELDS)
-      .eq("is_active", true)
-      .eq("admin_hidden", false);
-    if (!isSecret.value) {
-      listQuery = listQuery.in("category_label", VTT_LABELS);
-    }
-    // 4 requetes en parallele : la liste + 3 count globaux.
-    // - La liste charge jusqu'a 1000 ads (cap de securite). Les filtres
-    //   user (geo / electric / prix / categorie / search text) sont ensuite
-    //   appliques cote client sur ce dataset. Avec l'index partiel
-    //   (category_label, deal_score desc) where is_active = true et le
-    //   SELECT light (sans body / enrich_*), c'est rapide (~quelques 10aines
-    //   de ko, <200ms).
-    // - Les counts utilisent head:true => Postgres ne renvoie aucune ligne,
-    //   juste l'aggregat dans le header Content-Range. Tres rapide.
+    // Phase 1 : on attend SEULEMENT la 1ere page (100 ads) + les 3 counts.
+    // L'UI peut s'afficher des qu'on a ca (~150-300ms vs 575ms avant).
     const [listRes, totalRes, enrichedRes, greatRes] = await Promise.all([
-      listQuery
-        .order("deal_score", { ascending: false, nullsFirst: false })
-        .limit(1000),
+      buildListQuery().limit(INITIAL_PAGE_SIZE),
       scopedQuery(),
       scopedQuery().not("deal_score", "is", null),
       scopedQuery().gte("deal_score", 80),
@@ -226,6 +238,33 @@ async function load() {
     loading.value = false;
   }
   await syncSelectedFromRoute();
+
+  // Phase 2 : en background, complete le dataset jusqu'a 1000 si necessaire
+  // (pour les filtres geo/prix/electric qui ont besoin du dataset entier).
+  // Pas de await en haut : l'UI affiche deja les 100 premieres.
+  if (totalCount.value > INITIAL_PAGE_SIZE) {
+    _loadRest();
+  } else {
+    fullDatasetLoaded.value = true;
+  }
+}
+
+async function _loadRest() {
+  try {
+    const { data, error: e } = await buildListQuery()
+      .range(INITIAL_PAGE_SIZE, FULL_PAGE_SIZE - 1);
+    if (e) {
+      console.error("Background load failed:", e);
+      return;
+    }
+    if (data && data.length > 0) {
+      // On concatene en preservant l'ordre serveur (deja triE par deal_score).
+      ads.value = [...ads.value, ...(data as unknown as Ad[])];
+    }
+    fullDatasetLoaded.value = true;
+  } catch (e) {
+    console.error("Background load failed:", e);
+  }
 }
 
 // Quand on bascule entre / et /secret, on recharge avec le bon scope.
@@ -423,32 +462,40 @@ const stats = computed(() => ({
   <GuideDecrypterAnnonce v-else-if="isGuideDecrypter" />
   <div v-else class="min-h-screen flex flex-col">
     <header class="surface-header">
-      <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-baseline gap-4 justify-between">
-        <div>
-          <h1 class="text-xl font-bold tracking-tight">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center gap-3 sm:gap-4 justify-between">
+        <div class="min-w-0">
+          <h1 class="text-lg sm:text-xl font-bold tracking-tight">
             <span style="color: var(--color-accent-hover)">Trouve</span> Ton VTT
-            <span v-if="isSecret" class="ml-2 text-xs font-normal uppercase tracking-wider" style="color: var(--color-danger-text)">[ secret ]</span>
+            <span v-if="isSecret" class="ml-2 text-[10px] sm:text-xs font-normal uppercase tracking-wider" style="color: var(--color-danger-text)">[ secret ]</span>
           </h1>
-          <p class="text-xs text-muted mt-0.5">
+          <p class="text-[11px] sm:text-xs text-muted mt-0.5 hidden sm:block">
             <span v-if="isSecret">VTT, voitures, motos — analyse IA complète</span>
             <span v-else>les meilleures affaires VTT du moment, analysées par IA</span>
           </p>
         </div>
-        <div class="flex items-center gap-4 text-xs text-muted">
-          <router-link to="/guides" class="font-medium hover:opacity-80" style="color: var(--color-accent-hover)">
+        <div class="flex items-center gap-2 sm:gap-4 text-xs text-muted flex-wrap justify-end">
+          <!-- Stats : forme compacte sur mobile, detaillee en desktop -->
+          <span class="sm:hidden text-[11px]">
+            <span class="font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }}</span>
+            / {{ stats.enriched }} ex.
+          </span>
+          <router-link to="/guides" class="font-medium hover:opacity-80 hidden lg:inline" style="color: var(--color-accent-hover)">
             📘 Guides
           </router-link>
-          <span v-if="filtered.length === stats.total">{{ stats.total }} annonces</span>
-          <span v-else>{{ filtered.length }} / {{ stats.total }} annonces</span>
-          <span>{{ stats.enriched }} analysées</span>
-          <span class="font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }} excellentes</span>
-          <button @click="load" class="btn btn-ghost">↻ Recharger</button>
+          <span class="hidden sm:inline" v-if="filtered.length === stats.total">{{ stats.total }} annonces</span>
+          <span class="hidden sm:inline" v-else>{{ filtered.length }} / {{ stats.total }} annonces</span>
+          <span class="hidden md:inline">{{ stats.enriched }} analysées</span>
+          <span class="hidden sm:inline font-semibold" style="color: var(--color-accent-hover)">{{ stats.great }} excellentes</span>
+          <button @click="load" class="btn btn-ghost" aria-label="Recharger">
+            <span class="sm:hidden">↻</span>
+            <span class="hidden sm:inline">↻ Recharger</span>
+          </button>
           <AuthButton />
         </div>
       </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6 w-full">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 w-full">
       <!-- Banniere /favoris -->
       <div v-if="isFavoritesPage" class="banner-info">
         <div>
@@ -460,22 +507,34 @@ const stats = computed(() => ({
         <router-link to="/" class="btn btn-ghost">← Retour à toutes les annonces</router-link>
       </div>
 
-      <!-- Encart guides : visible sur la home publique uniquement, pas sur /secret ni /favoris -->
+      <!-- Encart guides : visible sur la home publique uniquement, pas sur /secret ni /favoris.
+           Replie par defaut sur mobile (chevron pour deplier). -->
       <section v-if="!isSecret && !isFavoritesPage" class="guides-banner">
-        <header class="flex items-baseline justify-between gap-4 mb-4">
-          <div>
-            <h2 class="text-base font-bold flex items-center gap-2">
+        <button
+          type="button"
+          @click="toggleGuides"
+          class="w-full flex items-baseline justify-between gap-3 text-left"
+          :aria-expanded="guidesOpen"
+        >
+          <div class="min-w-0 flex-1">
+            <h2 class="text-sm sm:text-base font-bold flex items-center gap-2">
+              <span class="transition-transform inline-block" :style="{ transform: guidesOpen ? 'rotate(90deg)' : 'rotate(0deg)' }">▸</span>
               📘 Avant d'acheter, lis nos guides
             </h2>
-            <p class="text-xs text-muted mt-0.5">
+            <p v-if="guidesOpen" class="text-xs text-muted mt-0.5 ml-5">
               Conseils pratiques pour choisir, négocier et éviter les arnaques.
             </p>
           </div>
-          <router-link to="/guides" class="text-xs font-semibold whitespace-nowrap" style="color: var(--color-accent-hover)">
-            Tous les guides →
+          <router-link
+            to="/guides"
+            @click.stop
+            class="text-xs font-semibold whitespace-nowrap shrink-0"
+            style="color: var(--color-accent-hover)"
+          >
+            Tous →
           </router-link>
-        </header>
-        <div class="grid gap-3 sm:grid-cols-3">
+        </button>
+        <div v-if="guidesOpen" class="grid gap-3 sm:grid-cols-3 mt-4">
           <router-link to="/guides/comment-choisir-vtt-occasion" class="guide-mini-card">
             <div class="text-xl">🛒</div>
             <div class="font-semibold leading-tight">Choisir un VTT d'occasion</div>
@@ -584,7 +643,10 @@ const stats = computed(() => ({
         </div>
       </div>
 
-      <div v-if="loading" class="text-center text-subtle py-12">Chargement…</div>
+      <!-- Skeleton pendant chargement initial : meme grille, meme nb par page -->
+      <div v-if="loading" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <DealCardSkeleton v-for="i in pageSize" :key="`sk${i}`" />
+      </div>
 
       <div v-else-if="error" class="panel-error">
         <p class="font-semibold">Erreur Supabase</p>

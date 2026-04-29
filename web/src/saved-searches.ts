@@ -32,19 +32,31 @@ const searches = ref<SavedSearch[]>([]);
 const loaded = ref(false);
 
 let initialized = false;
+let loadedForUserId: string | null = null;
+let loadInflight: Promise<void> | null = null;
 
 async function load(userId: string) {
-  const { data, error } = await supabase
-    .from("saved_searches")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-  if (error) {
-    console.error("Failed to load saved searches", error);
-    return;
+  if (loadedForUserId === userId) return;
+  if (loadInflight) return loadInflight;
+  loadInflight = (async () => {
+    const { data, error } = await supabase
+      .from("saved_searches")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("Failed to load saved searches", error);
+      return;
+    }
+    searches.value = (data ?? []) as SavedSearch[];
+    loaded.value = true;
+    loadedForUserId = userId;
+  })();
+  try {
+    await loadInflight;
+  } finally {
+    loadInflight = null;
   }
-  searches.value = (data ?? []) as SavedSearch[];
-  loaded.value = true;
 }
 
 function ensureInit() {
@@ -53,13 +65,14 @@ function ensureInit() {
 
   const { user } = useAuth();
   watch(
-    user,
-    async (u) => {
-      if (u) {
-        await load(u.id);
+    () => user.value?.id ?? null,
+    async (uid) => {
+      if (uid) {
+        await load(uid);
       } else {
         searches.value = [];
         loaded.value = false;
+        loadedForUserId = null;
       }
     },
     { immediate: true },

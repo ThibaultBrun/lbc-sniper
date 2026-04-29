@@ -19,10 +19,18 @@ const profile = ref<Profile | null>(null);
 const loading = ref(true);
 
 let initialized = false;
+// Dedup : on memorise le dernier user.id pour lequel le profile a ete charge.
+// Sans ca, getSession() + onAuthStateChange (immediat puis SIGNED_IN) declenchent
+// 2-3 chargements concurrents du meme profile.
+let profileLoadedFor: string | null = null;
+let profileInflight: Promise<Profile | null> | null = null;
 
 async function loadProfile(uid: string): Promise<Profile | null> {
-  // Timeout defensif : si la requete RLS tourne en boucle (recursion ou autre),
-  // on ne bloque pas l'app entiere — on continue sans profile complet.
+  // Dedup : si on a deja le profile pour ce user, on retourne le cache.
+  if (profileLoadedFor === uid && profile.value) return profile.value;
+  // Si une requete est en vol pour le meme user, on l'attend plutot que d'en lancer une autre.
+  if (profileInflight) return profileInflight;
+
   const TIMEOUT_MS = 8000;
   const timeoutPromise = new Promise<null>((resolve) => {
     setTimeout(() => {
@@ -42,13 +50,33 @@ async function loadProfile(uid: string): Promise<Profile | null> {
       }
       return data as Profile | null;
     });
-  return Promise.race([queryPromise, timeoutPromise]);
+  profileInflight = Promise.race([queryPromise, timeoutPromise]);
+  try {
+    const p = await profileInflight;
+    if (p) profileLoadedFor = uid;
+    return p;
+  } finally {
+    profileInflight = null;
+  }
+}
+
+async function setUserAndProfile(newUser: User | null) {
+  // Si l'user.id est le meme qu'avant, on ne re-fetch pas le profile.
+  const prevUid = user.value?.id ?? null;
+  const newUid = newUser?.id ?? null;
+  user.value = newUser;
+  if (!newUser) {
+    profile.value = null;
+    profileLoadedFor = null;
+    return;
+  }
+  if (prevUid === newUid && profileLoadedFor === newUid) return;
+  profile.value = await loadProfile(newUser.id);
 }
 
 async function syncFromSession() {
   const { data } = await supabase.auth.getSession();
-  user.value = data.session?.user ?? null;
-  profile.value = user.value ? await loadProfile(user.value.id) : null;
+  await setUserAndProfile(data.session?.user ?? null);
   loading.value = false;
 }
 
@@ -58,8 +86,7 @@ function ensureInit() {
   syncFromSession();
   // Tient l'etat a jour si l'utilisateur se logge / log out dans un autre onglet.
   supabase.auth.onAuthStateChange(async (_event, session) => {
-    user.value = session?.user ?? null;
-    profile.value = user.value ? await loadProfile(user.value.id) : null;
+    await setUserAndProfile(session?.user ?? null);
   });
 }
 
