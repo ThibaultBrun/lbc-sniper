@@ -95,6 +95,15 @@ async function handleSignOut() {
       <router-link to="/favoris" @click="menuOpen = false" class="dropdown-item">
         ♥ Mes favoris
       </router-link>
+      <router-link
+        v-if="isAdmin"
+        to="/admin/utilisateurs"
+        @click="menuOpen = false"
+        class="dropdown-item"
+        style="border-top: 1px solid var(--color-border-subtle)"
+      >
+        👥 Utilisateurs (admin)
+      </router-link>
       <button
         @click="handleSignOut"
         class="dropdown-item w-full text-left"

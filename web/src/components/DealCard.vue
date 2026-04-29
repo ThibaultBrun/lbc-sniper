@@ -2,14 +2,15 @@
 import { computed, ref } from "vue";
 import { useFavorites } from "../favorites";
 import { useAuth } from "../auth";
-import type { Ad } from "../supabase";
+import { hideAd, type Ad } from "../supabase";
 
 const props = defineProps<{ ad: Ad }>();
-const emit = defineEmits<{ open: [Ad] }>();
+const emit = defineEmits<{ open: [Ad]; hidden: [number] }>();
 
 const { isFavorite, toggle } = useFavorites();
-const { isAuthenticated, signInWithGoogle } = useAuth();
+const { isAuthenticated, isAdmin, signInWithGoogle } = useAuth();
 const favPending = ref(false);
+const hidePending = ref(false);
 
 const isFav = computed(() => isFavorite(props.ad.id));
 
@@ -27,6 +28,21 @@ async function handleFavClick(e: MouseEvent) {
     console.error(err);
   } finally {
     favPending.value = false;
+  }
+}
+
+async function handleHideClick(e: MouseEvent) {
+  e.stopPropagation();
+  if (!confirm(`Masquer cette annonce du site ?\n\n"${props.ad.subject}"`)) return;
+  hidePending.value = true;
+  try {
+    await hideAd(props.ad.id);
+    emit("hidden", props.ad.id);
+  } catch (err) {
+    console.error(err);
+    alert("Erreur lors de la suppression : " + (err as Error).message);
+  } finally {
+    hidePending.value = false;
   }
 }
 
@@ -135,6 +151,18 @@ const hasAnalysis = computed(
       >
         <span v-if="isFav">♥</span>
         <span v-else>♡</span>
+      </button>
+      <!-- Bouton admin : masquer l'annonce du site (admin uniquement) -->
+      <button
+        v-if="isAdmin"
+        type="button"
+        @click="handleHideClick"
+        :disabled="hidePending"
+        class="absolute top-2 left-2 w-9 h-9 rounded-full grid place-items-center text-base transition shadow-lg bg-black/60 text-white hover:bg-rose-500"
+        aria-label="Masquer cette annonce (admin)"
+        title="Masquer cette annonce (admin)"
+      >
+        🗑
       </button>
     </div>
 

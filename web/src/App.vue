@@ -7,6 +7,7 @@ import DealCard from "./components/DealCard.vue";
 import DealModal from "./components/DealModal.vue";
 import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
 import LegalPage from "./components/LegalPage.vue";
+import AdminUsers from "./components/AdminUsers.vue";
 import SavedSearchesBar from "./components/SavedSearchesBar.vue";
 import type { SavedSearchFilters } from "./saved-searches";
 import { useFavorites } from "./favorites";
@@ -22,6 +23,8 @@ const isSecret = computed(() => route.path.startsWith("/secret"));
 const isLegalPage = computed(() =>
   ["about", "legal", "privacy", "tos"].includes(String(route.name)),
 );
+
+const isAdminPage = computed(() => route.name === "admin-users");
 
 const isFavoritesPage = computed(() => route.name === "favorites");
 
@@ -118,6 +121,13 @@ function openAd(ad: Ad) {
   });
 }
 
+// Suppression admin reussie : on retire l'ad de la liste localement (pas de
+// reload pour l'experience instantanee) et on decremente le total.
+function handleAdHidden(adId: number) {
+  ads.value = ads.value.filter((a) => a.id !== adId);
+  if (totalCount.value > 0) totalCount.value -= 1;
+}
+
 function closeAd() {
   router.push({ name: isSecret.value ? "secret" : "home" });
 }
@@ -142,10 +152,13 @@ const LIST_FIELDS = [
   "size_label", "condition_score", "estimated_market_eur", "deal_score",
 ].join(",");
 
-// Helper : applique le scope commun (is_active + filtre VTT sur la home).
+// Helper : applique le scope commun (is_active + admin_hidden=false + VTT).
+// `admin_hidden=true` = annonce masquee par un admin ; jamais retouchee par le
+// scraper, donc la suppression est definitive meme si LBC reposte l'annonce.
 function scopedQuery() {
-  let q = supabase.from("ads").select("*", { count: "exact", head: true })
-    .eq("is_active", true);
+  let q = supabase.from("listings").select("*", { count: "exact", head: true })
+    .eq("is_active", true)
+    .eq("admin_hidden", false);
   if (!isSecret.value) q = q.in("category_label", VTT_LABELS);
   return q;
 }
@@ -155,9 +168,10 @@ async function load() {
   error.value = null;
   try {
     let listQuery = supabase
-      .from("ads")
+      .from("listings")
       .select(LIST_FIELDS)
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("admin_hidden", false);
     if (!isSecret.value) {
       listQuery = listQuery.in("category_label", VTT_LABELS);
     }
@@ -231,6 +245,28 @@ function applySavedSearch(f: SavedSearchFilters) {
   searchText.value = f.searchText ?? "";
   sortBy.value = f.sortBy ?? "deal";
 }
+
+function resetFilters() {
+  categoryFilter.value = null;
+  geo.value = null;
+  radiusKm.value = 50;
+  electricFilter.value = "all";
+  priceMin.value = null;
+  priceMax.value = null;
+  searchText.value = "";
+  sortBy.value = "deal";
+}
+
+// True des qu'au moins un filtre est actif (utilise pour afficher le bouton reset).
+const hasActiveFilters = computed(() =>
+  categoryFilter.value !== null
+  || geo.value !== null
+  || electricFilter.value !== "all"
+  || priceMin.value !== null
+  || priceMax.value !== null
+  || searchText.value !== ""
+  || sortBy.value !== "deal",
+);
 
 const filtered = computed(() => {
   let list = ads.value;
@@ -350,6 +386,7 @@ const stats = computed(() => ({
 
 <template>
   <LegalPage v-if="isLegalPage" />
+  <AdminUsers v-else-if="isAdminPage" />
   <div v-else class="min-h-screen flex flex-col">
     <header class="surface-header">
       <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-baseline gap-4 justify-between">
@@ -452,7 +489,12 @@ const stats = computed(() => ({
             </select>
           </label>
 
-          <div class="ml-auto">
+          <div class="ml-auto flex items-center gap-2">
+            <button v-if="hasActiveFilters" @click="resetFilters" class="btn btn-ghost"
+              title="Reinitialiser tous les filtres"
+            >
+              ✕ Reset
+            </button>
             <SavedSearchesBar :current-filters="currentFilters" @apply="applySavedSearch" />
           </div>
         </div>
@@ -471,7 +513,7 @@ const stats = computed(() => ({
 
       <div v-else>
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          <DealCard v-for="ad in paginated" :key="ad.id" :ad="ad" @open="openAd" />
+          <DealCard v-for="ad in paginated" :key="ad.id" :ad="ad" @open="openAd" @hidden="handleAdHidden" />
         </div>
 
         <!-- Pagination -->

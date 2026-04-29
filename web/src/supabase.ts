@@ -24,12 +24,24 @@ export const supabase = createClient(url, anonKey, {
 
 export async function getAdById(id: number): Promise<Ad | null> {
   const { data, error } = await supabase
-    .from("ads")
+    .from("listings")
     .select("*")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   return (data as Ad | null) ?? null;
+}
+
+// Hide admin : passe admin_hidden=true. Reserve aux admins via la policy RLS
+// "admin update ads". Colonne separee de is_active car le scraper remet
+// is_active=true a chaque upsert sur conflict ; admin_hidden, lui, n'est
+// jamais touche par le scraper donc la suppression est definitive.
+export async function hideAd(id: number): Promise<void> {
+  const { error } = await supabase
+    .from("listings")
+    .update({ admin_hidden: true })
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export type Ad = {
@@ -71,4 +83,5 @@ export type Ad = {
   fuel: string | null;
   gearbox: string | null;
   regyear: number | null;
+  admin_hidden?: boolean;
 };

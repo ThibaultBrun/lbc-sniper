@@ -19,6 +19,8 @@ const routes: RouteRecordRaw[] = [
   { path: "/mentions-legales", name: "legal", component: placeholder },
   { path: "/confidentialite", name: "privacy", component: placeholder },
   { path: "/cgu", name: "tos", component: placeholder },
+  // Admin (visible uniquement aux users avec role='admin', controle cote AdminUsers.vue)
+  { path: "/admin/utilisateurs", name: "admin-users", component: placeholder },
 ];
 
 export const router = createRouter({
