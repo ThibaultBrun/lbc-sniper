@@ -76,17 +76,22 @@ async function syncSelectedFromRoute() {
     return;
   }
   const adId = Number(id);
-  const inList = ads.value.find((a) => a.id === adId);
-  if (inList) {
-    selectedAd.value = inList;
-    return;
+  // On NE prend PAS l'objet de la liste tel quel : il vient du SELECT light
+  // (sans reasoning / pros / cons / attributes / body complet). On utilise
+  // l'objet light comme placeholder visuel pendant le re-fetch complet
+  // pour eviter le flash "loading", puis on remplace.
+  const fromList = ads.value.find((a) => a.id === adId);
+  if (fromList) {
+    selectedAd.value = fromList;
+  } else {
+    selectedAdLoading.value = true;
   }
-  selectedAdLoading.value = true;
   try {
-    selectedAd.value = await getAdById(adId);
+    const full = await getAdById(adId);
+    if (full) selectedAd.value = full;
   } catch (e) {
     console.error("Failed to fetch ad", adId, e);
-    selectedAd.value = null;
+    if (!fromList) selectedAd.value = null;
   } finally {
     selectedAdLoading.value = false;
   }
