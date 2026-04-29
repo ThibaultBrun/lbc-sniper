@@ -20,17 +20,29 @@ const loading = ref(true);
 
 let initialized = false;
 
-async function loadProfile(uid: string) {
-  const { data, error } = await supabase
+async function loadProfile(uid: string): Promise<Profile | null> {
+  // Timeout defensif : si la requete RLS tourne en boucle (recursion ou autre),
+  // on ne bloque pas l'app entiere — on continue sans profile complet.
+  const TIMEOUT_MS = 8000;
+  const timeoutPromise = new Promise<null>((resolve) => {
+    setTimeout(() => {
+      console.warn("loadProfile timeout — continuing without profile");
+      resolve(null);
+    }, TIMEOUT_MS);
+  });
+  const queryPromise = supabase
     .from("profiles")
     .select("*")
     .eq("id", uid)
-    .maybeSingle();
-  if (error) {
-    console.error("Failed to load profile", error);
-    return null;
-  }
-  return data as Profile | null;
+    .maybeSingle()
+    .then(({ data, error }) => {
+      if (error) {
+        console.error("Failed to load profile", error);
+        return null;
+      }
+      return data as Profile | null;
+    });
+  return Promise.race([queryPromise, timeoutPromise]);
 }
 
 async function syncFromSession() {
@@ -75,9 +87,15 @@ export function useAuth() {
   }
 
   async function signOut() {
-    await supabase.auth.signOut();
+    // On reset le state local AVANT l'appel reseau pour que l'UI reagisse
+    // immediatement, meme si l'appel Supabase est lent ou plante.
     user.value = null;
     profile.value = null;
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("signOut failed (state already reset locally)", e);
+    }
   }
 
   return { user, profile, loading, isAuthenticated, isAdmin, signInWithGoogle, signOut };
