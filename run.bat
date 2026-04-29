@@ -64,5 +64,4 @@ if /I "%MODE%"=="hybrid" (
 
 echo.
 echo === DONE ===
-echo Open the web UI: start-web.bat
 pause
