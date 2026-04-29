@@ -1,5 +1,5 @@
 @echo off
-REM Pipeline complet : fetch LBC -> cleanup annonces disparues -> enrichit via Claude
+REM Pipeline complet : fetch LBC -> cleanup -> enrichit via Claude -> envoie mails
 REM Par defaut, ne traite QUE les watches VTT (enduro + DH France).
 REM
 REM Usage:
@@ -28,7 +28,7 @@ if not exist "%PYTHON%" (
   exit /b 1
 )
 
-echo === [1/4] Installing/updating dependencies ===
+echo === [1/5] Installing/updating dependencies ===
 "%PYTHON%" -m pip install -q --user -r requirements.txt
 if errorlevel 1 (
   echo Failed to install dependencies.
@@ -36,7 +36,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo === [2/4] Scraping LBC (scope: %SCOPE%) ===
+echo === [2/5] Scraping LBC (scope: %SCOPE%) ===
 if /I "%SCOPE%"=="vtt" (
   "%PYTHON%" -m scraper.main --watch vtt-france
   if errorlevel 1 ( echo Scraper VTT failed. & exit /b 1 )
@@ -46,17 +46,22 @@ if /I "%SCOPE%"=="vtt" (
 )
 
 echo.
-echo === [3/4] Cleanup annonces disparues ^(verif individuelle non vues ^>3j^) ===
+echo === [3/5] Cleanup annonces disparues ^(verif individuelle non vues ^>3j^) ===
 "%PYTHON%" -m scraper.cleanup
 REM Si cleanup echoue (rate limit Datadome), on continue quand meme l'enrich.
 
 echo.
-echo === [4/4] Enriching pending ads via Claude (mode: %MODE%) ===
+echo === [4/5] Enriching pending ads via Claude (mode: %MODE%) ===
 if /I "%MODE%"=="hybrid" (
   "%PYTHON%" -m scraper.enricher --hybrid --limit 500
 ) else (
   "%PYTHON%" -m scraper.enricher --model %MODE% --limit 500
 )
+
+echo.
+echo === [5/5] Sending notification emails ^(price drops + new ads digest^) ===
+"%PYTHON%" -m scraper.notifier
+REM Si l'envoi mail echoue, on ne fait pas planter le run.
 
 echo.
 echo === DONE ===
