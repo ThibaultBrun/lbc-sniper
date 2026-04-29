@@ -376,14 +376,6 @@ const stats = computed(() => {
       <!-- Filtres -->
       <div class="space-y-3 text-sm rounded-xl border border-slate-800 bg-slate-900/40 p-4">
 
-        <!-- Recherches sauvegardees + bouton "Sauvegarder" -->
-        <div class="flex flex-wrap items-center justify-end gap-2 pb-2 border-b border-slate-800/50">
-          <SavedSearchesBar
-            :current-filters="currentFilters"
-            @apply="applySavedSearch"
-          />
-        </div>
-
         <!-- Ligne 1 : recherche texte + ville/position/rayon -->
         <div class="flex flex-wrap items-center gap-4">
           <label class="flex items-center gap-2 flex-1 min-w-[260px]">
@@ -458,6 +450,13 @@ const stats = computed(() => {
             <option value="recent">Plus récentes</option>
           </select>
         </label>
+
+        <div class="ml-auto">
+          <SavedSearchesBar
+            :current-filters="currentFilters"
+            @apply="applySavedSearch"
+          />
+        </div>
 
         </div>
       </div>
