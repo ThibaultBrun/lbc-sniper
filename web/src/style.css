@@ -296,6 +296,20 @@ html, body {
     background-color: var(--color-bg-input-hover);
   }
 
+  /* ----- Jauge de score 0-100 (DealCard header + DealModal bandeau) -----
+     Posee sur un fond tier-* colore (vert/orange/rouge). Fond ombre translucide
+     pour creuser, fill blanc translucide pour ressortir peu importe la couleur tier. */
+  .score-gauge {
+    @apply w-full rounded-full overflow-hidden;
+    height: 6px;
+    background-color: rgb(0 0 0 / 0.18);
+  }
+  .score-gauge-fill {
+    @apply h-full rounded-full transition-all;
+    background-color: rgb(255 255 255 / 0.85);
+    transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   /* ----- Score tiers (DealCard header / DealModal bandeau) -----
      Theme clair : couleurs vibrantes mais pas saturees, bon contraste blanc */
   .tier-great {

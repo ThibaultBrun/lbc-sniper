@@ -141,20 +141,25 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
 
 <template>
   <article :class="['card card-hover', cardBorderClass]">
-    <!-- HEADER : verdict IA en couleur (gradient defini par tier-XXX) -->
-    <div :class="['px-4 py-2.5 flex items-center justify-between gap-2', headerTierClass]">
-      <div class="flex items-baseline gap-2 min-w-0">
-        <span class="text-2xl font-black tabular-nums leading-none">{{ score }}</span>
-        <span class="text-xs font-bold uppercase tracking-wider opacity-90 truncate">
+    <!-- HEADER : verdict IA en couleur + jauge horizontale 0-100 -->
+    <div :class="['px-3 pt-2 pb-2.5', headerTierClass]">
+      <div class="flex items-center justify-between gap-2 mb-1.5">
+        <span class="text-xs font-bold uppercase tracking-wider opacity-95 truncate">
           {{ tierLabel }}
         </span>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span
+            v-if="ad.electric"
+            class="text-[10px] font-black uppercase tracking-widest bg-black/20 px-1.5 py-0.5 rounded"
+            title="Vélo électrique"
+          >⚡</span>
+          <span class="text-sm font-black tabular-nums leading-none opacity-95">{{ score }}</span>
+        </div>
       </div>
-      <span
-        v-if="ad.electric"
-        class="text-[10px] font-black uppercase tracking-widest bg-black/20 px-1.5 py-0.5 rounded shrink-0"
-      >
-        ⚡
-      </span>
+      <!-- Jauge horizontale : remplit selon le score, fond translucide -->
+      <div class="score-gauge" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
+        <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
+      </div>
     </div>
 
     <!-- IMAGE — ouvre l'analyse (la modale), pas LBC -->

@@ -89,12 +89,17 @@ onUnmounted(() => {
   <div class="modal-backdrop-scroll" @click.self="emit('close')">
     <div class="modal-shell" @click.stop>
       <!-- Bandeau verdict : compacte sur mobile, etale sur desktop -->
-      <div :class="['px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between gap-3', headerTierClass]">
-        <div class="flex items-baseline gap-3 sm:gap-4 min-w-0">
-          <span class="text-4xl sm:text-6xl font-black tabular-nums leading-none">{{ score }}</span>
-          <div class="min-w-0">
+      <div :class="['px-4 sm:px-8 py-4 sm:py-6 flex items-start justify-between gap-3', headerTierClass]">
+        <div class="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
+          <span class="text-4xl sm:text-6xl font-black tabular-nums leading-none shrink-0">{{ score }}</span>
+          <div class="min-w-0 flex-1 pt-0.5 sm:pt-1">
             <div class="text-lg sm:text-2xl font-bold leading-tight truncate">{{ tierLabel }}</div>
             <div class="text-[10px] sm:text-xs uppercase tracking-widest opacity-75 mt-0.5 sm:mt-1">Analyse IA</div>
+            <!-- Jauge 0-100 : visualise le score en barre horizontale, fond ombre, fill blanc translucide -->
+            <div class="score-gauge mt-2 sm:mt-2.5" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
+              <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
+            </div>
+            <div class="text-[10px] opacity-75 mt-1 tabular-nums">{{ score }}/100</div>
           </div>
         </div>
         <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
