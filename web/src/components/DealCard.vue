@@ -114,6 +114,17 @@ const tierLabel = computed(() =>
 const cardBorderClass = computed(() => `tier-border-${tier.value}`);
 const headerTierClass = computed(() => `tier-${tier.value}`);
 
+// Couleur de la jauge selon le tier. On l'applique inline (Tailwind/PostCSS
+// n'a pas l'air de garder les --score-color des classes tier-* au build).
+const TIER_COLORS: Record<string, string> = {
+  great: "#10b981",  // emerald-500
+  good: "#059669",   // emerald-600
+  fair: "#94a3b8",   // slate-400
+  poor: "#f59e0b",   // amber-500
+  bad: "#f43f5e",    // rose-500
+};
+const gaugeColor = computed(() => TIER_COLORS[tier.value] ?? "#94a3b8");
+
 const priceFmt = (v: number | null) =>
   v == null ? "?" : v.toLocaleString("fr-FR");
 
@@ -156,9 +167,9 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
           <span class="text-sm font-black tabular-nums leading-none opacity-95">{{ score }}</span>
         </div>
       </div>
-      <!-- Jauge horizontale : couleur unique selon le tier (definie par .tier-* parent) -->
+      <!-- Jauge horizontale : couleur unique selon le tier (inline car Tailwind strip --score-color) -->
       <div class="score-gauge" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
-        <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
+        <div class="score-gauge-fill" :style="{ width: `${score}%`, backgroundColor: gaugeColor }"></div>
       </div>
     </div>
 

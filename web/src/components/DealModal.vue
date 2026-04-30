@@ -74,6 +74,16 @@ const tierLabel = computed(() =>
 
 const headerTierClass = computed(() => `tier-${tier.value}`);
 
+// Couleur de la jauge selon le tier (inline, meme logique que DealCard).
+const TIER_COLORS: Record<string, string> = {
+  great: "#10b981",
+  good: "#059669",
+  fair: "#94a3b8",
+  poor: "#f59e0b",
+  bad: "#f43f5e",
+};
+const gaugeColor = computed(() => TIER_COLORS[tier.value] ?? "#94a3b8");
+
 const priceFmt = (v: number | null) =>
   v == null ? "?" : v.toLocaleString("fr-FR");
 
@@ -110,7 +120,7 @@ onUnmounted(() => {
             <div class="text-[10px] sm:text-xs uppercase tracking-widest opacity-75 mt-0.5 sm:mt-1">Analyse IA</div>
             <!-- Jauge 0-100 : couleur unique selon le tier (definie par .tier-* parent) -->
             <div class="score-gauge mt-2 sm:mt-2.5" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
-              <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
+              <div class="score-gauge-fill" :style="{ width: `${score}%`, backgroundColor: gaugeColor }"></div>
             </div>
             <div class="text-[10px] opacity-75 mt-1 tabular-nums">{{ score }}/100</div>
           </div>
