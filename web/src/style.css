@@ -394,6 +394,36 @@ html, body {
     border: 1px solid var(--color-border);
   }
 
+  /* Ligne de filtres : pleine largeur en colonne sur mobile,
+     flex-wrap horizontal sur desktop. */
+  .filter-row {
+    @apply flex flex-col gap-3 pt-3;
+  }
+  @media (min-width: 640px) {
+    .filter-row {
+      @apply flex-row flex-wrap items-center gap-4;
+    }
+  }
+  /* Un champ filtre : pleine largeur sur mobile (label a gauche, controle qui prend tout l'espace), inline sur desktop. */
+  .filter-field {
+    @apply flex items-center gap-2 w-full;
+  }
+  @media (min-width: 640px) {
+    .filter-field {
+      @apply w-auto;
+    }
+  }
+  /* Actions (Reset + SavedSearches) : pleine largeur en bas du bloc sur mobile,
+     a droite sur desktop. */
+  .filter-actions {
+    @apply flex items-center gap-2 w-full pt-1;
+  }
+  @media (min-width: 640px) {
+    .filter-actions {
+      @apply w-auto pt-0;
+    }
+  }
+
   /* ----- Header (sticky en haut) ----- */
   .surface-header {
     @apply sticky top-0 z-10 backdrop-blur;

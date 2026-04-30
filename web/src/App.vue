@@ -9,6 +9,7 @@ import GeoFilter, { type GeoFilterValue } from "./components/GeoFilter.vue";
 import LegalPage from "./components/LegalPage.vue";
 import AdminUsers from "./components/AdminUsers.vue";
 import DealCardSkeleton from "./components/DealCardSkeleton.vue";
+import CookieConsent from "./components/CookieConsent.vue";
 import GuidesIndex from "./components/guides/GuidesIndex.vue";
 import GuideChoisirVtt from "./components/guides/GuideChoisirVtt.vue";
 import GuideEnduroVsDh from "./components/guides/GuideEnduroVsDh.vue";
@@ -620,18 +621,18 @@ const stats = computed(() => ({
         </div>
 
         <!-- Ligne 2 : filtres metier -->
-        <div class="flex flex-wrap items-center gap-4 pt-3" style="border-top: 1px solid var(--color-border-subtle)">
-          <label v-if="categories.length > 1" class="flex items-center gap-2">
+        <div class="filter-row" style="border-top: 1px solid var(--color-border-subtle)">
+          <label v-if="categories.length > 1" class="filter-field">
             <span class="text-muted">Catégorie:</span>
-            <select v-model="categoryFilter" class="input-base">
+            <select v-model="categoryFilter" class="input-base flex-1 sm:flex-none">
               <option :value="null">Toutes</option>
               <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
             </select>
           </label>
 
-          <label class="flex items-center gap-2">
+          <label class="filter-field">
             <span class="text-muted">🚵 Type:</span>
-            <select v-model="vttCategoryFilter" class="input-base">
+            <select v-model="vttCategoryFilter" class="input-base flex-1 sm:flex-none">
               <option :value="null">Tous</option>
               <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
                 {{ o.label }}
@@ -639,23 +640,23 @@ const stats = computed(() => ({
             </select>
           </label>
 
-          <label class="flex items-center gap-2">
+          <label class="filter-field">
             <span class="text-muted">⚡ Électrique:</span>
-            <select v-model="electricFilter" class="input-base">
+            <select v-model="electricFilter" class="input-base flex-1 sm:flex-none">
               <option value="all">Tous</option>
               <option value="yes">Électrique</option>
               <option value="no">Musculaire</option>
             </select>
           </label>
 
-          <label class="flex items-center gap-1.5">
+          <label class="filter-field gap-1.5">
             <span class="text-muted">Prix:</span>
             <input
               v-model.number="priceMin"
               type="number"
               min="0"
               placeholder="min"
-              class="input-base w-24 text-right tabular-nums"
+              class="input-base w-20 sm:w-24 text-right tabular-nums"
             />
             <span class="text-subtle">–</span>
             <input
@@ -663,21 +664,21 @@ const stats = computed(() => ({
               type="number"
               min="0"
               placeholder="max"
-              class="input-base w-24 text-right tabular-nums"
+              class="input-base w-20 sm:w-24 text-right tabular-nums"
             />
             <span class="text-subtle">€</span>
           </label>
 
-          <label class="flex items-center gap-2">
+          <label class="filter-field">
             <span class="text-muted">Tri:</span>
-            <select v-model="sortBy" class="input-base">
+            <select v-model="sortBy" class="input-base flex-1 sm:flex-none">
               <option value="deal">Score IA ↓</option>
               <option value="price">Prix ↑</option>
               <option value="recent">Plus récentes</option>
             </select>
           </label>
 
-          <div class="ml-auto flex items-center gap-2">
+          <div class="filter-actions sm:ml-auto">
             <button v-if="hasActiveFilters" @click="resetFilters" class="btn btn-ghost"
               title="Reinitialiser tous les filtres"
             >
@@ -755,4 +756,5 @@ const stats = computed(() => ({
       </p>
     </footer>
   </div>
+  <CookieConsent />
 </template>

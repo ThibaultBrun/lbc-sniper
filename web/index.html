@@ -29,7 +29,27 @@
       name="twitter:description"
       content="Trouve les meilleures affaires VTT enduro et descente sur Le Bon Coin. Analyse IA gratuite et instantanée."
     />
-    <!-- Google AdSense : script de verification du site et chargement async -->
+    <!--
+      Google Consent Mode v2 : on initialise gtag avant les scripts AdSense/GA
+      avec tout REFUSE par defaut. Si l'utilisateur accepte (consent.ts), on
+      met a jour les flags via gtag('consent', 'update', ...). Approche
+      officielle Google compatible RGPD/CNIL : les scripts se chargent (bon
+      pour la validation AdSense + crawl) mais ne deposent ni cookie ni signal
+      personnel tant que pas d'accord explicite.
+    -->
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      window.gtag = gtag;
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied',
+        wait_for_update: 500
+      });
+    </script>
+    <!-- AdSense : script de verification + chargement async -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7552996355584047"
          crossorigin="anonymous"></script>
   </head>
