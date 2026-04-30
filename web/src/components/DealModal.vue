@@ -169,10 +169,13 @@ onUnmounted(() => {
         >📝 Description</button>
       </nav>
 
-      <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">
-        <!-- Panneau 1 : Infos (photo, prix, tags, CTA). Cache en mobile si autre onglet actif. -->
+      <!-- Wrapper grille : flex-1 prend toute la place restante, overflow-hidden
+           pour que les panneaux puissent gerer leur scroll vertical eux-memes
+           via overflow-y-auto. La modal-shell reste fixe a max-height 95vh. -->
+      <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0 flex-1 overflow-hidden">
+        <!-- Panneau 1 : Infos (photo, prix, tags, CTA). Scroll interne sur mobile. -->
         <div
-          :class="['p-4 sm:p-6 space-y-3 sm:space-y-4 modal-col-divider', activeTab === 'infos' ? '' : 'hidden lg:block']"
+          :class="['p-4 sm:p-6 space-y-3 sm:space-y-4 modal-col-divider overflow-y-auto', activeTab === 'infos' ? '' : 'hidden lg:block']"
         >
           <a
             :href="ad.url"
@@ -251,7 +254,7 @@ onUnmounted(() => {
 
         <!-- Panneau 2 : Analyse (Pros + Cons + reasoning IA). -->
         <div
-          :class="['p-4 sm:p-6 space-y-4 lg:max-h-[80vh] lg:overflow-y-auto modal-col-divider', activeTab === 'analyse' ? '' : 'hidden lg:block']"
+          :class="['p-4 sm:p-6 space-y-4 overflow-y-auto modal-col-divider', activeTab === 'analyse' ? '' : 'hidden lg:block']"
         >
           <section v-if="ad.pros?.length">
             <h3 class="section-title section-title-pros flex items-center gap-2 mb-2">
@@ -287,7 +290,7 @@ onUnmounted(() => {
 
         <!-- Panneau 3 : Description originale -->
         <div
-          :class="['p-4 sm:p-6 space-y-3 lg:max-h-[80vh] lg:overflow-y-auto', activeTab === 'description' ? '' : 'hidden lg:block']"
+          :class="['p-4 sm:p-6 space-y-3 overflow-y-auto', activeTab === 'description' ? '' : 'hidden lg:block']"
         >
           <section v-if="ad.subject">
             <h3 class="section-title flex items-center gap-2 mb-2">

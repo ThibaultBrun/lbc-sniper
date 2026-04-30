@@ -496,21 +496,27 @@ html, body {
     @apply fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm overflow-hidden;
     background-color: var(--color-bg-backdrop);
   }
-  /* overflow-y-auto pour scroll vertical, x-hidden pour bloquer le glissement
-     lateral parasite (mobile : un texte long du body peut depasser meme avec
-     overflow-hidden sur la modale). */
+  /* Backdrop sans scroll interne : c'est la modale qui gere ses propres
+     scrolls par panneau (modal-shell + .panel-scroll). Le backdrop reste fixe. */
   .modal-backdrop-scroll {
-    @apply fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto overflow-x-hidden backdrop-blur-sm;
+    @apply fixed inset-0 z-50 grid place-items-center p-2 sm:p-4 backdrop-blur-sm overflow-hidden;
     background-color: var(--color-bg-backdrop);
   }
 
-  /* ----- Modal ----- */
+  /* ----- Modal -----
+     Hauteur capee a 95vh sur mobile / 90vh desktop : la modale ne grandit
+     plus avec son contenu, elle reste une fenetre. Les panneaux (Infos /
+     Analyse / Description) gerent leur scroll vertical en interne. */
   .modal-shell {
-    @apply relative w-full max-w-7xl rounded-2xl overflow-hidden my-8;
+    @apply relative w-full max-w-7xl rounded-2xl overflow-hidden flex flex-col;
+    max-height: 95vh;
     background-color: var(--color-bg-elevated);
     border: 1px solid var(--color-border);
     color: var(--color-text);
     box-shadow: var(--shadow-elevated);
+  }
+  @media (min-width: 1024px) {
+    .modal-shell { max-height: 90vh; }
   }
   .modal-shell-sm {
     @apply w-full max-w-md rounded-xl p-6 space-y-4;

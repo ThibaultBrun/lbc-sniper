@@ -47,26 +47,11 @@ const { favoriteIds } = useFavorites();
 // trier par usage (XC, all-mountain, enduro, DH, dirt).
 const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC", "VTT dirt"];
 
-// Encart guides : replie par defaut sur mobile (gain de place), deplie sur desktop.
-// On utilise matchMedia (fiable, suit aussi les rotations / redimensionnements
-// utiles pour le hot-reload Vite). Si l'utilisateur a deja interagi
-// manuellement (toggle), on respecte son choix.
-function _isDesktop(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia("(min-width: 640px)").matches;
-}
-const guidesOpen = ref(_isDesktop());
-const guidesUserOverride = ref(false);
+// Encart guides : replie par defaut quel que soit le device (mobile + desktop).
+// Le user clique pour deplier, son choix n'est pas persiste (re-replie au reload).
+const guidesOpen = ref(false);
 function toggleGuides() {
   guidesOpen.value = !guidesOpen.value;
-  guidesUserOverride.value = true;
-}
-// Si la fenetre passe mobile <-> desktop sans que l'utilisateur ait override,
-// on ajuste l'etat (utile en HMR + en cas de rotation tablette).
-if (typeof window !== "undefined" && window.matchMedia) {
-  window.matchMedia("(min-width: 640px)").addEventListener("change", (e) => {
-    if (!guidesUserOverride.value) guidesOpen.value = e.matches;
-  });
 }
 
 const ads = ref<Ad[]>([]);
