@@ -125,14 +125,30 @@ const TIER_COLORS: Record<string, string> = {
 };
 const gaugeColor = computed(() => TIER_COLORS[tier.value] ?? "#94a3b8");
 
-// Resume de l'analyse pour donner envie de cliquer : 1er pro + 1er con.
-const topPro = computed<string | null>(() => {
-  const arr = props.ad.pros;
-  return arr && arr.length > 0 ? arr[0] : null;
-});
-const topCon = computed<string | null>(() => {
-  const arr = props.ad.cons;
-  return arr && arr.length > 0 ? arr[0] : null;
+// Resume de l'analyse, dose selon le score :
+//   >= 80 : 2 pros (le vendeur a fait un cadeau, on insiste sur le positif)
+//   40-79 : 1 pro + 1 con (analyse equilibree)
+//   < 40  : 2 cons (annonce surevaluee, on previent direct)
+const summaryItems = computed<Array<{ kind: "pro" | "con"; text: string }>>(() => {
+  const pros = props.ad.pros ?? [];
+  const cons = props.ad.cons ?? [];
+  const s = score.value;
+  const items: Array<{ kind: "pro" | "con"; text: string }> = [];
+  if (s >= 80) {
+    if (pros[0]) items.push({ kind: "pro", text: pros[0] });
+    if (pros[1]) items.push({ kind: "pro", text: pros[1] });
+    // Si on n'a qu'un seul pro, on complete avec le 1er con plutot que de
+    // laisser une seule ligne (la card serait trop courte vs ses voisines).
+    if (items.length < 2 && cons[0]) items.push({ kind: "con", text: cons[0] });
+  } else if (s >= 40) {
+    if (pros[0]) items.push({ kind: "pro", text: pros[0] });
+    if (cons[0]) items.push({ kind: "con", text: cons[0] });
+  } else {
+    if (cons[0]) items.push({ kind: "con", text: cons[0] });
+    if (cons[1]) items.push({ kind: "con", text: cons[1] });
+    if (items.length < 2 && pros[0]) items.push({ kind: "pro", text: pros[0] });
+  }
+  return items;
 });
 
 const priceFmt = (v: number | null) =>
@@ -267,16 +283,19 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
         <span v-if="ad.frame_material" class="tag">{{ ad.frame_material }}</span>
       </div>
 
-      <!-- Resume : 1er pro + 1er con (donne envie de cliquer) -->
+      <!-- Resume IA, dose selon le score (>=80 : 2 pros, 40-79 : 1+1, <40 : 2 cons) -->
       <div class="mt-auto pt-1 space-y-0.5 text-xs leading-snug">
-        <div v-if="topPro" class="flex gap-1 line-clamp-1" style="color: var(--color-accent)">
-          <span class="shrink-0">✓</span><span class="line-clamp-1">{{ topPro }}</span>
+        <div
+          v-for="(item, i) in summaryItems"
+          :key="i"
+          class="flex gap-1"
+          :style="{ color: item.kind === 'pro' ? 'var(--color-accent)' : '#b45309' }"
+        >
+          <span class="shrink-0">{{ item.kind === 'pro' ? '✓' : '⚠' }}</span>
+          <span class="line-clamp-1">{{ item.text }}</span>
         </div>
-        <div v-if="topCon" class="flex gap-1 line-clamp-1" style="color: theme(colors.amber.700)">
-          <span class="shrink-0">⚠</span><span class="line-clamp-1">{{ topCon }}</span>
-        </div>
-        <!-- Fallback : si pas d'analyse encore, on affiche le subject -->
-        <div v-if="!topPro && !topCon" class="text-subtle line-clamp-2">{{ ad.subject }}</div>
+        <!-- Fallback si pas encore enrichie -->
+        <div v-if="summaryItems.length === 0" class="text-subtle line-clamp-2">{{ ad.subject }}</div>
       </div>
       <div class="text-[10px] text-faint">{{ ad.city ?? "?" }}</div>
     </div>
