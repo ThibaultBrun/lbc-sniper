@@ -653,14 +653,6 @@ const stats = computed(() => ({
 
         <!-- Ligne 2 : filtres metier -->
         <div class="filter-row" style="border-top: 1px solid var(--color-border-subtle)">
-          <label v-if="categories.length > 1" class="filter-field">
-            <span class="text-muted">Catégorie:</span>
-            <select v-model="categoryFilter" class="input-base flex-1 sm:flex-none">
-              <option :value="null">Toutes</option>
-              <option v-for="c in categories" :key="c" :value="c">{{ c }}</option>
-            </select>
-          </label>
-
           <label class="filter-field">
             <span class="text-muted">🚵 Type:</span>
             <select v-model="vttCategoryFilter" class="input-base flex-1 sm:flex-none">
