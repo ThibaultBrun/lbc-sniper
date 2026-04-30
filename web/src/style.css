@@ -297,41 +297,66 @@ html, body {
   }
 
   /* ----- Jauge de score 0-100 (DealCard header + DealModal bandeau) -----
-     Posee sur un fond tier-* colore (vert/orange/rouge). Fond ombre translucide
-     pour creuser, fill blanc translucide pour ressortir peu importe la couleur tier. */
+     Bandeau neutre dessous, jauge en degrade rouge -> bleu -> vert qui se
+     "revele" selon le score. Astuce : on met le degrade complet en background
+     et on masque la partie non remplie via une div d'overlay (pas via width
+     du fill, sinon le degrade serait compresse).
+     Resultat : a 50%, on voit le rouge + le bleu mais pas encore le vert. */
   .score-gauge {
-    @apply w-full rounded-full overflow-hidden;
+    @apply relative w-full rounded-full overflow-hidden;
     height: 6px;
-    background-color: rgb(0 0 0 / 0.18);
+    background: linear-gradient(
+      to right,
+      theme(colors.rose.500),
+      theme(colors.amber.400) 30%,
+      theme(colors.sky.400) 55%,
+      theme(colors.emerald.500) 80%,
+      theme(colors.emerald.400)
+    );
   }
   .score-gauge-fill {
-    @apply h-full rounded-full transition-all;
-    background-color: rgb(255 255 255 / 0.85);
+    /* Mask : on cache la partie a droite du score. Width = 100 - score (en %). */
+    @apply absolute top-0 right-0 h-full;
+    background-color: var(--color-score-mask);
     transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
+  /* Couleur du masque : opaque selon le theme (clair = blanc cassse, sombre = slate fonce) */
+  :root {
+    --color-score-mask: rgb(0 0 0 / 0.15);
+  }
+  [data-theme="dark"] {
+    --color-score-mask: rgb(0 0 0 / 0.45);
+  }
 
-  /* ----- Score tiers (DealCard header / DealModal bandeau) -----
-     Theme clair : couleurs vibrantes mais pas saturees, bon contraste blanc */
+  /* ----- Score tiers : bandeau NEUTRE (fond carte) + label colore selon le score.
+     Le visuel fort vient maintenant de la jauge horizontale (.score-gauge) qui
+     est en degrade rouge -> bleu -> vert. */
   .tier-great {
-    background: linear-gradient(to right, theme(colors.emerald.500), theme(colors.emerald.400));
-    color: white;
+    background-color: var(--color-bg-elevated);
+    color: theme(colors.emerald.600);
   }
   .tier-good {
-    background: linear-gradient(to right, theme(colors.emerald.600), theme(colors.emerald.500));
-    color: white;
+    background-color: var(--color-bg-elevated);
+    color: theme(colors.emerald.700);
   }
   .tier-fair {
-    background: linear-gradient(to right, theme(colors.slate.400), theme(colors.slate.300));
-    color: theme(colors.slate.900);
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-muted);
   }
   .tier-poor {
-    background: linear-gradient(to right, theme(colors.amber.500), theme(colors.amber.400));
-    color: theme(colors.slate.900);
+    background-color: var(--color-bg-elevated);
+    color: theme(colors.amber.700);
   }
   .tier-bad {
-    background: linear-gradient(to right, theme(colors.rose.500), theme(colors.rose.400));
-    color: white;
+    background-color: var(--color-bg-elevated);
+    color: theme(colors.rose.600);
   }
+  /* Variante dark : nuances ajustees pour bon contraste sur fond sombre */
+  [data-theme="dark"] .tier-great { color: theme(colors.emerald.300); }
+  [data-theme="dark"] .tier-good { color: theme(colors.emerald.400); }
+  [data-theme="dark"] .tier-fair { color: var(--color-text-muted); }
+  [data-theme="dark"] .tier-poor { color: theme(colors.amber.300); }
+  [data-theme="dark"] .tier-bad { color: theme(colors.rose.400); }
 
   /* Bordures tier : tres legeres ombres colorees pour highlight les bonnes affaires */
   .tier-border-great { border-color: theme(colors.emerald.500 / 50%); box-shadow: 0 4px 16px theme(colors.emerald.500 / 15%); }
@@ -506,29 +531,32 @@ html, body {
     border-color: var(--color-border);
   }
 
-  /* ----- Modal action buttons (bandeau colore) -----
-     Place sur un bandeau tier-* (vert/orange/rouge/gris). Fond blanc transparent
-     pour rester lisible peu importe la couleur du bandeau dessous. */
+  /* ----- Modal action buttons (bandeau de modale) -----
+     Le bandeau est neutre (fond carte). On utilise la couleur input pour
+     que les boutons restent visibles sur ce fond clair/sombre selon le theme. */
   .icon-btn-pill {
     @apply rounded-full px-3 h-10 text-xs font-bold uppercase tracking-wider transition flex items-center gap-1.5;
-    background-color: rgb(255 255 255 / 0.25);
-    color: inherit;
+    background-color: var(--color-bg-input);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
   }
   .icon-btn-pill:hover {
-    background-color: rgb(255 255 255 / 0.4);
+    background-color: var(--color-bg-input-hover);
   }
   .icon-btn-pill-success {
-    background-color: white !important;
-    color: var(--color-accent-hover);
+    background-color: var(--color-accent) !important;
+    color: var(--color-accent-on);
+    border-color: var(--color-accent);
   }
 
   .icon-btn-circle {
     @apply rounded-full w-10 h-10 grid place-items-center text-2xl leading-none transition;
-    background-color: rgb(255 255 255 / 0.25);
-    color: inherit;
+    background-color: var(--color-bg-input);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
   }
   .icon-btn-circle:hover {
-    background-color: rgb(255 255 255 / 0.4);
+    background-color: var(--color-bg-input-hover);
   }
 
   /* ----- Section titles (modal) ----- */

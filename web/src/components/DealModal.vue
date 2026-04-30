@@ -95,9 +95,9 @@ onUnmounted(() => {
           <div class="min-w-0 flex-1 pt-0.5 sm:pt-1">
             <div class="text-lg sm:text-2xl font-bold leading-tight truncate">{{ tierLabel }}</div>
             <div class="text-[10px] sm:text-xs uppercase tracking-widest opacity-75 mt-0.5 sm:mt-1">Analyse IA</div>
-            <!-- Jauge 0-100 : visualise le score en barre horizontale, fond ombre, fill blanc translucide -->
+            <!-- Jauge 0-100 : degrade rouge -> bleu -> vert. Le fill = masque qui cache la droite. -->
             <div class="score-gauge mt-2 sm:mt-2.5" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
-              <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
+              <div class="score-gauge-fill" :style="{ width: `${100 - score}%` }"></div>
             </div>
             <div class="text-[10px] opacity-75 mt-1 tabular-nums">{{ score }}/100</div>
           </div>
