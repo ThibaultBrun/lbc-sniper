@@ -550,6 +550,20 @@ html, body {
     background-color: var(--color-bg-input-hover);
   }
 
+  /* ----- Modal tabs (mobile uniquement, lg:hidden) ----- */
+  .modal-tab {
+    @apply flex-1 px-3 py-2.5 text-xs sm:text-sm font-semibold transition border-b-2 border-transparent;
+    color: var(--color-text-muted);
+  }
+  .modal-tab:hover {
+    color: var(--color-text);
+  }
+  .modal-tab-active {
+    color: var(--color-accent);
+    border-bottom-color: var(--color-accent);
+    background-color: var(--color-accent-soft);
+  }
+
   /* ----- Section titles (modal) ----- */
   .section-title {
     @apply text-xs font-bold uppercase tracking-widest mb-2;

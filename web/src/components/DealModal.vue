@@ -7,6 +7,12 @@ const emit = defineEmits<{ close: [] }>();
 
 const copied = ref(false);
 
+// Onglets pour mobile : permet de naviguer entre les panneaux au lieu de tout
+// empiler. En desktop (>= lg) les 3 panneaux s'affichent cote a cote, l'onglet
+// actif n'a pas d'effet visuel.
+type Tab = "infos" | "analyse" | "description";
+const activeTab = ref<Tab>("infos");
+
 // Mapping enum -> label visible (memes valeurs que dans App.vue / DealCard).
 const VTT_CATEGORY_LABELS: Record<string, string> = {
   xc: "XC",
@@ -140,9 +146,34 @@ onUnmounted(() => {
         </div>
       </div>
 
+      <!-- Navbar onglets : visible uniquement en mobile/tablette (lg:hidden).
+           Sur desktop on garde les 3 panneaux cote a cote, donc pas besoin d'onglets. -->
+      <nav class="lg:hidden flex" style="border-bottom: 1px solid var(--color-border)" role="tablist">
+        <button
+          @click="activeTab = 'infos'"
+          :class="['modal-tab', activeTab === 'infos' ? 'modal-tab-active' : '']"
+          role="tab"
+          :aria-selected="activeTab === 'infos'"
+        >📋 Infos</button>
+        <button
+          @click="activeTab = 'analyse'"
+          :class="['modal-tab', activeTab === 'analyse' ? 'modal-tab-active' : '']"
+          role="tab"
+          :aria-selected="activeTab === 'analyse'"
+        >🧠 Analyse</button>
+        <button
+          @click="activeTab = 'description'"
+          :class="['modal-tab', activeTab === 'description' ? 'modal-tab-active' : '']"
+          role="tab"
+          :aria-selected="activeTab === 'description'"
+        >📝 Description</button>
+      </nav>
+
       <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">
-        <!-- Colonne 1 (mobile : tout en haut) : photo + prix + CTA + tags + ville -->
-        <div class="p-4 sm:p-6 space-y-3 sm:space-y-4 modal-col-divider">
+        <!-- Panneau 1 : Infos (photo, prix, tags, CTA). Cache en mobile si autre onglet actif. -->
+        <div
+          :class="['p-4 sm:p-6 space-y-3 sm:space-y-4 modal-col-divider', activeTab === 'infos' ? '' : 'hidden lg:block']"
+        >
           <a
             :href="ad.url"
             target="_blank"
@@ -218,8 +249,10 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Colonne 2 : Pros + Cons en premier (info critique pour decision) -->
-        <div class="p-4 sm:p-6 space-y-4 lg:max-h-[80vh] lg:overflow-y-auto modal-col-divider">
+        <!-- Panneau 2 : Analyse (Pros + Cons + reasoning IA). -->
+        <div
+          :class="['p-4 sm:p-6 space-y-4 lg:max-h-[80vh] lg:overflow-y-auto modal-col-divider', activeTab === 'analyse' ? '' : 'hidden lg:block']"
+        >
           <section v-if="ad.pros?.length">
             <h3 class="section-title section-title-pros flex items-center gap-2 mb-2">
               <span>✓</span> Points forts
@@ -243,30 +276,36 @@ onUnmounted(() => {
               </li>
             </ul>
           </section>
-        </div>
 
-        <!-- Colonne 3 : Analyse longue + description originale (accordeon) -->
-        <div class="p-4 sm:p-6 space-y-3 lg:max-h-[80vh] lg:overflow-y-auto">
-          <section v-if="ad.reasoning">
+          <section v-if="ad.reasoning" class="pt-3" style="border-top: 1px solid var(--color-border-subtle)">
             <h3 class="section-title flex items-center gap-2 mb-2">
-              <span>🧠</span> Analyse IA
+              <span>🧠</span> Synthèse IA
             </h3>
             <p class="text-sm leading-relaxed">{{ ad.reasoning }}</p>
           </section>
+        </div>
 
-          <!-- Description originale : repliable, pas critique sur mobile -->
-          <details v-if="ad.body" class="pt-3" style="border-top: 1px solid var(--color-border-subtle)">
-            <summary class="section-title cursor-pointer hover:opacity-80 flex items-center gap-2 select-none">
-              <span>📝</span> Description originale
-              <span class="text-[10px] opacity-60 normal-case font-normal">(cliquer pour ouvrir)</span>
-            </summary>
-            <p class="text-xs leading-relaxed whitespace-pre-line text-muted mt-3">{{ ad.body }}</p>
-          </details>
+        <!-- Panneau 3 : Description originale -->
+        <div
+          :class="['p-4 sm:p-6 space-y-3 lg:max-h-[80vh] lg:overflow-y-auto', activeTab === 'description' ? '' : 'hidden lg:block']"
+        >
+          <section v-if="ad.subject">
+            <h3 class="section-title flex items-center gap-2 mb-2">
+              <span>📝</span> Titre original
+            </h3>
+            <p class="text-sm font-medium">{{ ad.subject }}</p>
+          </section>
 
-          <!-- Subject (titre LBC) en bas pour reference -->
-          <div v-if="ad.subject" class="pt-3 text-xs text-subtle italic" style="border-top: 1px solid var(--color-border-subtle)">
-            Titre original : « {{ ad.subject }} »
-          </div>
+          <section v-if="ad.body" class="pt-3" style="border-top: 1px solid var(--color-border-subtle)">
+            <h3 class="section-title flex items-center gap-2 mb-2">
+              <span>📄</span> Description complète
+            </h3>
+            <p class="text-sm leading-relaxed whitespace-pre-line text-muted">{{ ad.body }}</p>
+          </section>
+
+          <p v-if="!ad.subject && !ad.body" class="text-sm text-muted italic">
+            Aucune description disponible.
+          </p>
         </div>
       </div>
     </div>
