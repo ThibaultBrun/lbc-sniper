@@ -29,7 +29,7 @@ const guides = [
   },
   {
     slug: "decrypter-annonce-leboncoin",
-    title: "Décrypter une annonce VTT sur Le Bon Coin",
+    title: "Décrypter une annonce VTT entre particuliers",
     description: "Reconnaître les annonces honnêtes, les arnaques et les vélos volés. Questions à poser, signaux d'alerte.",
     readingMin: 7,
     icon: "🕵",

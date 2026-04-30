@@ -109,7 +109,6 @@ function adKeywords(ad) {
   tokens.add("vtt pas cher");
   tokens.add("analyse ia");
   tokens.add("cote vtt");
-  tokens.add("leboncoin");
   return Array.from(tokens).join(", ");
 }
 
@@ -129,7 +128,7 @@ function jsonLdProduct(ad) {
       price: ad.current_price ? String(ad.current_price) : undefined,
       itemCondition: "https://schema.org/UsedCondition",
       availability: "https://schema.org/InStock",
-      seller: { "@type": "Organization", name: "Leboncoin (via Trouve Ton VTT)" },
+      seller: { "@type": "Organization", name: "Trouve Ton VTT" },
     },
     aggregateRating: ad.deal_score != null
       ? {
@@ -225,7 +224,7 @@ function buildAdHtml(template, ad) {
 
 function buildHomeHtml(template, ads) {
   const title = "Trouve Ton VTT — Bonnes affaires VTT enduro et descente, analysées par IA";
-  const description = `Découvre les meilleures affaires VTT du moment sur Le Bon Coin. ${ads.length} annonces analysées automatiquement par IA : score de prix, points forts, points de vigilance. Gratuit, sans inscription.`;
+  const description = `Découvre les meilleures affaires VTT du moment parmi les petites annonces. ${ads.length} annonces analysées automatiquement par IA : score de prix, points forts, points de vigilance. Gratuit, sans inscription.`;
   const url = SITE_URL;
 
   // SEO content : un H1 + un bref pitch + les 12 meilleures affaires en clair
@@ -240,7 +239,7 @@ function buildHomeHtml(template, ads) {
   const inlineContent = `
     <article style="display:none">
       <h1>Trouve Ton VTT — Les meilleures affaires VTT enduro et descente</h1>
-      <p>Une intelligence artificielle analyse chaque annonce VTT publiée sur Le Bon Coin et te dit instantanément si c'est une bonne affaire ou pas. Brand, modèle, année, prix marché, points forts et points de vigilance — tout est expliqué en quelques secondes.</p>
+      <p>Une intelligence artificielle analyse chaque annonce VTT publiée sur les principales plateformes de petites annonces françaises et te dit instantanément si c'est une bonne affaire ou pas. Marque, modèle, année, prix marché, points forts et points de vigilance — tout est expliqué en quelques secondes.</p>
       <h2>Pour qui ?</h2>
       <p>Pour quiconque cherche un VTT d'occasion (enduro, all-mountain, descente, électrique) sans passer des heures à éplucher des centaines d'annonces et sans se faire avoir sur le prix.</p>
       <h2>Top 12 affaires du moment</h2>
@@ -253,7 +252,7 @@ function buildHomeHtml(template, ads) {
 
   const metaBlock = `
     <meta name="description" content="${escapeHtml(description)}" />
-    <meta name="keywords" content="vtt occasion, vtt d'occasion, vtt enduro, vtt enduro occasion, vtt dh, vtt descente, vtt all mountain, vtt électrique, vae, e-mtb, leboncoin, bonne affaire vtt, vtt pas cher, analyse ia, cote vtt, lapierre, specialized, canyon, commencal, santa cruz, trek" />
+    <meta name="keywords" content="vtt occasion, vtt d'occasion, vtt enduro, vtt enduro occasion, vtt dh, vtt descente, vtt all mountain, vtt électrique, vae, e-mtb, bonne affaire vtt, vtt pas cher, analyse ia, cote vtt, lapierre, specialized, canyon, commencal, santa cruz, trek" />
     <link rel="canonical" href="${url}" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="${escapeHtml(title)}" />

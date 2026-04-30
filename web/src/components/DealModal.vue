@@ -98,7 +98,7 @@ onUnmounted(() => {
             target="_blank"
             rel="noopener noreferrer"
             class="block aspect-square rounded-xl overflow-hidden group/img surface-muted"
-            title="Ouvrir sur LeBonCoin"
+            title="Ouvrir l'annonce d'origine"
           >
             <img
               v-if="ad.image_url"
@@ -164,7 +164,7 @@ onUnmounted(() => {
             rel="noopener noreferrer"
             class="btn-cta block text-center w-full"
           >
-            Voir sur LeBonCoin →
+            Voir l'annonce →
           </a>
         </div>
 

@@ -262,7 +262,7 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
       class="block px-4 py-2.5 text-center text-xs font-bold uppercase tracking-wider btn-ghost rounded-none border-t"
       :style="{ borderColor: 'var(--color-border-subtle)' }"
     >
-      Voir sur LeBonCoin →
+      Voir l'annonce →
     </a>
   </article>
 </template>

@@ -626,7 +626,7 @@ const stats = computed(() => ({
           </router-link>
           <router-link to="/guides/decrypter-annonce-leboncoin" class="guide-mini-card">
             <div class="text-xl">🕵</div>
-            <div class="font-semibold leading-tight">Décrypter une annonce LBC</div>
+            <div class="font-semibold leading-tight">Décrypter une annonce VTT</div>
             <div class="text-xs text-muted">Reconnaître les arnaques et vélos volés.</div>
             <div class="text-[10px] text-subtle">⏱ 7 min</div>
           </router-link>
@@ -783,7 +783,7 @@ const stats = computed(() => ({
         <router-link to="/cgu" class="hover:opacity-80">CGU</router-link>
       </div>
       <p class="mt-2 text-[10px] text-faint">
-        Trouve Ton VTT n'est pas affilié à Leboncoin. Analyses générées par IA, à titre indicatif.
+        Trouve Ton VTT est un projet indépendant non affilié aux plateformes de petites annonces. Analyses générées par IA, à titre indicatif.
       </p>
     </footer>
   </div>

@@ -123,7 +123,7 @@ import GuideShell from "./GuideShell.vue";
 
     <h2>6. Sécuriser la transaction</h2>
     <ul>
-      <li><strong>Ne jamais acheter sans voir le vélo</strong>. Les arnaques type "je l'envoie après virement" sont massives sur LBC.</li>
+      <li><strong>Ne jamais acheter sans voir le vélo</strong>. Les arnaques type "je l'envoie après virement" sont massives entre particuliers.</li>
       <li><strong>Demande la facture d'origine</strong>. Sans facture, en cas de vol antérieur tu peux te retrouver sans recours.</li>
       <li><strong>Vérifie le numéro de série dans le fichier <a href="https://www.bicycode.org" target="_blank" rel="noopener" class="link-accent">Bicycode</a></strong> : si le vélo y est marqué et qu'il est déclaré volé, fuis.</li>
       <li><strong>Paye en espèces ou par virement</strong> au moment de récupérer le vélo. Évite PayPal "amis et famille" qui n'a aucune protection.</li>
@@ -132,7 +132,7 @@ import GuideShell from "./GuideShell.vue";
 
     <h2>7. La négociation</h2>
     <p>
-      Sur LBC, presque toutes les annonces sont négociables. Compte <strong>10 à 20% de marge</strong> en moyenne.
+      Entre particuliers, presque toutes les annonces sont négociables. Compte <strong>10 à 20% de marge</strong> en moyenne.
       Pour bien négocier :
     </p>
     <ul>

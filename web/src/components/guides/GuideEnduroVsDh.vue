@@ -11,7 +11,7 @@ import GuideShell from "./GuideShell.vue";
     :reading-min="6"
   >
     <p>
-      Quand tu débarques sur Le Bon Coin et que tu vois "VTT enduro", "VTT all-mountain", "VTT DH" et "VTT XC",
+      Quand tu cherches un VTT d'occasion et que tu vois "VTT enduro", "VTT all-mountain", "VTT DH" et "VTT XC",
       tu te dis que ces gens parlent une langue étrangère. Voici les vraies différences, expliquées par
       l'usage — pas par le marketing.
     </p>

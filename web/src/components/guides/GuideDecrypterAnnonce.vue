@@ -4,14 +4,14 @@ import GuideShell from "./GuideShell.vue";
 
 <template>
   <GuideShell
-    title="Décrypter une annonce VTT sur Le Bon Coin : les pièges à éviter"
-    description="Reconnaître les annonces honnêtes, les arnaques et les vélos volés sur Le Bon Coin. Questions à poser, signaux d'alerte, vérifications avant achat."
+    title="Décrypter une annonce VTT entre particuliers : les pièges à éviter"
+    description="Reconnaître les annonces honnêtes, les arnaques et les vélos volés sur les sites de petites annonces. Questions à poser, signaux d'alerte, vérifications avant achat."
     slug="decrypter-annonce-leboncoin"
     last-update="30 avril 2026"
     :reading-min="7"
   >
     <p>
-      Sur Le Bon Coin, sur 100 annonces VTT, environ 5 sont des arnaques pures, 10 sont des vélos volés
+      Sur 100 annonces VTT entre particuliers, environ 5 sont des arnaques pures, 10 sont des vélos volés
       (souvent à l'insu du vendeur de bonne foi qui l'a acheté à un voleur), et le reste est honnête.
       Voici comment trier en 2 minutes par annonce.
     </p>
@@ -40,7 +40,7 @@ import GuideShell from "./GuideShell.vue";
     </p>
     <ul>
       <li>Un site de vente neuf (Alltricks, Probikeshop, site marque) → photos de stock, le vendeur n'a peut-être pas le vélo</li>
-      <li>Une autre annonce LBC avec un autre vendeur → arnaque, ils volent les photos d'annonces réelles</li>
+      <li>Une autre annonce avec un autre vendeur → arnaque, ils volent les photos d'annonces réelles</li>
       <li>Un forum ou un Pinterest → potentiellement annonce factice</li>
     </ul>
 
@@ -53,7 +53,7 @@ import GuideShell from "./GuideShell.vue";
 
     <h3>4. Vendeur récent ou sans historique</h3>
     <p>
-      Sur LBC, regarde le profil du vendeur. Une seule annonce, compte créé il y a 2 jours, pas d'autres
+      Regarde le profil du vendeur. Une seule annonce, compte créé il y a 2 jours, pas d'autres
       ventes : prudence. Un compte avec 50 annonces sur 5 ans dans le vélo + d'autres trucs (jardinage,
       mobilier, etc.) c'est rassurant — c'est un vrai humain qui vend ses trucs.
     </p>
@@ -76,11 +76,11 @@ import GuideShell from "./GuideShell.vue";
       est en train d'arnaquer.
     </p>
 
-    <h3>7. Communication uniquement par mail / WhatsApp / hors LBC</h3>
+    <h3>7. Communication uniquement par mail / WhatsApp / hors plateforme</h3>
     <p>
-      Les arnaqueurs essaient toujours de sortir de la messagerie LBC vers un canal moins traçable. "Réponds
-      moi sur WhatsApp au +33 6 XX XX XX XX" en 2e message = signal rouge. Les pros et particuliers honnêtes
-      restent sur LBC ou donnent un téléphone fixe vérifiable.
+      Les arnaqueurs essaient toujours de sortir de la messagerie de la plateforme vers un canal moins
+      traçable. "Réponds moi sur WhatsApp au +33 6 XX XX XX XX" en 2e message = signal rouge. Les pros et
+      particuliers honnêtes restent sur la messagerie d'origine ou donnent un téléphone fixe vérifiable.
     </p>
 
     <h2>Les questions à poser systématiquement</h2>
@@ -148,7 +148,7 @@ import GuideShell from "./GuideShell.vue";
     </ul>
 
     <div class="callout">
-      <strong>Astuce pratique :</strong> garde tous les échanges LBC + WhatsApp en captures d'écran. Et photographie
+      <strong>Astuce pratique :</strong> garde tous les échanges (messagerie + WhatsApp) en captures d'écran. Et photographie
       le vélo lors de l'achat avec sa carte ID dans le cadre. En cas de litige, ça sert.
     </div>
 
@@ -161,14 +161,14 @@ import GuideShell from "./GuideShell.vue";
       <li><strong>Signalement Pharos</strong> (
         <a href="https://www.internet-signalement.gouv.fr" target="_blank" rel="noopener" class="link-accent">internet-signalement.gouv.fr</a>
         ).</li>
-      <li><strong>Signalement à LBC</strong> via leur formulaire — ils peuvent bloquer le compte du vendeur si récidive.</li>
+      <li><strong>Signaler la fraude à la plateforme</strong> via leur formulaire de signalement — la plupart bloquent le compte du vendeur si récidive.</li>
       <li><strong>Si paiement par carte ou virement</strong> : contacte ta banque pour tenter une opposition / chargeback. Difficile mais possible si action rapide.</li>
     </ol>
 
     <h2>En résumé : la règle des 3 NON</h2>
     <ol>
       <li>Pas d'argent <strong>avant</strong> de voir.</li>
-      <li>Pas de transaction <strong>hors LBC / hors face-à-face</strong>.</li>
+      <li>Pas de transaction <strong>à distance / hors face-à-face</strong>.</li>
       <li>Pas d'achat <strong>sans facture ni numéro de série lisible</strong>.</li>
     </ol>
     <p>

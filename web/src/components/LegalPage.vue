@@ -42,7 +42,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Ce qu'on fait</h2>
           <p>
-            Plusieurs fois par jour, on consulte les nouvelles annonces VTT (enduro et descente) publiées sur Leboncoin. Pour chacune, une intelligence artificielle :
+            Plusieurs fois par jour, on consulte les nouvelles annonces VTT (enduro et descente) publiées sur les principaux sites de petites annonces françaises. Pour chacune, une intelligence artificielle :
           </p>
           <ul class="list-disc ml-6 space-y-1.5">
             <li>identifie le modèle, l'année, les caractéristiques (suspension, taille, électrique ou non…)</li>
@@ -68,7 +68,7 @@ const lastUpdate = "29 avril 2026";
             Les analyses sont générées par une IA et fournies <strong>à titre indicatif</strong>. Elles peuvent se tromper, surtout sur des modèles rares ou des annonces peu détaillées. <strong>Vérifie toujours l'annonce originale, regarde les photos en grand, pose des questions au vendeur, et inspecte le vélo avant achat.</strong> On te donne une longueur d'avance, pas une garantie.
           </p>
           <p>
-            Le service est <strong>gratuit</strong> et le restera. Trouve Ton VTT n'est ni partenaire, ni affilié à Leboncoin — c'est un projet indépendant qui s'appuie uniquement sur des annonces publiques.
+            Le service est <strong>gratuit</strong> et le restera. Trouve Ton VTT est un projet indépendant qui s'appuie uniquement sur des annonces publiques de particuliers. On n'est partenaire ni affilié à aucun site de petites annonces.
           </p>
         </section>
 
@@ -108,10 +108,10 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Données affichées</h2>
           <p>
-            Les annonces présentées sur ce site sont issues du site <strong>Leboncoin.fr</strong> et restent la propriété de leurs auteurs respectifs. Trouve Ton VTT n'est ni affilié, ni partenaire, ni sponsorisé par Leboncoin SA.
+            Les annonces présentées sur ce site sont des annonces publiques de particuliers et restent la propriété de leurs auteurs respectifs. Trouve Ton VTT n'est affilié à aucune plateforme de petites annonces.
           </p>
           <p>
-            Le service est fourni à titre gratuit et informatif. Trouve Ton VTT ne se porte pas garant de la véracité, de la disponibilité ou de l'état des biens présentés. Toute transaction se fait directement entre l'acheteur et le vendeur sur Leboncoin.
+            Le service est fourni à titre gratuit et informatif. Trouve Ton VTT ne se porte pas garant de la véracité, de la disponibilité ou de l'état des biens présentés. Toute transaction se fait directement entre l'acheteur et le vendeur sur la plateforme d'origine de l'annonce.
           </p>
         </section>
 
@@ -175,7 +175,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">1. Objet</h2>
           <p>
-            Trouve Ton VTT est un service en ligne <strong>gratuit</strong> qui agrège des annonces VTT publiques issues de Leboncoin.fr et propose une analyse automatisée de leur intérêt grâce à un moteur d'intelligence artificielle.
+            Trouve Ton VTT est un service en ligne <strong>gratuit</strong> qui agrège des annonces VTT publiques de particuliers et propose une analyse automatisée de leur intérêt grâce à un moteur d'intelligence artificielle.
           </p>
         </section>
 
@@ -189,7 +189,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">3. Données présentées</h2>
           <p>
-            Les annonces sont récupérées automatiquement depuis Leboncoin et peuvent être désactivées, modifiées ou périmées sans que cela soit reflété en temps réel sur Trouve Ton VTT. Les prix, descriptions et photos restent la propriété de leurs auteurs et de Leboncoin.
+            Les annonces sont récupérées automatiquement depuis leur plateforme d'origine et peuvent être désactivées, modifiées ou périmées sans que cela soit reflété en temps réel sur Trouve Ton VTT. Les prix, descriptions et photos restent la propriété de leurs auteurs et de la plateforme d'origine.
           </p>
         </section>
 
@@ -212,7 +212,7 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">5. Utilisation acceptable</h2>
           <p>
-            L'utilisateur s'engage à ne pas perturber le fonctionnement du site (scraping massif, attaques, tentatives d'intrusion). Toute utilisation abusive pourra entraîner un blocage de l'accès.
+            L'utilisateur s'engage à ne pas perturber le fonctionnement du site (collecte automatisée massive, attaques, tentatives d'intrusion). Toute utilisation abusive pourra entraîner un blocage de l'accès.
           </p>
         </section>
 
