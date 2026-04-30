@@ -156,10 +156,9 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
           <span class="text-sm font-black tabular-nums leading-none opacity-95">{{ score }}</span>
         </div>
       </div>
-      <!-- Jauge horizontale : degrade rouge -> bleu -> vert revele selon le score.
-           score-gauge-fill = masque qui cache la partie a droite du score. -->
+      <!-- Jauge horizontale : couleur unique selon le tier (definie par .tier-* parent) -->
       <div class="score-gauge" role="progressbar" :aria-valuenow="score" aria-valuemin="0" aria-valuemax="100">
-        <div class="score-gauge-fill" :style="{ width: `${100 - score}%` }"></div>
+        <div class="score-gauge-fill" :style="{ width: `${score}%` }"></div>
       </div>
     </div>
 

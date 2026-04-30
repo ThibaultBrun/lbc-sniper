@@ -297,36 +297,32 @@ html, body {
   }
 
   /* ----- Jauge de score 0-100 (DealCard header + DealModal bandeau) -----
-     Bandeau neutre dessous, jauge en degrade rouge -> bleu -> vert qui se
-     "revele" selon le score. Astuce : on met le degrade complet en background
-     et on masque la partie non remplie via une div d'overlay (pas via width
-     du fill, sinon le degrade serait compresse).
-     Resultat : a 50%, on voit le rouge + le bleu mais pas encore le vert. */
+     Bandeau neutre dessous, jauge en couleur unique selon le tier (rouge -> vert
+     en passant par orange et gris pour le neutre). On ressort sur fond clair
+     comme sombre car le rail est tres clair et le fill est sature. */
   .score-gauge {
     @apply relative w-full rounded-full overflow-hidden;
     height: 6px;
-    background: linear-gradient(
-      to right,
-      theme(colors.rose.500),
-      theme(colors.amber.400) 30%,
-      theme(colors.sky.400) 55%,
-      theme(colors.emerald.500) 80%,
-      theme(colors.emerald.400)
-    );
+    background-color: var(--color-bg-muted);
   }
   .score-gauge-fill {
-    /* Mask : on cache la partie a droite du score. Width = 100 - score (en %). */
-    @apply absolute top-0 right-0 h-full;
-    background-color: var(--color-score-mask);
+    /* width = score% sur l'axe X. La couleur est definie par le parent tier-*
+       via la variable --score-color. */
+    @apply h-full rounded-full;
+    background-color: var(--score-color, theme(colors.slate.400));
     transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  /* Couleur du masque : opaque selon le theme (clair = blanc cassse, sombre = slate fonce) */
-  :root {
-    --color-score-mask: rgb(0 0 0 / 0.15);
-  }
-  [data-theme="dark"] {
-    --color-score-mask: rgb(0 0 0 / 0.45);
-  }
+  /* Couleur de la jauge selon le tier (definie sur le bandeau parent .tier-*) */
+  .tier-great { --score-color: theme(colors.emerald.500); }
+  .tier-good  { --score-color: theme(colors.emerald.600); }
+  .tier-fair  { --score-color: theme(colors.slate.400); }
+  .tier-poor  { --score-color: theme(colors.amber.500); }
+  .tier-bad   { --score-color: theme(colors.rose.500); }
+  [data-theme="dark"] .tier-great { --score-color: theme(colors.emerald.400); }
+  [data-theme="dark"] .tier-good  { --score-color: theme(colors.emerald.400); }
+  [data-theme="dark"] .tier-fair  { --score-color: theme(colors.slate.400); }
+  [data-theme="dark"] .tier-poor  { --score-color: theme(colors.amber.400); }
+  [data-theme="dark"] .tier-bad   { --score-color: theme(colors.rose.400); }
 
   /* ----- Score tiers : bandeau NEUTRE (fond carte) + label colore selon le score.
      Le visuel fort vient maintenant de la jauge horizontale (.score-gauge) qui
