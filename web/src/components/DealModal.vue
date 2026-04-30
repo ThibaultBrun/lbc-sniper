@@ -281,7 +281,7 @@ onUnmounted(() => {
             <h3 class="section-title flex items-center gap-2 mb-2">
               <span>🧠</span> Synthèse IA
             </h3>
-            <p class="text-sm leading-relaxed">{{ ad.reasoning }}</p>
+            <p class="text-sm leading-relaxed break-words">{{ ad.reasoning }}</p>
           </section>
         </div>
 
@@ -293,14 +293,14 @@ onUnmounted(() => {
             <h3 class="section-title flex items-center gap-2 mb-2">
               <span>📝</span> Titre original
             </h3>
-            <p class="text-sm font-medium">{{ ad.subject }}</p>
+            <p class="text-sm font-medium break-words">{{ ad.subject }}</p>
           </section>
 
           <section v-if="ad.body" class="pt-3" style="border-top: 1px solid var(--color-border-subtle)">
             <h3 class="section-title flex items-center gap-2 mb-2">
               <span>📄</span> Description complète
             </h3>
-            <p class="text-sm leading-relaxed whitespace-pre-line text-muted">{{ ad.body }}</p>
+            <p class="text-sm leading-relaxed whitespace-pre-line break-words text-muted">{{ ad.body }}</p>
           </section>
 
           <p v-if="!ad.subject && !ad.body" class="text-sm text-muted italic">

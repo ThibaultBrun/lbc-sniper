@@ -577,7 +577,7 @@ const stats = computed(() => ({
   <GuideChoisirVtt v-else-if="isGuideChoisir" />
   <GuideEnduroVsDh v-else-if="isGuideEnduroVsDh" />
   <GuideDecrypterAnnonce v-else-if="isGuideDecrypter" />
-  <div v-else class="min-h-screen flex flex-col">
+  <div v-else class="min-h-screen flex flex-col overflow-x-hidden">
     <header class="surface-header">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center gap-3 sm:gap-4 justify-between">
         <div class="min-w-0">

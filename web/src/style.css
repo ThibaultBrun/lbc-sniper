@@ -493,11 +493,14 @@ html, body {
 
   /* ----- Modal backdrop ----- */
   .modal-backdrop {
-    @apply fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm;
+    @apply fixed inset-0 z-50 grid place-items-center p-4 backdrop-blur-sm overflow-hidden;
     background-color: var(--color-bg-backdrop);
   }
+  /* overflow-y-auto pour scroll vertical, x-hidden pour bloquer le glissement
+     lateral parasite (mobile : un texte long du body peut depasser meme avec
+     overflow-hidden sur la modale). */
   .modal-backdrop-scroll {
-    @apply fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto backdrop-blur-sm;
+    @apply fixed inset-0 z-50 grid place-items-center p-4 overflow-y-auto overflow-x-hidden backdrop-blur-sm;
     background-color: var(--color-bg-backdrop);
   }
 
