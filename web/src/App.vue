@@ -239,9 +239,13 @@ function applySort<T>(q: T): T {
   return (q as any).order("deal_score", { ascending: false, nullsFirst: false });
 }
 
-// Count des ads matchant les filtres user (= total du dataset filtre).
-// Sert a calculer le nombre de pages exact pour la pagination server-side.
+// Counts du dataset filtre (= toutes pages confondues) pour les chiffres en
+// haut "X / Y annonces", "X / Y analysees", "X / Y excellentes". Calcules
+// server-side avec les memes filtres que la liste, sinon le compteur serait
+// limite a la page courante (max 20 ads).
 const filteredTotalCount = ref(0);
+const filteredEnrichedCount = ref(0);
+const filteredGreatCount = ref(0);
 
 async function load() {
   loading.value = true;
@@ -274,25 +278,45 @@ async function load() {
       ).limit(500);
     }
 
-    // Count filtre = total de pages possibles (mode server-side uniquement).
-    const filteredCountPromise = useServerPagination
-      ? buildFilteredQueryBase(
-          supabase.from("listings").select("*", { count: "exact", head: true }),
-        )
-      : Promise.resolve({ count: null });
+    // 3 counts filtres (en plus des 3 globaux) : tous appliquent les memes
+    // filtres SQL que la liste, donc reflectent le dataset filtre complet
+    // (toutes pages, pas juste la page courante).
+    // En mode geo/favoris ces counts sont calcules cote client dans `filtered`
+    // (apres haversine / intersection favoris), donc on les met a 0 ici.
+    const baseFilteredCount = () => buildFilteredQueryBase(
+      supabase.from("listings").select("*", { count: "exact", head: true }),
+    );
+    const filteredCountPromises = useServerPagination
+      ? [
+          baseFilteredCount(),
+          baseFilteredCount().not("deal_score", "is", null),
+          baseFilteredCount().gte("deal_score", 80),
+        ]
+      : [
+          Promise.resolve({ count: null }),
+          Promise.resolve({ count: null }),
+          Promise.resolve({ count: null }),
+        ];
 
-    const [listRes, fcRes, totalRes, enrichedRes, greatRes] = await Promise.all([
+    const [listRes, fcRes, fEnrRes, fGreatRes, totalRes, enrichedRes, greatRes] = await Promise.all([
       listPromise,
-      filteredCountPromise,
+      ...filteredCountPromises,
       scopedCountQuery(),
       scopedCountQuery().not("deal_score", "is", null),
       scopedCountQuery().gte("deal_score", 80),
     ]);
     if ((listRes as any).error) throw (listRes as any).error;
     ads.value = (listRes as any).data as unknown as Ad[];
-    filteredTotalCount.value = useServerPagination
-      ? ((fcRes as any).count ?? 0)
-      : ads.value.length;  // mode geo : on ne sait pas avant filtrage client
+    if (useServerPagination) {
+      filteredTotalCount.value = (fcRes as any).count ?? 0;
+      filteredEnrichedCount.value = (fEnrRes as any).count ?? 0;
+      filteredGreatCount.value = (fGreatRes as any).count ?? 0;
+    } else {
+      // Mode geo/favoris : on calcule depuis `filtered` cote client (voir plus bas).
+      filteredTotalCount.value = ads.value.length;
+      filteredEnrichedCount.value = 0;
+      filteredGreatCount.value = 0;
+    }
     totalCount.value = totalRes.count ?? 0;
     enrichedCount.value = enrichedRes.count ?? 0;
     greatCount.value = greatRes.count ?? 0;
@@ -473,16 +497,23 @@ const pageNumbers = computed<(number | "…")[]>(() => {
 });
 
 // Stats globales (count queries server-side) + stats filtrees (calculees
-// localement sur `filtered`) pour afficher "X / Y" dans le header quand un
-// filtre est actif. Note : "filtered" peut etre tronque tant que le 2e load
-// (background, jusqu'a 1000 ads) n'est pas fini -> les chiffres se completent
-// progressivement, c'est OK.
-const filteredEnriched = computed(() =>
-  filtered.value.filter((a) => a.deal_score !== null && a.deal_score !== undefined).length,
-);
-const filteredGreat = computed(() =>
-  filtered.value.filter((a) => (a.deal_score ?? 0) >= 80).length,
-);
+// Stats filtrees (toutes pages confondues) :
+//   - Mode server-side (sans geo/favoris) : on prefere les counts SQL precis
+//     calcules dans load() (filteredEnrichedCount / filteredGreatCount).
+//   - Mode client (geo / favoris) : on calcule sur `filtered` (le dataset
+//     deja filtre par haversine ou favoris).
+const filteredEnriched = computed(() => {
+  if (useClientPagination.value) {
+    return filtered.value.filter((a) => a.deal_score !== null && a.deal_score !== undefined).length;
+  }
+  return filteredEnrichedCount.value;
+});
+const filteredGreat = computed(() => {
+  if (useClientPagination.value) {
+    return filtered.value.filter((a) => (a.deal_score ?? 0) >= 80).length;
+  }
+  return filteredGreatCount.value;
+});
 
 const stats = computed(() => ({
   total: totalCount.value,
