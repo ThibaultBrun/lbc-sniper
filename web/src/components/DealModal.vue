@@ -119,7 +119,7 @@ onUnmounted(() => {
             :href="ad.url"
             target="_blank"
             rel="noopener noreferrer"
-            class="block aspect-square rounded-xl overflow-hidden group/img surface-muted"
+            class="block aspect-[4/3] sm:aspect-square rounded-xl overflow-hidden group/img surface-muted"
             title="Ouvrir l'annonce d'origine"
           >
             <img
@@ -127,6 +127,9 @@ onUnmounted(() => {
               :src="ad.image_url"
               :alt="ad.subject"
               class="h-full w-full object-cover transition group-hover/img:scale-105"
+              decoding="async"
+              referrerpolicy="no-referrer"
+              fetchpriority="high"
             />
             <div v-else class="h-full w-full grid place-items-center text-faint">
               pas de photo
