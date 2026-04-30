@@ -25,22 +25,20 @@ let initialized = false;
 let profileLoadedFor: string | null = null;
 let profileInflight: Promise<Profile | null> | null = null;
 
-async function loadProfile(uid: string): Promise<Profile | null> {
-  // Dedup : si une requete est en vol pour ce uid, on attend la meme.
-  // On marque profileLoadedFor IMMEDIATEMENT (avant l'await) pour bloquer
-  // les appels concurrents qui arriveraient pendant que la requete est en vol.
-  if (profileLoadedFor === uid) {
-    if (profileInflight) return profileInflight;
-    return profile.value;
-  }
+function loadProfileInBackground(uid: string) {
+  // Charge le profile sans bloquer le caller. Met a jour `profile.value`
+  // quand la donnee arrive (la reactivite Vue propage aux composants qui
+  // dependent de isAdmin / profile.avatar_url).
+  // Dedup : si on a deja chargE pour ce uid OU si une requete est en vol,
+  // on ne relance rien.
+  if (profileLoadedFor === uid && profile.value) return;
+  if (profileInflight) return;
   profileLoadedFor = uid;
 
-  const TIMEOUT_MS = 8000;
+  // Timeout court : au-dela, on abandonne. On ne bloque plus l'app.
+  const TIMEOUT_MS = 3000;
   const timeoutPromise = new Promise<null>((resolve) => {
-    setTimeout(() => {
-      console.warn("loadProfile timeout — continuing without profile");
-      resolve(null);
-    }, TIMEOUT_MS);
+    setTimeout(() => resolve(null), TIMEOUT_MS);
   });
   const queryPromise = supabase
     .from("profiles")
@@ -55,15 +53,19 @@ async function loadProfile(uid: string): Promise<Profile | null> {
       return data as Profile | null;
     });
   profileInflight = Promise.race([queryPromise, timeoutPromise]);
-  try {
-    const p = await profileInflight;
-    return p;
-  } finally {
-    profileInflight = null;
-  }
+  profileInflight
+    .then((p) => {
+      if (p) profile.value = p;
+    })
+    .catch((e) => console.error("Profile load failed", e))
+    .finally(() => {
+      profileInflight = null;
+    });
 }
 
-async function setUserAndProfile(newUser: User | null) {
+function setUserAndProfile(newUser: User | null) {
+  // PAS async : on ne bloque plus le caller (syncFromSession / onAuthStateChange).
+  // Le profile se charge en background, l'app peut continuer avec juste user.
   const newUid = newUser?.id ?? null;
   user.value = newUser;
   if (!newUid) {
@@ -72,14 +74,13 @@ async function setUserAndProfile(newUser: User | null) {
     profileInflight = null;
     return;
   }
-  // Si on a deja le profile pour ce uid, on ne refait rien.
   if (profileLoadedFor === newUid && profile.value) return;
-  profile.value = await loadProfile(newUid);
+  loadProfileInBackground(newUid);
 }
 
 async function syncFromSession() {
   const { data } = await supabase.auth.getSession();
-  await setUserAndProfile(data.session?.user ?? null);
+  setUserAndProfile(data.session?.user ?? null);
   loading.value = false;
 }
 
@@ -91,8 +92,8 @@ function ensureInit() {
   // Note : Supabase declenche un evenement INITIAL_SESSION au boot meme si on
   // a deja appele getSession(). Notre dedup via profileLoadedFor evite de
   // re-fetch dans ce cas.
-  supabase.auth.onAuthStateChange(async (_event, session) => {
-    await setUserAndProfile(session?.user ?? null);
+  supabase.auth.onAuthStateChange((_event, session) => {
+    setUserAndProfile(session?.user ?? null);
   });
 }
 
