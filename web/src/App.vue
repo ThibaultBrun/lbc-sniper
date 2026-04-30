@@ -86,6 +86,15 @@ const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const sizeFilter = ref<string | null>(null);
 const wheelFilter = ref<string | null>(null);
+// Score minimum (filtre IA "ne montre que les bonnes affaires")
+const minDealScore = ref<number | null>(null);
+
+const MIN_SCORE_OPTIONS = [
+  { value: null, label: "Tous" },
+  { value: 40, label: "≥ 40 (moyennes)" },
+  { value: 60, label: "≥ 60 (bonnes)" },
+  { value: 80, label: "≥ 80 (excellentes)" },
+];
 
 // Categories d'usage VTT (cle = valeur enum SQL, label = ce qu'on affiche).
 // Trail et all-mountain sont fusionnees en pratique sur le marche FR.
@@ -242,6 +251,7 @@ function buildFilteredQueryBase<T>(q: T): T {
     // wheel_size peut etre stocke '29"', '29 pouces', '29' -> on prefixe-match.
     qq = qq.ilike("wheel_size", `${wheelFilter.value}%`);
   }
+  if (minDealScore.value !== null) qq = qq.gte("deal_score", minDealScore.value);
   if (electricFilter.value === "yes") qq = qq.eq("electric", true);
   else if (electricFilter.value === "no") qq = qq.eq("electric", false);
   if (priceMin.value !== null) qq = qq.gte("current_price", priceMin.value);
@@ -374,6 +384,7 @@ const currentFilters = computed<SavedSearchFilters>(() => ({
   vttCategoryFilter: vttCategoryFilter.value,
   sizeFilter: sizeFilter.value,
   wheelFilter: wheelFilter.value,
+  minDealScore: minDealScore.value ?? undefined,
   geo: geo.value,
   radiusKm: radiusKm.value,
   electricFilter: electricFilter.value,
@@ -388,6 +399,7 @@ function applySavedSearch(f: SavedSearchFilters) {
   vttCategoryFilter.value = f.vttCategoryFilter ?? null;
   sizeFilter.value = f.sizeFilter ?? null;
   wheelFilter.value = f.wheelFilter ?? null;
+  minDealScore.value = f.minDealScore ?? null;
   geo.value = f.geo;
   radiusKm.value = f.radiusKm ?? 50;
   electricFilter.value = f.electricFilter ?? "all";
@@ -402,6 +414,7 @@ function resetFilters() {
   vttCategoryFilter.value = null;
   sizeFilter.value = null;
   wheelFilter.value = null;
+  minDealScore.value = null;
   geo.value = null;
   radiusKm.value = 50;
   electricFilter.value = "all";
@@ -417,6 +430,7 @@ const hasActiveFilters = computed(() =>
   || vttCategoryFilter.value !== null
   || sizeFilter.value !== null
   || wheelFilter.value !== null
+  || minDealScore.value !== null
   || geo.value !== null
   || electricFilter.value !== "all"
   || priceMin.value !== null
@@ -473,7 +487,7 @@ const paginated = computed(() => {
 // Reset a la page 1 quand les filtres changent (pour eviter d'etre sur la page
 // 5 d'un dataset qui n'en a plus que 2).
 watch(
-  [categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, searchText],
+  [categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter, minDealScore, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, searchText],
   () => {
     currentPage.value = 1;
   },
@@ -486,7 +500,7 @@ watch(
 let _loadDebounce: ReturnType<typeof setTimeout> | null = null;
 watch(
   [
-    categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter,
+    categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter, minDealScore,
     electricFilter, priceMin, priceMax,
     sortBy, searchText, pageSize, currentPage, geo, isFavoritesPage,
   ],
@@ -689,6 +703,15 @@ const stats = computed(() => ({
             <select v-model="vttCategoryFilter" class="input-base flex-1 sm:flex-none">
               <option :value="null">Tous</option>
               <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
+                {{ o.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span class="text-muted">🎯 Score IA:</span>
+            <select v-model="minDealScore" class="input-base flex-1 sm:flex-none">
+              <option v-for="o in MIN_SCORE_OPTIONS" :key="String(o.value)" :value="o.value">
                 {{ o.label }}
               </option>
             </select>
