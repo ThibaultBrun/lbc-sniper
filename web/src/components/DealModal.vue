@@ -7,6 +7,26 @@ const emit = defineEmits<{ close: [] }>();
 
 const copied = ref(false);
 
+// Date de publication originale (champ first_publication renvoye par la
+// plateforme d'origine). On affiche "il y a X jours" si recent, sinon date complete.
+const publishedLabel = computed<string | null>(() => {
+  const raw = (props.ad as Ad & { first_publication?: string | null }).first_publication;
+  if (!raw) return null;
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) return null;
+  const now = Date.now();
+  const ageMs = now - d.getTime();
+  const oneDay = 86400 * 1000;
+  if (ageMs < oneDay) {
+    const hours = Math.floor(ageMs / 3600000);
+    if (hours < 1) return "il y a moins d'une heure";
+    return `il y a ${hours} h`;
+  }
+  const days = Math.floor(ageMs / oneDay);
+  if (days < 30) return `il y a ${days} jour${days > 1 ? "s" : ""}`;
+  return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+});
+
 async function copyShareLink() {
   const url = `${globalThis.location.origin}/ad/${props.ad.id}`;
   try {
@@ -155,7 +175,10 @@ onUnmounted(() => {
 
           <div class="text-sm pt-2" style="border-top: 1px solid var(--color-border)">
             <div class="font-medium">{{ ad.subject }}</div>
-            <div class="text-xs mt-1 text-muted">{{ ad.city ?? "?" }}</div>
+            <div class="text-xs mt-1 text-muted flex flex-wrap gap-x-3 gap-y-0.5">
+              <span>📍 {{ ad.city ?? "?" }}</span>
+              <span v-if="publishedLabel">📅 Publiée {{ publishedLabel }}</span>
+            </div>
           </div>
 
           <a
