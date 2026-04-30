@@ -88,23 +88,25 @@ onUnmounted(() => {
 <template>
   <div class="modal-backdrop-scroll" @click.self="emit('close')">
     <div class="modal-shell" @click.stop>
-      <!-- Bandeau verdict -->
-      <div :class="['px-8 py-6 flex items-center justify-between gap-4', headerTierClass]">
-        <div class="flex items-baseline gap-4">
-          <span class="text-6xl font-black tabular-nums leading-none">{{ score }}</span>
-          <div>
-            <div class="text-2xl font-bold leading-tight">{{ tierLabel }}</div>
-            <div class="text-xs uppercase tracking-widest opacity-75 mt-1">Analyse IA — Claude Opus</div>
+      <!-- Bandeau verdict : compacte sur mobile, etale sur desktop -->
+      <div :class="['px-4 sm:px-8 py-4 sm:py-6 flex items-center justify-between gap-3', headerTierClass]">
+        <div class="flex items-baseline gap-3 sm:gap-4 min-w-0">
+          <span class="text-4xl sm:text-6xl font-black tabular-nums leading-none">{{ score }}</span>
+          <div class="min-w-0">
+            <div class="text-lg sm:text-2xl font-bold leading-tight truncate">{{ tierLabel }}</div>
+            <div class="text-[10px] sm:text-xs uppercase tracking-widest opacity-75 mt-0.5 sm:mt-1">Analyse IA</div>
           </div>
         </div>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
           <button
             @click="copyShareLink"
             :class="['icon-btn-pill', copied ? 'icon-btn-pill-success' : '']"
             :aria-label="copied ? 'Lien copié' : 'Copier le lien partageable'"
           >
-            <span v-if="copied">✓ Copié</span>
-            <span v-else>🔗 Partager</span>
+            <span v-if="copied" class="hidden sm:inline">✓ Copié</span>
+            <span v-else class="hidden sm:inline">🔗 Partager</span>
+            <span v-if="copied" class="sm:hidden">✓</span>
+            <span v-else class="sm:hidden">🔗</span>
           </button>
           <button @click="emit('close')" class="icon-btn-circle" aria-label="Fermer">×</button>
         </div>
@@ -112,7 +114,7 @@ onUnmounted(() => {
 
       <div class="grid lg:grid-cols-[320px_1fr_1fr] gap-0">
         <!-- Colonne 1 : photo + prix + tags -->
-        <div class="p-6 space-y-4 modal-col-divider">
+        <div class="p-4 sm:p-6 space-y-4 modal-col-divider">
           <a
             :href="ad.url"
             target="_blank"
@@ -132,7 +134,7 @@ onUnmounted(() => {
           </a>
 
           <div class="space-y-2">
-            <div class="text-4xl font-bold tabular-nums">
+            <div class="text-3xl sm:text-4xl font-bold tabular-nums">
               {{ priceFmt(ad.current_price) }} €
             </div>
             <div v-if="ad.estimated_market_eur" class="text-sm">
@@ -192,7 +194,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Colonne 2 : Analyse + description originale -->
-        <div class="p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto modal-col-divider">
+        <div class="p-4 sm:p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto modal-col-divider">
           <section v-if="ad.reasoning">
             <h3 class="section-title flex items-center gap-2">
               <span class="text-base">🧠</span> Analyse
@@ -207,7 +209,7 @@ onUnmounted(() => {
         </div>
 
         <!-- Colonne 3 : Pros / Cons -->
-        <div class="p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto">
+        <div class="p-4 sm:p-6 space-y-5 lg:max-h-[80vh] lg:overflow-y-auto">
           <section v-if="ad.pros?.length">
             <h3 class="section-title section-title-pros flex items-center gap-2">
               <span class="text-lg">✓</span> Points forts
