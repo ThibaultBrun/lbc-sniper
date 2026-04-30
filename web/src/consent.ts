@@ -15,9 +15,10 @@ export type ConsentStatus = "accepted" | "rejected" | "unknown";
 const STORAGE_KEY = "ttv-cookies-consent";
 const TTL_DAYS = 395; // ~13 mois CNIL
 
-// L'ID GA sera renseigne quand le compte sera valide. Tant qu'il est vide,
-// on ne charge pas le tag GA (juste AdSense via index.html).
-const GA_MEASUREMENT_ID = ""; // ex: "G-XXXXXXXXXX"
+// ID GA4 (Trouve Ton VTT). Le tag se charge UNIQUEMENT si l'utilisateur
+// accepte les cookies (RGPD : Consent Mode v2 init dans index.html avec
+// analytics_storage=denied par defaut, update vers granted via accept()).
+const GA_MEASUREMENT_ID = "G-FNC1SBPZQJ";
 
 interface StoredConsent {
   v: 1;
@@ -84,10 +85,27 @@ function loadGAIfNeeded() {
 
   if (window.gtag) {
     window.gtag("js", new Date());
+    // send_page_view: false -> on envoie nous-meme les page_view au changement
+    // de route SPA via trackPageView(), sinon GA ne voit que la 1ere page.
     window.gtag("config", GA_MEASUREMENT_ID, {
       anonymize_ip: true,
+      send_page_view: false,
     });
+    // Premier hit : la page d'arrivee.
+    trackPageView(window.location.pathname + window.location.search);
   }
+}
+
+// Envoie un page_view a GA. A appeler depuis le router Vue.
+// Si GA n'est pas charge (consent denied / config vide), no-op silencieux.
+export function trackPageView(path: string, title?: string) {
+  if (typeof window === "undefined" || !window.gtag || !GA_MEASUREMENT_ID) return;
+  if (consent.value !== "accepted") return;
+  window.gtag("event", "page_view", {
+    page_path: path,
+    page_title: title ?? document.title,
+    page_location: window.location.href,
+  });
 }
 
 export function useConsent() {
