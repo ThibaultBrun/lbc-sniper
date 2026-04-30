@@ -186,9 +186,8 @@ const LIST_FIELDS = [
 ].join(",");
 
 // Helper : applique le scope commun (is_active + admin_hidden=false + VTT).
-// `admin_hidden=true` = annonce masquee par un admin ; jamais retouchee par le
-// scraper, donc la suppression est definitive meme si LBC reposte l'annonce.
-function scopedQuery() {
+// Counts globaux scope VTT (sans filtres user) pour le header "X / Y".
+function scopedCountQuery() {
   let q = supabase.from("listings").select("*", { count: "exact", head: true })
     .eq("is_active", true)
     .eq("admin_hidden", false);
@@ -196,39 +195,88 @@ function scopedQuery() {
   return q;
 }
 
-// Page initiale chargee tres vite (100 ads = 5 lignes en xl). Les filtres
-// client-side ne fonctionnent que sur ce qu'on a charge — on complete en
-// background avec _loadRest pour avoir le dataset entier.
-const INITIAL_PAGE_SIZE = 100;
-const FULL_PAGE_SIZE = 1000;
-
-function buildListQuery() {
-  let q = supabase
-    .from("listings")
-    .select(LIST_FIELDS)
+// Builder commun aux 2 requetes "filtree" (liste + count) : applique tous les
+// filtres faisables server-side. Geo et favoris restent forcement cote client.
+function buildFilteredQueryBase<T>(q: T): T {
+  let qq = (q as any)
     .eq("is_active", true)
     .eq("admin_hidden", false);
-  if (!isSecret.value) q = q.in("category_label", VTT_LABELS);
-  return q.order("deal_score", { ascending: false, nullsFirst: false });
+  if (!isSecret.value) qq = qq.in("category_label", VTT_LABELS);
+  if (categoryFilter.value) qq = qq.eq("category_label", categoryFilter.value);
+  if (vttCategoryFilter.value) qq = qq.eq("vtt_category", vttCategoryFilter.value);
+  if (electricFilter.value === "yes") qq = qq.eq("electric", true);
+  else if (electricFilter.value === "no") qq = qq.eq("electric", false);
+  if (priceMin.value !== null) qq = qq.gte("current_price", priceMin.value);
+  if (priceMax.value !== null) qq = qq.lte("current_price", priceMax.value);
+  const txt = searchText.value.trim();
+  if (txt.length > 0) qq = qq.ilike("subject", `%${txt}%`);
+  return qq;
 }
 
-const fullDatasetLoaded = ref(false);
+function applySort<T>(q: T): T {
+  if (sortBy.value === "price") {
+    return (q as any).order("current_price", { ascending: true, nullsFirst: false });
+  }
+  if (sortBy.value === "recent") {
+    return (q as any).order("first_seen_at", { ascending: false, nullsFirst: false });
+  }
+  return (q as any).order("deal_score", { ascending: false, nullsFirst: false });
+}
+
+// Count des ads matchant les filtres user (= total du dataset filtre).
+// Sert a calculer le nombre de pages exact pour la pagination server-side.
+const filteredTotalCount = ref(0);
 
 async function load() {
   loading.value = true;
   error.value = null;
-  fullDatasetLoaded.value = false;
   try {
-    // Phase 1 : on attend SEULEMENT la 1ere page (100 ads) + les 3 counts.
-    // L'UI peut s'afficher des qu'on a ca (~150-300ms vs 575ms avant).
-    const [listRes, totalRes, enrichedRes, greatRes] = await Promise.all([
-      buildListQuery().limit(INITIAL_PAGE_SIZE),
-      scopedQuery(),
-      scopedQuery().not("deal_score", "is", null),
-      scopedQuery().gte("deal_score", 80),
+    // Pagination : 2 modes selon que geo est actif ou pas.
+    // - Sans geo : pagination 100% server-side. On fetch SEULEMENT la page courante
+    //   (= pageSize ads). Ultra-rapide, payload minimal.
+    // - Avec geo : on charge un buffer plus large (500 max) et on filtre par
+    //   haversine cote client, car PostGIS n'est pas dispo. La pagination devient
+    //   alors client-side sur le sous-ensemble filtre.
+    const useServerPagination = !geo.value && !isFavoritesPage.value;
+
+    let listPromise;
+    if (useServerPagination) {
+      const from = (currentPage.value - 1) * pageSize.value;
+      const to = from + pageSize.value - 1;
+      listPromise = applySort(
+        buildFilteredQueryBase(
+          supabase.from("listings").select(LIST_FIELDS),
+        ),
+      ).range(from, to);
+    } else {
+      // Mode geo / favoris : on charge jusqu'a 500 ads matchant les filtres
+      // server-side, puis on filtre/pagine cote client (geo, favoris).
+      listPromise = applySort(
+        buildFilteredQueryBase(
+          supabase.from("listings").select(LIST_FIELDS),
+        ),
+      ).limit(500);
+    }
+
+    // Count filtre = total de pages possibles (mode server-side uniquement).
+    const filteredCountPromise = useServerPagination
+      ? buildFilteredQueryBase(
+          supabase.from("listings").select("*", { count: "exact", head: true }),
+        )
+      : Promise.resolve({ count: null });
+
+    const [listRes, fcRes, totalRes, enrichedRes, greatRes] = await Promise.all([
+      listPromise,
+      filteredCountPromise,
+      scopedCountQuery(),
+      scopedCountQuery().not("deal_score", "is", null),
+      scopedCountQuery().gte("deal_score", 80),
     ]);
-    if (listRes.error) throw listRes.error;
-    ads.value = listRes.data as unknown as Ad[];
+    if ((listRes as any).error) throw (listRes as any).error;
+    ads.value = (listRes as any).data as unknown as Ad[];
+    filteredTotalCount.value = useServerPagination
+      ? ((fcRes as any).count ?? 0)
+      : ads.value.length;  // mode geo : on ne sait pas avant filtrage client
     totalCount.value = totalRes.count ?? 0;
     enrichedCount.value = enrichedRes.count ?? 0;
     greatCount.value = greatRes.count ?? 0;
@@ -238,33 +286,6 @@ async function load() {
     loading.value = false;
   }
   await syncSelectedFromRoute();
-
-  // Phase 2 : en background, complete le dataset jusqu'a 1000 si necessaire
-  // (pour les filtres geo/prix/electric qui ont besoin du dataset entier).
-  // Pas de await en haut : l'UI affiche deja les 100 premieres.
-  if (totalCount.value > INITIAL_PAGE_SIZE) {
-    _loadRest();
-  } else {
-    fullDatasetLoaded.value = true;
-  }
-}
-
-async function _loadRest() {
-  try {
-    const { data, error: e } = await buildListQuery()
-      .range(INITIAL_PAGE_SIZE, FULL_PAGE_SIZE - 1);
-    if (e) {
-      console.error("Background load failed:", e);
-      return;
-    }
-    if (data && data.length > 0) {
-      // On concatene en preservant l'ordre serveur (deja triE par deal_score).
-      ads.value = [...ads.value, ...(data as unknown as Ad[])];
-    }
-    fullDatasetLoaded.value = true;
-  } catch (e) {
-    console.error("Background load failed:", e);
-  }
 }
 
 // Quand on bascule entre / et /secret, on recharge avec le bon scope.
@@ -334,19 +355,15 @@ const hasActiveFilters = computed(() =>
   || sortBy.value !== "deal",
 );
 
+// `filtered` : applique uniquement les filtres qu'on ne peut PAS faire en SQL
+// simple sans extension. Tri et reste deja appliques server-side dans load().
+//   - Page /favoris : on intersecte avec les ad_id en favori du user
+//   - geo : haversine (PostGIS pas dispo)
 const filtered = computed(() => {
   let list = ads.value;
-  // Page /favoris : on garde uniquement les annonces favorites du user
   if (isFavoritesPage.value) {
     list = list.filter((a) => favoriteIds.value.has(a.id));
   }
-  if (categoryFilter.value)
-    list = list.filter((a) => a.category_label === categoryFilter.value);
-
-  if (vttCategoryFilter.value)
-    list = list.filter((a) => a.vtt_category === vttCategoryFilter.value);
-
-  // Filtre geographique : Haversine si geo est defini
   if (geo.value) {
     const g = geo.value;
     const r = radiusKm.value;
@@ -355,65 +372,60 @@ const filtered = computed(() => {
       return haversineKm(g.lat, g.lng, a.ad_lat, a.ad_lng) <= r;
     });
   }
-
-  // Filtre electrique
-  if (electricFilter.value === "yes") {
-    list = list.filter((a) => a.electric === true);
-  } else if (electricFilter.value === "no") {
-    list = list.filter((a) => a.electric === false);
-  }
-
-  // Filtre prix min/max
-  if (priceMin.value !== null) {
-    const min = priceMin.value;
-    list = list.filter((a) => a.current_price !== null && a.current_price >= min);
-  }
-  if (priceMax.value !== null) {
-    const max = priceMax.value;
-    list = list.filter((a) => a.current_price !== null && a.current_price <= max);
-  }
-
-  // Filtre recherche texte — desormais sur le titre uniquement (le body
-  // n'est plus charge dans le payload initial pour gagner ~70% sur la
-  // requete Supabase). Si tu veux chercher dans la description, ouvre
-  // l'analyse (modale) qui contient le body complet.
-  const q = normalizeText(searchText.value.trim());
-  if (q.length > 0) {
-    list = list.filter((a) => {
-      const haystack = normalizeText(a.subject ?? "");
-      return haystack.includes(q);
-    });
-  }
-
-  if (sortBy.value === "deal") {
-    list = [...list].sort((a, b) => (b.deal_score ?? -1) - (a.deal_score ?? -1));
-  } else if (sortBy.value === "price") {
-    list = [...list].sort(
-      (a, b) => (a.current_price ?? Infinity) - (b.current_price ?? Infinity),
-    );
-  } else {
-    list = [...list].sort(
-      (a, b) =>
-        new Date(b.first_seen_at).getTime() - new Date(a.first_seen_at).getTime(),
-    );
-  }
   return list;
 });
 
-const totalPages = computed(() =>
-  Math.max(1, Math.ceil(filtered.value.length / pageSize.value)),
+// Pagination : 2 modes.
+// - Mode server-side (pas de geo/favoris) : `ads.value` contient deja la page
+//   courante du serveur, on l'affiche directement. totalPages depend du count
+//   filtre server-side (filteredTotalCount).
+// - Mode client (geo/favoris) : on pagine `filtered` localement.
+const useClientPagination = computed(
+  () => geo.value !== null || isFavoritesPage.value,
 );
 
-const paginated = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return filtered.value.slice(start, start + pageSize.value);
+const totalPages = computed(() => {
+  if (useClientPagination.value) {
+    return Math.max(1, Math.ceil(filtered.value.length / pageSize.value));
+  }
+  return Math.max(1, Math.ceil(filteredTotalCount.value / pageSize.value));
 });
 
-// Reset a la page 1 quand les filtres changent ou que la taille de page bouge.
+const paginated = computed(() => {
+  if (useClientPagination.value) {
+    const start = (currentPage.value - 1) * pageSize.value;
+    return filtered.value.slice(start, start + pageSize.value);
+  }
+  // En mode server-side, ads.value est deja la page courante
+  return filtered.value;
+});
+
+// Reset a la page 1 quand les filtres changent (pour eviter d'etre sur la page
+// 5 d'un dataset qui n'en a plus que 2).
 watch(
-  [categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, pageSize, searchText],
+  [categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, searchText],
   () => {
     currentPage.value = 1;
+  },
+);
+
+// Refetch a chaque changement de filtre / page / taille de page. Le tri,
+// les filtres SQL et la range pagination sont tous server-side.
+// Mode client (geo/fav) : seul un changement de filtres declenche le refetch
+// (pas la page, qui est gerée localement).
+let _loadDebounce: ReturnType<typeof setTimeout> | null = null;
+watch(
+  [
+    categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax,
+    sortBy, searchText, pageSize, currentPage, geo, isFavoritesPage,
+  ],
+  () => {
+    // Petit debounce pour eviter les rafales de requetes (ex: l'utilisateur
+    // tape vite dans la search ou clique plusieurs fois sur prev/next).
+    if (_loadDebounce) clearTimeout(_loadDebounce);
+    _loadDebounce = setTimeout(() => {
+      load();
+    }, 150);
   },
 );
 
