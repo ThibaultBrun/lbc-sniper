@@ -63,6 +63,13 @@ const lastUpdate = "29 avril 2026";
         </section>
 
         <section>
+          <h2 class="text-xl font-bold text-strong mt-6 mb-2">Couverture</h2>
+          <p class="text-sm text-muted">
+            Le site a été lancé fin avril 2026. Les annonces publiées <strong>avant le 28 avril 2026</strong> ne sont pas disponibles dans notre catalogue. Nouvelles annonces ajoutées plusieurs fois par jour.
+          </p>
+        </section>
+
+        <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Important</h2>
           <p>
             Les analyses sont générées par une IA et fournies <strong>à titre indicatif</strong>. Elles peuvent se tromper, surtout sur des modèles rares ou des annonces peu détaillées. <strong>Vérifie toujours l'annonce originale, regarde les photos en grand, pose des questions au vendeur, et inspecte le vélo avant achat.</strong> On te donne une longueur d'avance, pas une garantie.
