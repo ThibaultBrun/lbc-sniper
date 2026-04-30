@@ -7,6 +7,19 @@ const emit = defineEmits<{ close: [] }>();
 
 const copied = ref(false);
 
+// Mapping enum -> label visible (memes valeurs que dans App.vue / DealCard).
+const VTT_CATEGORY_LABELS: Record<string, string> = {
+  xc: "XC",
+  all_mountain: "Trail / AM",
+  enduro: "Enduro",
+  dh: "DH",
+  dirt: "Dirt",
+};
+const vttCategoryLabel = computed(() => {
+  const c = props.ad.vtt_category;
+  return c ? VTT_CATEGORY_LABELS[c] ?? null : null;
+});
+
 // Date de publication originale (champ first_publication renvoye par la
 // plateforme d'origine). On affiche "il y a X jours" si recent, sinon date complete.
 const publishedLabel = computed<string | null>(() => {
@@ -168,6 +181,7 @@ onUnmounted(() => {
           </div>
 
           <div class="flex flex-wrap gap-1.5">
+            <span v-if="vttCategoryLabel" class="tag-vtt-category">{{ vttCategoryLabel }}</span>
             <span v-if="ad.electric" class="tag-electric">⚡ électrique</span>
             <span v-if="ad.regyear" class="tag-strong tabular-nums">{{ ad.regyear }}</span>
             <span v-if="ad.mileage_km" class="tag-strong tabular-nums">
