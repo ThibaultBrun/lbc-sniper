@@ -214,10 +214,12 @@ watch(isSecret, () => {
 // Champs strict minimum pour la liste / DealCard / filtres geo+prix+electric.
 // On EXCLUT explicitement (rechargees via getAdById a l'ouverture de la modale) :
 //   - body (texte long, plombe la requete 4x plus que le reste)
-//   - reasoning, pros, cons (jsonb arrays, ~500o-2ko par ad)
+//   - reasoning (jsonb, peut etre long)
 //   - attributes (jsonb), enriched_at, enrich_error, enrich_model
 //   - watch_id, category_id, category_name (admin uniquement)
 //   - zipcode, first_publication, last_seen_at, condition_score, is_active (pas affiche)
+// pros/cons : on les charge pour afficher pros[0] et cons[0] en resume sur la card
+// (donne envie de cliquer sans avoir a ouvrir la modale).
 const LIST_FIELDS = [
   "id", "subject", "url", "image_url", "city",
   "ad_lat", "ad_lng", "category_label",
@@ -225,6 +227,7 @@ const LIST_FIELDS = [
   "mileage_km", "fuel", "gearbox", "regyear",
   "brand", "model", "year", "frame_material", "wheel_size", "electric",
   "size_label", "vtt_category", "deal_score",
+  "pros", "cons",
 ].join(",");
 
 // Helper : applique le scope commun (is_active + admin_hidden=false + VTT).

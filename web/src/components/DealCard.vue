@@ -125,6 +125,16 @@ const TIER_COLORS: Record<string, string> = {
 };
 const gaugeColor = computed(() => TIER_COLORS[tier.value] ?? "#94a3b8");
 
+// Resume de l'analyse pour donner envie de cliquer : 1er pro + 1er con.
+const topPro = computed<string | null>(() => {
+  const arr = props.ad.pros;
+  return arr && arr.length > 0 ? arr[0] : null;
+});
+const topCon = computed<string | null>(() => {
+  const arr = props.ad.cons;
+  return arr && arr.length > 0 ? arr[0] : null;
+});
+
 const priceFmt = (v: number | null) =>
   v == null ? "?" : v.toLocaleString("fr-FR");
 
@@ -257,7 +267,17 @@ const hasAnalysis = computed(() => props.ad.deal_score !== null && props.ad.deal
         <span v-if="ad.frame_material" class="tag">{{ ad.frame_material }}</span>
       </div>
 
-      <div class="text-xs text-subtle line-clamp-2 mt-auto pt-1">{{ ad.subject }}</div>
+      <!-- Resume : 1er pro + 1er con (donne envie de cliquer) -->
+      <div class="mt-auto pt-1 space-y-0.5 text-xs leading-snug">
+        <div v-if="topPro" class="flex gap-1 line-clamp-1" style="color: var(--color-accent)">
+          <span class="shrink-0">✓</span><span class="line-clamp-1">{{ topPro }}</span>
+        </div>
+        <div v-if="topCon" class="flex gap-1 line-clamp-1" style="color: theme(colors.amber.700)">
+          <span class="shrink-0">⚠</span><span class="line-clamp-1">{{ topCon }}</span>
+        </div>
+        <!-- Fallback : si pas d'analyse encore, on affiche le subject -->
+        <div v-if="!topPro && !topCon" class="text-subtle line-clamp-2">{{ ad.subject }}</div>
+      </div>
       <div class="text-[10px] text-faint">{{ ad.city ?? "?" }}</div>
     </div>
 
