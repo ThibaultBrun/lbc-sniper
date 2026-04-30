@@ -312,17 +312,7 @@ html, body {
     background-color: var(--score-color, theme(colors.slate.400));
     transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  /* Couleur de la jauge selon le tier (definie sur le bandeau parent .tier-*) */
-  .tier-great { --score-color: theme(colors.emerald.500); }
-  .tier-good  { --score-color: theme(colors.emerald.600); }
-  .tier-fair  { --score-color: theme(colors.slate.400); }
-  .tier-poor  { --score-color: theme(colors.amber.500); }
-  .tier-bad   { --score-color: theme(colors.rose.500); }
-  [data-theme="dark"] .tier-great { --score-color: theme(colors.emerald.400); }
-  [data-theme="dark"] .tier-good  { --score-color: theme(colors.emerald.400); }
-  [data-theme="dark"] .tier-fair  { --score-color: theme(colors.slate.400); }
-  [data-theme="dark"] .tier-poor  { --score-color: theme(colors.amber.400); }
-  [data-theme="dark"] .tier-bad   { --score-color: theme(colors.rose.400); }
+  /* (la definition de --score-color est fusionnee dans le bloc tier-* plus bas) */
 
   /* ----- Score tiers : bandeau NEUTRE (fond carte) + label colore selon le score.
      Le visuel fort vient maintenant de la jauge horizontale (.score-gauge) qui
@@ -330,29 +320,34 @@ html, body {
   .tier-great {
     background-color: var(--color-bg-elevated);
     color: theme(colors.emerald.600);
+    --score-color: theme(colors.emerald.500);
   }
   .tier-good {
     background-color: var(--color-bg-elevated);
     color: theme(colors.emerald.700);
+    --score-color: theme(colors.emerald.600);
   }
   .tier-fair {
     background-color: var(--color-bg-elevated);
     color: var(--color-text-muted);
+    --score-color: theme(colors.slate.400);
   }
   .tier-poor {
     background-color: var(--color-bg-elevated);
     color: theme(colors.amber.700);
+    --score-color: theme(colors.amber.500);
   }
   .tier-bad {
     background-color: var(--color-bg-elevated);
     color: theme(colors.rose.600);
+    --score-color: theme(colors.rose.500);
   }
   /* Variante dark : nuances ajustees pour bon contraste sur fond sombre */
-  [data-theme="dark"] .tier-great { color: theme(colors.emerald.300); }
-  [data-theme="dark"] .tier-good { color: theme(colors.emerald.400); }
-  [data-theme="dark"] .tier-fair { color: var(--color-text-muted); }
-  [data-theme="dark"] .tier-poor { color: theme(colors.amber.300); }
-  [data-theme="dark"] .tier-bad { color: theme(colors.rose.400); }
+  [data-theme="dark"] .tier-great { color: theme(colors.emerald.300); --score-color: theme(colors.emerald.400); }
+  [data-theme="dark"] .tier-good { color: theme(colors.emerald.400); --score-color: theme(colors.emerald.400); }
+  [data-theme="dark"] .tier-fair { color: var(--color-text-muted); --score-color: theme(colors.slate.400); }
+  [data-theme="dark"] .tier-poor { color: theme(colors.amber.300); --score-color: theme(colors.amber.400); }
+  [data-theme="dark"] .tier-bad { color: theme(colors.rose.400); --score-color: theme(colors.rose.400); }
 
   /* Bordures tier : tres legeres ombres colorees pour highlight les bonnes affaires */
   .tier-border-great { border-color: theme(colors.emerald.500 / 50%); box-shadow: 0 4px 16px theme(colors.emerald.500 / 15%); }

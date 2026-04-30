@@ -84,6 +84,8 @@ const vttCategoryFilter = ref<string | null>(null);
 const geo = ref<GeoFilterValue | null>(null);
 const radiusKm = ref(50);
 const electricFilter = ref<"all" | "yes" | "no">("all");
+const sizeFilter = ref<string | null>(null);
+const wheelFilter = ref<string | null>(null);
 
 // Categories d'usage VTT (cle = valeur enum SQL, label = ce qu'on affiche).
 // Trail et all-mountain sont fusionnees en pratique sur le marche FR.
@@ -93,6 +95,21 @@ const VTT_CATEGORY_OPTIONS = [
   { value: "enduro", label: "Enduro" },
   { value: "dh", label: "DH / Descente" },
   { value: "dirt", label: "Dirt" },
+];
+
+// Tailles cadre VTT adulte (les size_label voitures comme "Monospace 7 places"
+// ne sont simplement pas proposees dans le filtre).
+const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"];
+
+// Tailles de roues (utile pour les VTT enfant : 20", 24" ; pour adulte : 26-29").
+// Les wheel_size de la base ont des formats varies ("29\"", "29 pouces", "29")
+// donc on cherche en SQL via ilike pour matcher toutes les variantes.
+const WHEEL_OPTIONS = [
+  { value: "20", label: "20\" (enfant)" },
+  { value: "24", label: "24\" (enfant)" },
+  { value: "26", label: "26\"" },
+  { value: "27.5", label: "27.5\"" },
+  { value: "29", label: "29\"" },
 ];
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
@@ -220,6 +237,11 @@ function buildFilteredQueryBase<T>(q: T): T {
   if (!isSecret.value) qq = qq.in("category_label", VTT_LABELS);
   if (categoryFilter.value) qq = qq.eq("category_label", categoryFilter.value);
   if (vttCategoryFilter.value) qq = qq.eq("vtt_category", vttCategoryFilter.value);
+  if (sizeFilter.value) qq = qq.eq("size_label", sizeFilter.value);
+  if (wheelFilter.value) {
+    // wheel_size peut etre stocke '29"', '29 pouces', '29' -> on prefixe-match.
+    qq = qq.ilike("wheel_size", `${wheelFilter.value}%`);
+  }
   if (electricFilter.value === "yes") qq = qq.eq("electric", true);
   else if (electricFilter.value === "no") qq = qq.eq("electric", false);
   if (priceMin.value !== null) qq = qq.gte("current_price", priceMin.value);
@@ -350,6 +372,8 @@ const categories = computed(() => {
 const currentFilters = computed<SavedSearchFilters>(() => ({
   categoryFilter: categoryFilter.value,
   vttCategoryFilter: vttCategoryFilter.value,
+  sizeFilter: sizeFilter.value,
+  wheelFilter: wheelFilter.value,
   geo: geo.value,
   radiusKm: radiusKm.value,
   electricFilter: electricFilter.value,
@@ -362,6 +386,8 @@ const currentFilters = computed<SavedSearchFilters>(() => ({
 function applySavedSearch(f: SavedSearchFilters) {
   categoryFilter.value = f.categoryFilter;
   vttCategoryFilter.value = f.vttCategoryFilter ?? null;
+  sizeFilter.value = f.sizeFilter ?? null;
+  wheelFilter.value = f.wheelFilter ?? null;
   geo.value = f.geo;
   radiusKm.value = f.radiusKm ?? 50;
   electricFilter.value = f.electricFilter ?? "all";
@@ -374,6 +400,8 @@ function applySavedSearch(f: SavedSearchFilters) {
 function resetFilters() {
   categoryFilter.value = null;
   vttCategoryFilter.value = null;
+  sizeFilter.value = null;
+  wheelFilter.value = null;
   geo.value = null;
   radiusKm.value = 50;
   electricFilter.value = "all";
@@ -387,6 +415,8 @@ function resetFilters() {
 const hasActiveFilters = computed(() =>
   categoryFilter.value !== null
   || vttCategoryFilter.value !== null
+  || sizeFilter.value !== null
+  || wheelFilter.value !== null
   || geo.value !== null
   || electricFilter.value !== "all"
   || priceMin.value !== null
@@ -443,7 +473,7 @@ const paginated = computed(() => {
 // Reset a la page 1 quand les filtres changent (pour eviter d'etre sur la page
 // 5 d'un dataset qui n'en a plus que 2).
 watch(
-  [categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, searchText],
+  [categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter, electricFilter, priceMin, priceMax, geo, radiusKm, sortBy, searchText],
   () => {
     currentPage.value = 1;
   },
@@ -456,7 +486,8 @@ watch(
 let _loadDebounce: ReturnType<typeof setTimeout> | null = null;
 watch(
   [
-    categoryFilter, vttCategoryFilter, electricFilter, priceMin, priceMax,
+    categoryFilter, vttCategoryFilter, sizeFilter, wheelFilter,
+    electricFilter, priceMin, priceMax,
     sortBy, searchText, pageSize, currentPage, geo, isFavoritesPage,
   ],
   () => {
@@ -660,6 +691,22 @@ const stats = computed(() => ({
               <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
                 {{ o.label }}
               </option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span class="text-muted">📏 Taille:</span>
+            <select v-model="sizeFilter" class="input-base flex-1 sm:flex-none">
+              <option :value="null">Toutes</option>
+              <option v-for="s in SIZE_OPTIONS" :key="s" :value="s">{{ s }}</option>
+            </select>
+          </label>
+
+          <label class="filter-field">
+            <span class="text-muted">🛞 Roues:</span>
+            <select v-model="wheelFilter" class="input-base flex-1 sm:flex-none">
+              <option :value="null">Toutes</option>
+              <option v-for="w in WHEEL_OPTIONS" :key="w.value" :value="w.value">{{ w.label }}</option>
             </select>
           </label>
 
