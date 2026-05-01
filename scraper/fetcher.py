@@ -89,7 +89,7 @@ def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     2. Les noms de modeles ou marques pure-MTB ne qualifient QUE si on
        trouve aussi un signal 'vtt' / 'mtb' / 'mountain' / etc. dans le texte.
     """
-    from .vtt_models import GENERIC_XC, GENERIC_DIRT
+    from .vtt_models import GENERIC_XC, GENERIC_DIRT, MODELS_UNAMBIGUOUS_ENDURO
 
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
@@ -110,7 +110,14 @@ def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     if _match_first_keyword(padded, BRANDS_ENDURO_PURE, LABEL_VTT_ENDURO):
         return LABEL_VTT_ENDURO
 
-    # Niveau 3 : modele potentiellement ambigu ('titan', 'element', 'capra').
+    # Niveau 2.5 : modeles VTT enduro/AM tellement specifiques qu'ils qualifient
+    # seuls (Orbea Rallon, Trek Slash, etc.). Resout les annonces type
+    # "Orbea Rallon M10" qui n'ont ni 'vtt' ni 'enduro' explicite mais sont
+    # incontestablement des VTT enduro.
+    if _match_first_keyword(padded, MODELS_UNAMBIGUOUS_ENDURO, LABEL_VTT_ENDURO):
+        return LABEL_VTT_ENDURO
+
+    # Niveau 3 : modele potentiellement ambigu ('titan', 'element').
     # Demande un qualifier 'vtt'/'mtb'/etc. dans le texte.
     if not _has_vtt_qualifier(padded):
         return None

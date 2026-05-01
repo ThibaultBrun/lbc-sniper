@@ -6,6 +6,65 @@ sans accents, ponctuation -> espaces), l'annonce est consideree pertinente.
 Les termes DH ont priorite sur enduro pour la categorisation.
 """
 
+# Noms de modeles VTT enduro/AM tellement specifiques qu'ils qualifient seuls
+# (sans avoir besoin de 'vtt'/'mtb' ailleurs dans le texte). Ces termes ne sont
+# pas des mots du francais courant ni des noms de modeles velo route -> 0 risque
+# de faux positif. Resout le cas "Orbea Rallon M10" qui n'a ni vtt ni enduro.
+MODELS_UNAMBIGUOUS_ENDURO = {
+    'rallon',           # Orbea Rallon (enduro)
+    'megatower',        # Santa Cruz Megatower
+    'nomad',            # Santa Cruz Nomad
+    'bronson',          # Santa Cruz Bronson
+    'hightower',        # Santa Cruz Hightower
+    'stumpjumper',      # Specialized Stumpjumper
+    'kenevo',           # Specialized Kenevo (VAE enduro)
+    'turbo levo',       # Specialized Turbo Levo (VAE)
+    'turbolevo',
+    'levo sl',          # Specialized Levo SL
+    'spicy',            # Lapierre Spicy
+    'zesty',            # Lapierre Zesty
+    'overvolt',         # Lapierre Overvolt (VAE)
+    'spectral',         # Canyon Spectral
+    'strive',           # Canyon Strive
+    'torque',           # Canyon Torque (peut aussi etre un terme generique mais rare)
+    'sender',           # Canyon Sender
+    'capra',            # YT Capra
+    'jeffsy',           # YT Jeffsy
+    'tues',             # YT Tues
+    'izzo',             # YT Izzo
+    'meta tr',          # Commencal Meta TR
+    'meta am',          # Commencal Meta AM
+    'meta sx',          # Commencal Meta SX
+    'meta ht',          # Commencal Meta HT
+    'meta power',       # Commencal Meta Power
+    'supreme dh',       # Commencal Supreme DH (matche aussi en DH)
+    'furious',          # Commencal Furious
+    'clash',            # Commencal Clash
+    'fuel ex',          # Trek Fuel EX
+    'fuelex',
+    'slash',            # Trek Slash
+    'session',          # Trek Session
+    'remedy',           # Trek Remedy
+    'mega',             # Nukeproof Mega
+    'giga',             # Nukeproof Giga
+    'reactor',          # Nukeproof Reactor
+    'dissent',          # Nukeproof Dissent
+    'foxy',             # Mondraker Foxy
+    'superfoxy',
+    'dune',             # Mondraker Dune
+    'crafty',           # Mondraker Crafty
+    'summum',           # Mondraker Summum
+    'occam',            # Orbea Occam
+    'wild ',            # Orbea Wild (VAE) - espace pour eviter 'wildcat' etc
+    'rise ',            # Orbea Rise (VAE) - espace
+    'altitude',         # Rocky Mountain Altitude
+    'instinct',         # Rocky Mountain Instinct
+    'maiden',           # Rocky Mountain Maiden
+    'sommet',           # Vitus Sommet
+    'escarpe',          # Vitus Escarpe
+    'mythique',         # Vitus Mythique
+}
+
 # Mots-cles generiques qui qualifient enduro/trail/AM
 GENERIC_ENDURO = {
     'all mountain',

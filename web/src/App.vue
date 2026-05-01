@@ -250,13 +250,23 @@ function buildFilteredQueryBase<T>(q: T): T {
 }
 
 function applySort<T>(q: T): T {
+  // Secondary sort sur `id` desc pour garantir un ordre STABLE entre requetes.
+  // Sans ca, deux ads avec meme deal_score peuvent changer de position entre
+  // page 1 et page 2 -> la meme ad apparait deux fois (cas Rallon vu plusieurs
+  // fois). Postgres ne garantit pas l'ordre des ex-aequo sans tie-breaker.
   if (sortBy.value === "price") {
-    return (q as any).order("current_price", { ascending: true, nullsFirst: false });
+    return (q as any)
+      .order("current_price", { ascending: true, nullsFirst: false })
+      .order("id", { ascending: false });
   }
   if (sortBy.value === "recent") {
-    return (q as any).order("first_seen_at", { ascending: false, nullsFirst: false });
+    return (q as any)
+      .order("first_seen_at", { ascending: false, nullsFirst: false })
+      .order("id", { ascending: false });
   }
-  return (q as any).order("deal_score", { ascending: false, nullsFirst: false });
+  return (q as any)
+    .order("deal_score", { ascending: false, nullsFirst: false })
+    .order("id", { ascending: false });
 }
 
 // Counts du dataset filtre (= toutes pages confondues) pour les chiffres en
