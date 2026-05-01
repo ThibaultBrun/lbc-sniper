@@ -403,51 +403,115 @@ def _process_one(db, ad: dict, watches: dict, model: str) -> bool:
         return False
 
 
+class _LoopState:
+    """Etat mute partage entre _run_loop et _handle_future_result. Sert a eviter
+    de passer 6 args + retourner 6 valeurs. Pas de logique : juste des champs."""
+    def __init__(self) -> None:
+        self.ok = 0
+        self.failed = 0
+        self.ok_ids: list[int] = []
+        self.completed = 0
+        self.last_results: list[bool] = []  # fenetre glissante rate-limit
+
+
+def _handle_future_result(
+    state: _LoopState,
+    ad: dict,
+    success: bool,
+    total: int,
+    prefix: str,
+) -> None:
+    """Met a jour `state` avec le resultat d'un future et log la ligne."""
+    state.completed += 1
+    status = "OK" if success else "FAIL"
+    print(f"{prefix}[{state.completed}/{total}] [{ad['id']}] {status} | {ad['subject'][:60]}")
+    if success:
+        state.ok += 1
+        state.ok_ids.append(ad["id"])
+    else:
+        state.failed += 1
+    state.last_results.append(success)
+    if len(state.last_results) > _CONSECUTIVE_FAILURE_LIMIT:
+        state.last_results.pop(0)
+
+
+def _is_rate_limited(state: _LoopState) -> bool:
+    """Renvoie True si la fenetre glissante des derniers resultats est entierement
+    en echec (signale probable quota Claude epuise)."""
+    return (
+        len(state.last_results) == _CONSECUTIVE_FAILURE_LIMIT
+        and not any(state.last_results)
+    )
+
+
 def _run_loop(
-    db, pending: list, watches: dict, model: str, prefix: str = ""
+    db, pending: list, watches: dict, model: str, prefix: str = "",
+    parallelism: int = 3,
 ) -> tuple[int, int, bool, list[int]]:
-    """Boucle principale d'enrichissement.
+    """Boucle principale d'enrichissement, parallelisee.
+
+    On lance jusqu'a `parallelism` subprocess Claude CLI en parallele : chaque
+    appel CLI a un overhead boot ~3s, donc paralleliser donne un gain immediat
+    x3-x4. Claude API supporte la concurrence; Supabase aussi.
+
+    Le detecteur de rate-limit utilise une fenetre glissante des derniers
+    resultats finis (parallelisme rend la notion de "consecutif" non lineaire).
+
     Retourne (ok, failed, rate_limit_hit, ok_ids)."""
-    ok = 0
-    failed = 0
-    consecutive = 0
-    ok_ids: list[int] = []
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    for i, ad in enumerate(pending, 1):
-        print(f"\n{prefix}[{i}/{len(pending)}] [{ad['id']}] {ad['subject'][:60]}")
-        if _process_one(db, ad, watches, model):
-            ok += 1
-            consecutive = 0
-            ok_ids.append(ad["id"])
-            continue
-        failed += 1
-        consecutive += 1
-        if consecutive >= _CONSECUTIVE_FAILURE_LIMIT:
-            print(
-                f"\n!!! {consecutive} echecs consecutifs - probable rate-limit "
-                f"Claude (quota {model} epuise sur la fenetre 5h). Arret du run, "
-                f"reessaie dans quelques heures.",
-                file=sys.stderr,
-            )
-            _reset_failed_burst(db, pending, i, consecutive)
-            return ok, failed, True, ok_ids
+    state = _LoopState()
+    total = len(pending)
+    rate_limit_hit = False
 
-    return ok, failed, False, ok_ids
+    with ThreadPoolExecutor(max_workers=parallelism) as pool:
+        future_to_ad = {
+            pool.submit(_process_one, db, ad, watches, model): ad
+            for ad in pending
+        }
+        for future in as_completed(future_to_ad):
+            ad = future_to_ad[future]
+            try:
+                success = future.result()
+            except Exception as e:
+                print(f"  WORKER CRASH on ad {ad['id']}: {e}", file=sys.stderr)
+                success = False
+
+            _handle_future_result(state, ad, success, total, prefix)
+
+            if _is_rate_limited(state):
+                print(
+                    f"\n!!! {_CONSECUTIVE_FAILURE_LIMIT} echecs sur les derniers "
+                    f"resultats - probable rate-limit Claude (quota {model} "
+                    f"epuise). Arret du run.",
+                    file=sys.stderr,
+                )
+                rate_limit_hit = True
+                for f in future_to_ad:
+                    if not f.done():
+                        f.cancel()
+                break
+
+    if rate_limit_hit:
+        _reset_failed_burst(db, pending, state.completed, _CONSECUTIVE_FAILURE_LIMIT)
+
+    return state.ok, state.failed, rate_limit_hit, state.ok_ids
 
 
 def enrich(
     watch_id: Optional[str] = None,
     limit: int = 50,
-    model: str = "opus",
+    model: str = "haiku",
     reset: bool = False,
+    parallelism: int = 3,
 ) -> int:
     db = get_client()
     if reset:
         pending = fetch_active_ads(db, watch_id=watch_id, limit=limit)
-        print(f"[--reset] Re-enriching {len(pending)} active ads (model={model})")
+        print(f"[--reset] Re-enriching {len(pending)} active ads (model={model}, parallelism={parallelism})")
     else:
         pending = fetch_unenriched_ads(db, watch_id=watch_id, limit=limit)
-        print(f"Found {len(pending)} unenriched ads (model={model})")
+        print(f"Found {len(pending)} unenriched ads (model={model}, parallelism={parallelism})")
 
     if not pending:
         return 0
@@ -456,7 +520,9 @@ def enrich(
     watches = {w.id: w for w in load_config("config.yaml")}
 
     run_id = start_run(db, watch_id or "*", "enrich")
-    ok, failed, rate_limit_hit, _ = _run_loop(db, pending, watches, model)
+    ok, failed, rate_limit_hit, _ = _run_loop(
+        db, pending, watches, model, parallelism=parallelism
+    )
 
     if rate_limit_hit:
         run_error = "rate-limit hit, run aborted"
@@ -572,10 +638,19 @@ if __name__ == "__main__":
         default=60,
         help="Min deal_score from Haiku to trigger Opus refinement (default: 60).",
     )
+    parser.add_argument(
+        "--parallelism",
+        type=int,
+        default=3,
+        help="Nb de subprocess Claude CLI en parallele (default: 3, gain ~x3-x4 sur l'overhead boot CLI)",
+    )
     args = parser.parse_args()
     if args.hybrid:
         sys.exit(enrich_hybrid(
             args.watch, args.limit,
             reset=args.reset, refine_threshold=args.refine_threshold,
         ))
-    sys.exit(enrich(args.watch, args.limit, args.model, reset=args.reset))
+    sys.exit(enrich(
+        args.watch, args.limit, args.model,
+        reset=args.reset, parallelism=args.parallelism,
+    ))
