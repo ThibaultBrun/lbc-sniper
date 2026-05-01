@@ -3,9 +3,9 @@ REM Pipeline complet : fetch LBC -> cleanup -> enrichit via Claude -> envoie mai
 REM Par defaut, ne traite QUE les watches VTT (enduro + DH France).
 REM
 REM Usage:
-REM   run.bat                  -> VTT uniquement, enrichissement hybride
-REM   run.bat opus             -> VTT uniquement, tout Opus
-REM   run.bat haiku            -> VTT uniquement, tout Haiku
+REM   run.bat                  -> VTT uniquement, enrichissement Haiku (rapide + pas cher, defaut)
+REM   run.bat opus             -> VTT uniquement, tout Opus (cher mais affine)
+REM   run.bat hybrid           -> VTT uniquement, Haiku puis Opus refinement sur deal_score >= 60
 REM   run.bat all              -> TOUS les watches du config (VTT + voitures + motos)
 REM   run.bat all opus         -> tous les watches, mode Opus
 
@@ -13,7 +13,7 @@ set PYTHON=C:\Python313\python.exe
 set FIRST=%1
 set SECOND=%2
 set SCOPE=vtt
-set MODE=hybrid
+set MODE=haiku
 
 REM Premier argument peut etre 'all' (scope) ou un mode (opus/haiku/hybrid)
 if /I "%FIRST%"=="all" (
@@ -46,7 +46,7 @@ if /I "%SCOPE%"=="vtt" (
 )
 
 echo.
-echo === [3/5] Cleanup annonces disparues ^(verif individuelle non vues ^>3j^) ===
+echo === [3/5] Cleanup annonces disparues ^(verif individuelle non vues ^>6 mois^) ===
 "%PYTHON%" -m scraper.cleanup
 REM Si cleanup echoue (rate limit Datadome), on continue quand meme l'enrich.
 

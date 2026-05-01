@@ -33,7 +33,10 @@ from .db import finish_run, get_client, start_run
 # En dessous, on fait confiance au scrape recent (incremental_hours=24 confirme
 # tout ce qui est repasse dans le top des dernieres 24h). Au-dela, on doute
 # vraiment qu'elles soient encore actives -> on verifie une par une.
-_CANDIDATE_AGE_HOURS = 24 * 3  # 3 jours
+# A 6 mois : c'est une duree de vie raisonnable pour une annonce VTT (au-dela
+# le vendeur l'a probablement abandonnee), et ca limite drastiquement le nb
+# de candidates a verifier (vs 3 jours qui en faisait beaucoup).
+_CANDIDATE_AGE_HOURS = 24 * 30 * 6  # 6 mois
 
 # Stop apres ce nombre d'erreurs consecutives (probable rate-limit / Datadome).
 _CONSECUTIVE_ERROR_LIMIT = 5

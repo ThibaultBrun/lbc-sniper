@@ -555,7 +555,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Enrich ads via claude CLI")
     parser.add_argument("--watch", help="Limit to a single watch_id")
     parser.add_argument("--limit", type=int, default=50, help="Max ads per run")
-    parser.add_argument("--model", default="opus", help="claude model: opus or haiku")
+    parser.add_argument("--model", default="haiku", help="claude model: opus or haiku (default: haiku, plus rapide et moins cher)")
     parser.add_argument(
         "--reset",
         action="store_true",
