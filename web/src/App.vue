@@ -431,6 +431,9 @@ const hasActiveFilters = computed(() =>
 // simple sans extension. Tri et reste deja appliques server-side dans load().
 //   - Page /favoris : on intersecte avec les ad_id en favori du user
 //   - geo : haversine (PostGIS pas dispo)
+//   - dedup : meme (brand+model+year+price+city) -> on garde la plus recente.
+//     Cas frequent : revendeur pro qui republie la meme annonce avec 2 angles
+//     marketing differents ("garanti 1 an" vs "14 jours pour essayer").
 const filtered = computed(() => {
   let list = ads.value;
   if (isFavoritesPage.value) {
@@ -444,7 +447,27 @@ const filtered = computed(() => {
       return haversineKm(g.lat, g.lng, a.ad_lat, a.ad_lng) <= r;
     });
   }
-  return list;
+  // Dedup par cle (brand|model|year|price|city). Si tous nuls -> pas de dedup
+  // (on ne veut pas regrouper 2 annonces "non-enrichies" dans la meme bucket).
+  const seen = new Map<string, Ad>();
+  const noKey: Ad[] = [];
+  for (const a of list) {
+    if (!a.brand && !a.model && !a.year && !a.current_price && !a.city) {
+      noKey.push(a);
+      continue;
+    }
+    const key = [a.brand ?? "", a.model ?? "", a.year ?? "", a.current_price ?? "", a.city ?? ""].join("|");
+    const existing = seen.get(key);
+    if (existing) {
+      // On garde le plus recent (first_seen_at desc).
+      if ((a.first_seen_at ?? "") > (existing.first_seen_at ?? "")) {
+        seen.set(key, a);
+      }
+    } else {
+      seen.set(key, a);
+    }
+  }
+  return [...seen.values(), ...noKey];
 });
 
 // Pagination : 2 modes.
