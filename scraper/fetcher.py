@@ -62,6 +62,21 @@ def _has_vtt_qualifier(padded: str) -> bool:
     return any(_contains_word(padded, q) for q in _VTT_QUALIFIERS)
 
 
+# Labels VTT renvoyes par classify_vtt() (= valeurs de category_label en DB).
+LABEL_VTT_DH = "VTT DH"
+LABEL_VTT_ENDURO = "VTT enduro"
+LABEL_VTT_XC = "VTT XC"
+LABEL_VTT_DIRT = "VTT dirt"
+
+
+def _match_first_keyword(padded: str, keywords, label: str) -> Optional[str]:
+    """Si `padded` contient un mot-cle de `keywords`, retourne `label`. Sinon None."""
+    for kw in keywords:
+        if _contains_word(padded, kw):
+            return label
+    return None
+
+
 def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     """Cherche un signal VTT (XC, enduro, DH, dirt) dans le titre+body normalises.
     Retourne 'VTT DH', 'VTT enduro', 'VTT XC', 'VTT dirt', ou None.
@@ -79,36 +94,35 @@ def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
 
-    # Niveau 1 : mots-cles qui qualifient seuls (dirt > DH > enduro > XC).
-    for kw in GENERIC_DIRT:
-        if _contains_word(padded, kw):
-            return "VTT dirt"
-    for kw in GENERIC_DH:
-        if _contains_word(padded, kw):
-            return "VTT DH"
-    for kw in GENERIC_ENDURO:
-        if _contains_word(padded, kw):
-            return "VTT enduro"
-    for kw in GENERIC_XC:
-        if _contains_word(padded, kw):
-            return "VTT XC"
+    # Niveau 1 : mots-cles generiques qui qualifient seuls. Ordre = priorite.
+    generic_table = (
+        (GENERIC_DIRT, LABEL_VTT_DIRT),
+        (GENERIC_DH, LABEL_VTT_DH),
+        (GENERIC_ENDURO, LABEL_VTT_ENDURO),
+        (GENERIC_XC, LABEL_VTT_XC),
+    )
+    for keywords, label in generic_table:
+        match = _match_first_keyword(padded, keywords, label)
+        if match:
+            return match
 
-    # Niveau 2 : marques 100% MTB — qualifient SEULES (pas besoin de 'vtt').
-    for brand in BRANDS_ENDURO_PURE:
-        if _contains_word(padded, brand):
-            return "VTT enduro"
+    # Niveau 2 : marques 100% MTB qualifient seules (pas besoin de 'vtt').
+    if _match_first_keyword(padded, BRANDS_ENDURO_PURE, LABEL_VTT_ENDURO):
+        return LABEL_VTT_ENDURO
 
-    # Niveau 3 : nom de modele tout seul (potentiellement ambigu : 'titan',
-    # 'element', 'capra'). Demande un qualifier 'vtt'/'mtb'/etc. dans le texte.
+    # Niveau 3 : modele potentiellement ambigu ('titan', 'element', 'capra').
+    # Demande un qualifier 'vtt'/'mtb'/etc. dans le texte.
     if not _has_vtt_qualifier(padded):
         return None
 
-    for term in DH_TERMS:
-        if _contains_word(padded, term):
-            return "VTT DH"
-    for term in ENDURO_TERMS:
-        if _contains_word(padded, term):
-            return "VTT enduro"
+    ambiguous_table = (
+        (DH_TERMS, LABEL_VTT_DH),
+        (ENDURO_TERMS, LABEL_VTT_ENDURO),
+    )
+    for terms, label in ambiguous_table:
+        match = _match_first_keyword(padded, terms, label)
+        if match:
+            return match
     return None
 
 
@@ -183,14 +197,33 @@ def _ad_to_fetched(ad: lbc.Ad) -> FetchedAd:
     )
 
 
+# Resolution Europe/Paris : sur Windows, zoneinfo n'a pas la base IANA par
+# defaut. On force le chargement via le package `tzdata` (dans requirements.txt).
+# Si l'import echoue (env exotique), fallback offset fixe +1h (heure d'hiver
+# Paris) - precision suffisante pour notre usage de cutoff a +/-1h.
+try:
+    import tzdata  # noqa: F401
+    from zoneinfo import ZoneInfo
+    _PARIS_TZ = ZoneInfo("Europe/Paris")
+except Exception:  # pragma: no cover
+    _PARIS_TZ = timezone(timedelta(hours=2))  # fallback CEST par defaut
+
+
 def _parse_lbc_date(s: Optional[str]) -> Optional[datetime]:
-    """LBC renvoie soit '2026-04-29T08:48:49Z' soit '2026-04-29 08:48:49'."""
+    """LBC renvoie soit '2026-04-29T08:48:49Z' (UTC explicite) soit
+    '2026-04-29 08:48:49' (heure locale PARIS, sans timezone).
+
+    Bug constate : si on parse le 2e format en UTC, on ajoute un decalage de
+    +2h en CEST (ete) ou +1h en CET (hiver) -> les annonces apparaissent dans
+    le "futur" et le filtre cutoff est casse. On interprete donc explicitement
+    en Europe/Paris (DST gere automatiquement par zoneinfo+tzdata)."""
     if not s:
         return None
     try:
         if "T" in s:
             return datetime.fromisoformat(s.replace("Z", "+00:00"))
-        return datetime.strptime(s, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+        naive = datetime.strptime(s, "%Y-%m-%d %H:%M:%S")
+        return naive.replace(tzinfo=_PARIS_TZ).astimezone(timezone.utc)
     except ValueError:
         return None
 
@@ -216,13 +249,8 @@ def _apply_filters(fetched: list[FetchedAd], watch: Watch) -> list[FetchedAd]:
     return fetched
 
 
-def fetch_watch(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
-    """Fetch les annonces d'un watch.
-
-    - Si watch.incremental_hours est defini, on pagine jusqu'a tomber sur une
-      annonce plus vieille que la fenetre demandee. Sinon on fait un seul
-      appel avec watch.limit.
-    - watch.location peut etre None (recherche France entiere)."""
+def _build_search_kwargs(watch: Watch) -> dict:
+    """Construit les kwargs communs aux appels client.search() pour un watch."""
     try:
         category = lbc.Category[watch.category]
     except KeyError as e:
@@ -237,65 +265,90 @@ def fetch_watch(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
             city=watch.location.city,
         )]
 
-    kwargs: dict = {}
+    kwargs: dict = {
+        "text": watch.text,
+        "category": category,
+        "locations": locations,
+        "limit": watch.limit,
+        "sort": lbc.Sort.NEWEST,
+        "search_in_title_only": watch.search_in_title_only,
+    }
     if watch.price_max is not None:
         kwargs["price"] = (0, watch.price_max)
+    return kwargs
 
-    if watch.incremental_hours is None:
-        # Mode classique : un seul appel
-        result = client.search(
-            text=watch.text,
-            category=category,
-            locations=locations,
-            limit=watch.limit,
-            sort=lbc.Sort.NEWEST,
-            search_in_title_only=watch.search_in_title_only,
-            **kwargs,
-        )
-        return _apply_filters([_ad_to_fetched(ad) for ad in result.ads], watch)
 
-    # Mode incremental : on pagine jusqu'a tomber sur une annonce plus vieille
-    # que (now - incremental_hours), ou jusqu'a un cap raisonnable de pages.
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=watch.incremental_hours)
+def _fetch_paginated(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
+    """Pagine LBC pour ramener les annonces publiees dans les
+    `watch.incremental_hours` dernieres heures.
+
+    ATTENTION : LBC ne trie PAS strictement par NEWEST. Il intercale des
+    annonces "boostees" (republiees, pro, mises en avant) qui peuvent etre
+    tres anciennes (100+ jours) dans des pages recentes. Donc on ne peut pas
+    s'arreter sur "la plus vieille de la page > cutoff" sans rater massivement.
+
+    Strategie : on continue tant que la page courante contient au moins
+    `MIN_RECENT_PER_PAGE` ads dans la fenetre. Si une page entiere n'a
+    que des ads vieilles -> on a quitte la zone des recentes, on stoppe.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=watch.incremental_hours or 24)
+    base_kwargs = _build_search_kwargs(watch)
     all_fetched: list[FetchedAd] = []
     seen_ids: set[int] = set()
-    max_pages = 20  # garde-fou (LBC autorise plus mais on n'en aura jamais besoin)
+    max_pages = 20  # garde-fou
+    min_recent_per_page = 2
 
     for page in range(1, max_pages + 1):
-        result = client.search(
-            text=watch.text,
-            category=category,
-            locations=locations,
-            limit=watch.limit,
-            page=page,
-            sort=lbc.Sort.NEWEST,
-            search_in_title_only=watch.search_in_title_only,
-            **kwargs,
-        )
+        result = client.search(page=page, **base_kwargs)
         if not result.ads:
             break
 
-        page_fetched: list[FetchedAd] = []
-        oldest_in_page: Optional[datetime] = None
-        for raw_ad in result.ads:
-            fa = _ad_to_fetched(raw_ad)
-            if fa.id in seen_ids:
-                continue
-            seen_ids.add(fa.id)
-            page_fetched.append(fa)
-            pub = _parse_lbc_date(fa.first_publication_date)
-            if pub and (oldest_in_page is None or pub < oldest_in_page):
-                oldest_in_page = pub
+        recent_in_page = _process_page(result.ads, seen_ids, all_fetched, cutoff)
 
-        all_fetched.extend(page_fetched)
-
-        # Stop si la page la plus ancienne est < cutoff
-        if oldest_in_page and oldest_in_page < cutoff:
+        # Stop si la page n'a (presque) plus d'annonces recentes : on est sortis
+        # de la fenetre temporelle qui nous interesse.
+        if page > 1 and recent_in_page < min_recent_per_page:
             break
 
-    # Filtre temporel + filtres watch
     in_window = [
         a for a in all_fetched
         if (pub := _parse_lbc_date(a.first_publication_date)) is None or pub >= cutoff
     ]
-    return _apply_filters(in_window, watch)
+    return in_window
+
+
+def _process_page(
+    raw_ads: list,
+    seen_ids: set[int],
+    all_fetched: list[FetchedAd],
+    cutoff: datetime,
+) -> int:
+    """Convertit les ads brutes de la page, dedup, append a all_fetched.
+    Retourne le nombre d'ads de la page qui sont dans la fenetre [cutoff, now]."""
+    recent = 0
+    for raw_ad in raw_ads:
+        fa = _ad_to_fetched(raw_ad)
+        if fa.id in seen_ids:
+            continue
+        seen_ids.add(fa.id)
+        all_fetched.append(fa)
+        pub = _parse_lbc_date(fa.first_publication_date)
+        if pub and pub >= cutoff:
+            recent += 1
+    return recent
+
+
+def fetch_watch(client: lbc.Client, watch: Watch) -> list[FetchedAd]:
+    """Fetch les annonces d'un watch.
+
+    - Si `watch.incremental_hours` est defini, on pagine pour ramener TOUTES
+      les annonces publiees dans cette fenetre temporelle (logique deportee
+      dans `_fetch_paginated`).
+    - Sinon, un seul appel avec `watch.limit`.
+    - `watch.location` peut etre None (recherche France entiere).
+    """
+    if watch.incremental_hours is None:
+        result = client.search(**_build_search_kwargs(watch))
+        return _apply_filters([_ad_to_fetched(ad) for ad in result.ads], watch)
+
+    return _apply_filters(_fetch_paginated(client, watch), watch)
