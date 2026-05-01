@@ -14,6 +14,7 @@ Usage:
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -314,8 +315,85 @@ def _reset_failed_burst(db, pending: list, current_index: int, burst_size: int) 
         print(f"  (failed to reset burst: {e})", file=sys.stderr)
 
 
+_SUBJECT_NORMALIZE_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _normalize_subject(s: str) -> str:
+    """Normalise le subject pour detecter les doublons : lowercase, retire
+    ponctuation, espaces, mais aussi les 'marketing tags' qui distinguent les
+    republications (| Garanti 1 an, | Reconditionne, | 14 jours, etc).
+    On coupe au 1er separateur '|' s'il existe (commun chez les pros)."""
+    if not s:
+        return ""
+    cut = s.split("|")[0]  # garde la partie avant le 1er |
+    return _SUBJECT_NORMALIZE_RE.sub("", cut.lower())
+
+
+def _find_duplicate(db, ad: dict) -> Optional[dict]:
+    """Cherche en base une annonce DEJA enrichie qui ressemble a `ad` :
+    meme prix + meme ville + subject normalise identique. Si trouvee, on
+    pourra copier les enrichissements au lieu de re-appeler Claude.
+    Retourne le dict de l'annonce trouvee, ou None."""
+    norm = _normalize_subject(ad.get("subject") or "")
+    if not norm or not ad.get("city") or ad.get("current_price") is None:
+        return None
+    rows = (
+        db.table("ads")
+        .select("id, subject, brand, model, year, frame_material, wheel_size, "
+                "electric, size_label, vtt_category, condition_score, "
+                "estimated_market_eur, deal_score, reasoning, pros, cons")
+        .eq("city", ad["city"])
+        .eq("current_price", ad["current_price"])
+        .neq("id", ad["id"])
+        .not_.is_("deal_score", "null")
+        .limit(20)
+        .execute()
+        .data
+    )
+    for r in rows:
+        if _normalize_subject(r.get("subject") or "") == norm:
+            return r
+    return None
+
+
+def _copy_enrichment(db, target_ad_id: int, source: dict, model: str) -> None:
+    """Copie les champs enrichis d'une annonce source vers la target. Sert quand
+    on detecte un doublon : pas la peine de cramer Claude, on reprend le travail."""
+    payload = {
+        "brand": source.get("brand"),
+        "model": source.get("model"),
+        "year": source.get("year"),
+        "frame_material": source.get("frame_material"),
+        "wheel_size": source.get("wheel_size"),
+        "electric": source.get("electric"),
+        "size_label": source.get("size_label"),
+        "vtt_category": source.get("vtt_category"),
+        "condition_score": source.get("condition_score"),
+        "estimated_market_eur": source.get("estimated_market_eur"),
+        "deal_score": source.get("deal_score"),
+        "reasoning": source.get("reasoning"),
+        "pros": source.get("pros"),
+        "cons": source.get("cons"),
+    }
+    update_enrichment(db, target_ad_id, payload, model=f"{model}+dedup")
+
+
 def _process_one(db, ad: dict, watches: dict, model: str) -> bool:
     """Enrichit une annonce. Retourne True si succes, False si echec."""
+    # Court-circuit anti-doublon : si une annonce identique (subject normalise
+    # + meme prix + meme ville) est deja enrichie, on copie ses champs au lieu
+    # de relancer Claude. Cas frequent : revendeur pro qui republie 3x la meme
+    # annonce avec des angles marketing differents ("Garanti", "Livraison", etc).
+    try:
+        dup = _find_duplicate(db, ad)
+    except Exception as e:
+        print(f"  (dedup check failed for {ad['id']}: {e})", file=sys.stderr)
+        dup = None
+    if dup:
+        _copy_enrichment(db, ad["id"], dup, model)
+        print(f"  -> DEDUP from ad {dup['id']} (deal_score={dup.get('deal_score')})")
+        return True
+
     watch = watches.get(ad["watch_id"])
     # Pour les VTT, le category_label de l'annonce ('VTT enduro' ou 'VTT DH')
     # surclasse l'enrichment_domain du watch — un seul watch large peut produire

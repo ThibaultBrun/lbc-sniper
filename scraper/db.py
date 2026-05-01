@@ -44,86 +44,202 @@ def get_client() -> Client:
     return create_client(url, key)
 
 
+_DEDUP_NORMALIZE_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _fingerprint(subject: Optional[str], city: Optional[str], price: Optional[float]) -> Optional[str]:
+    """Cle de detection des doublons : subject normalise + city + price.
+    Le subject est coupe au 1er '|' (commun chez les pros qui ajoutent un tag
+    marketing apres le titre : '... | Garanti 1 an' vs '... | Livraison offerte').
+    Retourne None si on n'a pas assez d'info pour dedup."""
+    if not subject or not city or price is None:
+        return None
+    cut = subject.split("|")[0]
+    norm = _DEDUP_NORMALIZE_RE.sub("", cut.lower())
+    if not norm:
+        return None
+    return f"{norm}|{city}|{int(price)}"
+
+
+def _fetch_known_prices(db: Client, ad_ids: list[int]) -> dict[int, Optional[float]]:
+    """Recupere les prix connus pour les ads dont l'id est deja en base.
+    Sert ensuite a detecter les changements de prix pour price_history."""
+    if not ad_ids:
+        return {}
+    res = db.table("ads").select("id, current_price").in_("id", ad_ids).execute()
+    return {row["id"]: row["current_price"] for row in res.data}
+
+
+def _build_canonical_map(
+    db: Client, new_ads: list[FetchedAd]
+) -> tuple[dict[str, int], dict[str, FetchedAd]]:
+    """Pour chaque nouvelle ad (id non encore en base), calcule son fingerprint.
+    Cherche en base les ads existantes qui partagent le meme (city, price) puis
+    matche les fingerprints.
+    Retourne (canonical_id_by_fp, fingerprints_to_check)."""
+    fingerprints_to_check: dict[str, FetchedAd] = {}
+    for a in new_ads:
+        fp = _fingerprint(a.subject, a.city, a.price)
+        if fp:
+            fingerprints_to_check[fp] = a
+
+    canonical_id_by_fp: dict[str, int] = {}
+    if not fingerprints_to_check:
+        return canonical_id_by_fp, fingerprints_to_check
+
+    cities = list({a.city for a in fingerprints_to_check.values() if a.city})
+    prices = list({a.price for a in fingerprints_to_check.values() if a.price is not None})
+    if not cities or not prices:
+        return canonical_id_by_fp, fingerprints_to_check
+
+    candidates = (
+        db.table("ads")
+        .select("id, subject, city, current_price")
+        .in_("city", cities)
+        .in_("current_price", prices)
+        .eq("is_active", True)
+        .limit(500)
+        .execute()
+        .data
+    )
+    for row in candidates:
+        fp = _fingerprint(row.get("subject"), row.get("city"), row.get("current_price"))
+        if fp and fp in fingerprints_to_check and fp not in canonical_id_by_fp:
+            # On garde la canonique la plus ancienne (premier id rencontre)
+            canonical_id_by_fp[fp] = row["id"]
+    return canonical_id_by_fp, fingerprints_to_check
+
+
+def _build_row(
+    a: FetchedAd, watch_id: str, category_label: Optional[str], now: str, is_new: bool
+) -> dict:
+    """Serialise une FetchedAd en dict pret a etre upserted."""
+    row: dict = {
+        "id": a.id,
+        "watch_id": watch_id,
+        "category_label": a.auto_category_label or category_label,
+        "subject": a.subject,
+        "body": a.body,
+        "url": a.url,
+        "image_url": a.image,
+        "city": a.city,
+        "zipcode": a.zipcode,
+        "ad_lat": a.lat,
+        "ad_lng": a.lng,
+        "category_id": a.category_id,
+        "category_name": a.category_name,
+        "current_price": a.price,
+        "first_publication": a.first_publication_date,
+        "last_seen_at": now,
+        "is_active": True,
+        "attributes": a.attributes or {},
+        **_extract_columns(a.attributes or {}),
+    }
+    if is_new:
+        row["first_seen_at"] = now
+    return row
+
+
+class _UpsertBatch:
+    """Conteneur mutable des donnees a flusher en fin d'upsert_ads.
+    Existe pour permettre de splitter la grosse boucle en sous-fonctions sans
+    se trimballer 6 args + 6 valeurs de retour."""
+    def __init__(self) -> None:
+        self.rows_to_upsert: list[dict] = []
+        self.price_history_rows: list[dict] = []
+        self.canonical_to_refresh: list[int] = []
+        self.new_count = 0
+        self.updated_count = 0
+        self.deduped_count = 0
+
+
+def _is_dedup_skip(
+    a: FetchedAd, is_new: bool, canonical_id_by_fp: dict[str, int]
+) -> Optional[int]:
+    """Si l'ad est nouvelle ET que son fingerprint matche une canonique
+    existante d'un autre id, retourne l'id canonique (-> skip). Sinon None."""
+    if not is_new:
+        return None
+    fp = _fingerprint(a.subject, a.city, a.price)
+    canonical_id = canonical_id_by_fp.get(fp) if fp else None
+    if canonical_id and canonical_id != a.id:
+        return canonical_id
+    return None
+
+
+def _process_ad(
+    a: FetchedAd,
+    is_new: bool,
+    old_price: Optional[float],
+    watch_id: str,
+    category_label: Optional[str],
+    now: str,
+    batch: _UpsertBatch,
+) -> None:
+    """Ajoute une ad a la batch upsert + a l'historique de prix si change."""
+    batch.rows_to_upsert.append(_build_row(a, watch_id, category_label, now, is_new))
+    if is_new:
+        batch.new_count += 1
+    else:
+        batch.updated_count += 1
+    price_changed = (
+        a.price is not None
+        and (is_new or (old_price is not None and float(old_price) != a.price))
+    )
+    if price_changed:
+        batch.price_history_rows.append({"ad_id": a.id, "price": a.price, "seen_at": now})
+
+
+def _flush_batch(db: Client, batch: _UpsertBatch, now: str) -> None:
+    """Persiste tout ce qui est dans batch (upserts + price_history + canonical bump)."""
+    if batch.rows_to_upsert:
+        # default_to_null=False : sur un update, les colonnes non envoyees
+        # (ex: first_seen_at) restent en place plutot que d'etre remises a NULL.
+        db.table("ads").upsert(batch.rows_to_upsert, default_to_null=False).execute()
+    if batch.price_history_rows:
+        db.table("price_history").insert(batch.price_history_rows).execute()
+    if batch.canonical_to_refresh:
+        db.table("ads").update({"last_seen_at": now}).in_(
+            "id", list(set(batch.canonical_to_refresh))
+        ).execute()
+
+
 def upsert_ads(
     db: Client, watch_id: str, ads: list[FetchedAd], category_label: Optional[str] = None
 ) -> tuple[int, int]:
     """Upsert chaque annonce. Si le prix a changé, on log dans price_history.
-    Retourne (new_count, updated_count)."""
-    now = datetime.now(timezone.utc).isoformat()
-    new_count = 0
-    updated_count = 0
+    Retourne (new_count, updated_count).
 
+    DEDUP : si une annonce LBC fraichement fetchee a le meme fingerprint
+    (subject normalise + city + price) qu'une annonce DEJA en base avec un
+    autre id, on SKIP l'insert. On rafraichit juste last_seen_at sur l'ad
+    canonique. Cas typique : revendeurs pros qui republient le meme velo
+    plusieurs fois avec des angles marketing differents.
+    """
     if not ads:
         return 0, 0
 
-    # On récupère les annonces déjà connues (pour comparer les prix)
-    ad_ids = [a.id for a in ads]
-    existing = (
-        db.table("ads")
-        .select("id, current_price")
-        .in_("id", ad_ids)
-        .execute()
-    )
-    known_prices: dict[int, Optional[float]] = {
-        row["id"]: row["current_price"] for row in existing.data
-    }
+    now = datetime.now(timezone.utc).isoformat()
+    known_prices = _fetch_known_prices(db, [a.id for a in ads])
+    new_ads = [a for a in ads if a.id not in known_prices]
+    canonical_id_by_fp, _ = _build_canonical_map(db, new_ads)
 
-    rows_to_upsert: list[dict] = []
-    price_history_rows: list[dict] = []
-
+    batch = _UpsertBatch()
     for a in ads:
         is_new = a.id not in known_prices
-        old_price = known_prices.get(a.id)
+        skip_canonical = _is_dedup_skip(a, is_new, canonical_id_by_fp)
+        if skip_canonical is not None:
+            batch.deduped_count += 1
+            batch.canonical_to_refresh.append(skip_canonical)
+            continue
+        _process_ad(a, is_new, known_prices.get(a.id), watch_id, category_label, now, batch)
 
-        row: dict = {
-            "id": a.id,
-            "watch_id": watch_id,
-            # auto_category_label (depuis classify_vtt) override le label du watch
-            "category_label": a.auto_category_label or category_label,
-            "subject": a.subject,
-            "body": a.body,
-            "url": a.url,
-            "image_url": a.image,
-            "city": a.city,
-            "zipcode": a.zipcode,
-            "ad_lat": a.lat,
-            "ad_lng": a.lng,
-            "category_id": a.category_id,
-            "category_name": a.category_name,
-            "current_price": a.price,
-            "first_publication": a.first_publication_date,
-            "last_seen_at": now,
-            "is_active": True,
-            "attributes": a.attributes or {},
-            **_extract_columns(a.attributes or {}),
-        }
-        if is_new:
-            row["first_seen_at"] = now
-            new_count += 1
-        else:
-            updated_count += 1
+    _flush_batch(db, batch, now)
 
-        rows_to_upsert.append(row)
+    if batch.deduped_count:
+        print(f"  dedup: {batch.deduped_count} doublon(s) skip (meme subject+city+price qu'une ad existante)")
 
-        # Log historique : ligne à chaque first_seen ou changement de prix
-        price_changed = (
-            a.price is not None
-            and (is_new or (old_price is not None and float(old_price) != a.price))
-        )
-        if price_changed:
-            price_history_rows.append(
-                {"ad_id": a.id, "price": a.price, "seen_at": now}
-            )
-
-    # default_to_null=False : pour les upserts qui matchent une ligne existante,
-    # les colonnes non envoyées (ex: first_seen_at sur un update) sont laissees
-    # telles quelles plutot que d'etre remises a NULL. Sans ça, un update casse
-    # le not-null constraint sur first_seen_at.
-    db.table("ads").upsert(rows_to_upsert, default_to_null=False).execute()
-    if price_history_rows:
-        db.table("price_history").insert(price_history_rows).execute()
-
-    return new_count, updated_count
+    return batch.new_count, batch.updated_count
 
 
 def deactivate_stale_ads(
