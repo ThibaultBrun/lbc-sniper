@@ -61,18 +61,19 @@ SCHEMA = {
         "condition_score": {"type": "integer", "minimum": 0, "maximum": 100},
         "estimated_market_eur": {"type": "number"},
         "deal_score": {"type": "integer", "minimum": 0, "maximum": 100},
-        "reasoning": {"type": "string"},
+        # Reasoning bornee a ~500 chars pour limiter les tokens output
+        "reasoning": {"type": "string", "maxLength": 500},
         "pros": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {"type": "string", "maxLength": 80},
             "minItems": 0,
-            "maxItems": 6,
+            "maxItems": 4,
         },
         "cons": {
             "type": "array",
-            "items": {"type": "string"},
+            "items": {"type": "string", "maxLength": 80},
             "minItems": 0,
-            "maxItems": 6,
+            "maxItems": 4,
         },
     },
     "required": [
@@ -83,61 +84,35 @@ SCHEMA = {
 }
 
 
-# Regles VTT communes a enduro et DH (decote forte avec l'age, obsolescence techno).
-# Concatenees au debut de chaque DOMAIN_INTRO VTT.
+# Regles VTT communes (decote, penalites, classification). Compactees pour
+# minimiser les tokens d'input - Claude connait deja le marche, on lui rappelle
+# juste les criteres a appliquer.
 _VTT_DECOTE_RULES = """
-REGLES DE DECOTE VTT (a appliquer SYSTEMATIQUEMENT) :
-- modele < 4 ans : prix occasion ~ 50-70% du neuf selon etat
-- modele 4-7 ans : prix occasion ~ 25-40% du neuf
-- modele 8-12 ans : prix occasion ~ 12-22% du neuf, FORTE obsolescence techno
-- modele > 12 ans : prix occasion ~ 5-15% du neuf (collectionneurs surtout)
+DECOTE VTT (% du prix neuf):
+<4 ans:50-70% | 4-7 ans:25-40% | 8-12 ans:12-22% (obsolescence techno) | >12 ans:5-15%
 
-PENALITES TECHNO supplementaires (cumulatives) :
-- Roues 26" (modeles avant ~2015) : -30% vs 27.5/29
-- Suspensions standards anciens (axe 9mm, pas Boost) : -20%
-- Cassette 9V/10V vs 12V actuel : -10% (pieces compromises)
-- Cadre alu defraichi / peinture rayee : -10 a -20%
+PENALITES (cumulables):
+26" (avant ~2015): -30% | suspensions axe 9mm/pas-Boost: -20%
+cassette 9V/10V: -10% | cadre alu raye: -10 a -20%
 
-REPERES de cote reelle occasion sur LBC (a adapter mais comme base) :
-- GIANT Faith 2010 (DH 26", Single Crown) : 250-450 EUR
-- Kona Stinky 2014-2016 (DH 26"/27.5") : 350-700 EUR
-- YT Tues 2.0 2014-2015 (DH carbone 26") : 700-1200 EUR
-- Cube Hanzz 190 2018-2019 (DH alu) : 1200-1800 EUR
-- Specialized Demo 8 2014-2017 (DH alu) : 1000-2000 EUR
-- Lapierre Zesty AM 2014-2016 (enduro alu 27.5) : 500-900 EUR
-- Specialized Stumpjumper 2017-2019 (alu/carbone 29) : 1500-3000 EUR
+CLASSIFICATION vtt_category (mm debattement):
+xc:100-120 | all_mountain:120-150 (= ancien "trail") | enduro:150-170
+dh:180-200 (incl. freeride) | dirt:hardtail jump/pumptrack
+=> null si impossible a trancher
 
-Si modele anterieur a 2018, particuliere vigilance : ne PAS surestimer la cote.
-
-CLASSIFICATION vtt_category (renvoie une de ces valeurs, ou null si impossible) :
-- "xc"           : 100-120 mm debattement, course/marathon, leger (Specialized Epic, Trek Supercaliber, Scott Spark, BMC Fourstroke, Cannondale Scalpel)
-- "all_mountain" : 120-150 mm, polyvalent (englobe l'ancien "trail" : Trek Fuel EX, Lapierre Zesty, Specialized Stumpjumper, Cube Stereo, Santa Cruz Hightower/Bronson, Canyon Spectral, Commencal Meta TR/HT, Norco Optic/Sight, Vitus Mythique)
-- "enduro"       : 150-170 mm, descente engagee + montee (Lapierre Spicy, Specialized Enduro/Stumpjumper Evo, Canyon Torque/Strive, Nukeproof Mega/Giga, YT Capra, Santa Cruz Megatower/Nomad, Commencal Meta AM/Clash, Trek Slash, Mondraker Dune)
-- "dh"           : 180-200 mm, descente pure / freeride (Specialized Demo, Trek Session, Commencal Supreme/Furious, Santa Cruz V10, YT Tues, Canyon Sender, GT Fury, Intense M16/M29, Mondraker Summum, Norco Aurum)
-- "dirt"         : VTT dirt jump / pumptrack, hardtail rigide (Specialized P.1/P.3, Commencal Absolut, NS Bikes, Canyon Stitched)
-
-Renvoie null si l'annonce ne donne pas assez d'info pour trancher (ex: "VTT 27.5 bon etat" sans modele identifiable).
+NB: si modele < 2018, ne PAS surestimer la cote.
 """
 
 
 DOMAIN_INTROS = {
     "vtt_enduro": (
-        "Tu es un expert du marche VTT enduro/all-mountain d'occasion en France. "
-        "Tu connais les modeles courants (Lapierre Zesty/Spicy, Specialized Enduro/Stumpjumper, "
-        "Trek Slash/Remedy, Canyon Torque/Spectral/Strive, Commencal Meta/Clash, Santa Cruz Megatower/Bronson/Nomad, "
-        "Cube Stereo, Orbea Occam/Rallon, BH Linx, Mondraker Crafty/Foxy, Haibike Alltrail) et leurs cotes."
+        "Expert marche VTT enduro/AM d'occasion FR (cote reelle LBC, pas Argus)."
         + _VTT_DECOTE_RULES
     ),
     "vtt_dh": (
-        "Tu es un expert du marche VTT de descente (DH/downhill) d'occasion en France. "
-        "Tu connais les modeles competition courants (Specialized Demo, Trek Session, "
-        "Commencal Supreme DH, Santa Cruz V10/Megatower, Rocky Mountain Maiden, Canyon Sender/"
-        "Torque DHX, YT Tues, Norco Aurum, GT Fury, Intense M16/M29, Mondraker Summum, "
-        "Devinci Wilson, Transition TR11, Kona Operator, Lapierre DH). "
-        "Caracteristiques cles d'un VTT DH : double couronne (170-200mm avant), gros amortisseur "
-        "arriere, plateau unique, freins puissants 4 pistons (Code/MT7), pneus DH carcasse renforcee, "
-        "souvent reserve a la piste. Verifie etat suspensions, geometrie, generation (slack 63-64°), "
-        "presence de 'tarage' / amorti reglage maintenu, et coherence du prix vs annee/etat."
+        "Expert marche VTT DH/freeride d'occasion FR (cote reelle LBC). "
+        "VTT DH = double couronne 170-200mm av, gros amorti ar, plateau unique, "
+        "4 pistons, pneus carcasse DH, slack 63-64°, usage piste."
         + _VTT_DECOTE_RULES
     ),
     "voiture": (
@@ -210,8 +185,8 @@ DOMAIN_INTROS = {
 def build_prompt(ad: dict, domain: Optional[str]) -> str:
     intro = DOMAIN_INTROS.get(domain or "", "Tu es un expert du marche francais d'occasion.")
     body = (ad.get("body") or "").strip()
-    if len(body) > 1500:
-        body = body[:1500] + "..."
+    if len(body) > 800:
+        body = body[:800] + "..."
 
     price = ad.get("current_price")
     price_str = f"{int(price)} EUR" if price else "Non indique"
@@ -242,59 +217,28 @@ def build_prompt(ad: dict, domain: Optional[str]) -> str:
 
     return f"""{intro}
 
-Analyse cette annonce LeBonCoin et estime si c'est une bonne affaire.
+Analyse cette annonce et evalue si c'est une bonne affaire.
 
 Titre: {ad.get("subject", "")}
-Prix demande: {price_str}
-Ville: {ad.get("city") or "?"}
-{attr_block}
-Description (texte libre du vendeur) :
-{body or "(vide)"}
+Prix: {price_str} | Ville: {ad.get("city") or "?"}{attr_block}
+Description: {body or "(vide)"}
 
-Estime le PRIX REEL DE REVENTE OCCASION en euros (valeur centrale).
+ESTIME le prix de revente occasion REEL (sur LBC/Vinted/forums, pas Argus theorique).
+Applique les regles de decote ci-dessus rigoureusement.
 
-ATTENTION — c'est un point critique : on cherche le prix auquel ce vehicule
-specifique se VEND REELLEMENT AUJOURD'HUI sur LeBonCoin / Vinted / forums
-specialises, PAS la cote theorique "neuf - X% par an" type Argus. La realite
-du marche occasion depasse rarement la cote Argus, et descend souvent bien
-en dessous pour les vieux modeles.
+deal_score = ecart prix vs marche reel UNIQUEMENT :
+0=tres cher | 30=un peu cher | 50=au marche | 70=sous marche -15 a -30% | 90+=>-30%
 
-Tu trouveras dans l'intro expert ci-dessus les regles de decote specifiques
-au domaine (age, technologie, modele) — applique-les rigoureusement.
+REGLE: ne baisse JAMAIS le deal_score pour cause d'arnaque suspectee. Prix bas vs
+marche => score haut, point. Les doutes vont dans `cons`, pas dans le score.
 
-Note de bon plan (deal_score) — UNIQUEMENT basee sur l'ecart prix demande vs
-prix de marche occasion REEL estime ci-dessus :
-- 0   = beaucoup plus cher que le marche
-- 30  = un peu cher
-- 50  = au prix du marche
-- 70  = clairement sous le marche (-15 a -30%)
-- 90+ = tres au-dessous du marche (>30% en dessous)
+condition_score: 0=HS | 50=usure visible | 80=bon etat | 95+=quasi neuf.
 
-REGLE IMPORTANTE: ne baisse JAMAIS le deal_score parce que tu suspectes une arnaque,
-un vol, ou que l'annonce paraitrait "trop belle pour etre vraie". On ne fait pas de
-detection d'arnaque ici. Si le prix demande est tres bas vs marche, le deal_score
-DOIT etre tres haut, point. Les doutes/verifications a faire vont dans `cons`, pas
-dans le score.
-
-Note d'etat (condition_score):
-- 0   = HS / pour pieces
-- 50  = etat moyen, usure visible
-- 80  = bon etat
-- 95+ = quasi neuf
-
-Champs a remplir:
-- reasoning: analyse detaillee (3-6 phrases) qui explique le score, situe le modele
-  sur le marche (cote neuf / cote occasion typique), commente l'etat declare et
-  rappelle l'enjeu (interet de cette annonce specifique).
-- pros: 2-5 points forts concrets et factuels (ex: "carbone haut de gamme", "marque
-  reputee Specialized", "annee recente 2023", "prix 40% sous la cote", "composants
-  premium SRAM XX1", "vendeur professionnel").
-- cons: 2-5 points de vigilance (ex: "absence de photos detaillees des suspensions",
-  "modele ancien, pieces peut-etre obsoletes", "kilometrage non mentionne", "vendeur
-  particulier, paiement en main propre uniquement", "annonce vague, manque de specs",
-  "prix tres bas, verifier qu'il ne s'agit pas d'une arnaque").
-
-Sois precis et factuel, evite les banalites. Si une info manque dans l'annonce, mentionne-le."""
+Sois concis. Reponds en JSON via le schema:
+- reasoning: 2-3 phrases (max ~80 mots), explique le score + situe le modele.
+- pros: 2-4 points concrets et brefs (max ~10 mots/item).
+- cons: 2-4 points concrets et brefs (max ~10 mots/item).
+"""
 
 
 def call_claude(prompt: str, model: str = "opus") -> dict:
