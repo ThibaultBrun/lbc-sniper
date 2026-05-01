@@ -57,12 +57,51 @@ MODELS_UNAMBIGUOUS_ENDURO = {
     'occam',            # Orbea Occam
     'wild ',            # Orbea Wild (VAE) - espace pour eviter 'wildcat' etc
     'rise ',            # Orbea Rise (VAE) - espace
-    'altitude',         # Rocky Mountain Altitude
+    # 'altitude' retire : collision avec BMC Altitude Series (velo route)
     'instinct',         # Rocky Mountain Instinct
     'maiden',           # Rocky Mountain Maiden
     'sommet',           # Vitus Sommet
     'escarpe',          # Vitus Escarpe
     'mythique',         # Vitus Mythique
+}
+
+# Mots-cles qui DISQUALIFIENT une annonce du scope VTT enduro/AM/DH/XC.
+# Si un de ces termes apparait dans le titre+body, on rejette QUEL QUE SOIT
+# le matching positif - prioritaire sur tout. Cas : velo route, triathlon,
+# velo enfant, ou annonce composite (lot de 2+ velos).
+EXCLUDE_TERMS = {
+    # Velo de route / cyclo / triathlon
+    'velo de route',
+    'velo route',
+    'route carbone',
+    'cycliste route',
+    'cyclo cross',
+    'cyclo-cross',
+    'gravel',           # gravel : pas notre scope
+    'triathlon',
+    'chrono carbone',
+    'tt bike',
+    'time trial',
+    'randonneuse',
+    # Velo de ville / hollandais
+    'velo hollandais',
+    'velo de ville',
+    'velo ville',
+    'hollandais',
+    # BMX / dirt jump pur (deja capture par GENERIC_DIRT mais on confirme)
+    # Velo enfant explicite (titre)
+    'pousseur enfant',
+    'draisienne',
+    # Vente en lot (annonce composite, non analysable)
+    'lot velo',
+    'lot de velo',
+    'lot de 2 velos',
+    'lot de 3 velos',
+    'deux velos',
+    'trois velos',
+    '2 velos',
+    '3 velos',
+    'paire de velos',
 }
 
 # Mots-cles generiques qui qualifient enduro/trail/AM
@@ -940,7 +979,8 @@ ENDURO_TERMS = {
     'sb160',
     'sb165',
     'sb4 5',
-    'scale',
+    # 'scale' et 'scott scale' retires : Scott Scale = VTT XC pur, pas enduro.
+    # 'scott spark' retire : XC pur aussi.
     'scott aspect eride',
     'scott genius',
     'scott genius eride',
@@ -951,8 +991,6 @@ ENDURO_TERMS = {
     'scott patron eride 900 tuned',
     'scott ransom',
     'scott ransom eride',
-    'scott scale',
-    'scott spark',
     'scott strike eride',
     'scott voltage',
     'scott voltage eride',

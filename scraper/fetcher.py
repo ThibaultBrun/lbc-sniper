@@ -89,10 +89,17 @@ def classify_vtt(subject: str, body: Optional[str]) -> Optional[str]:
     2. Les noms de modeles ou marques pure-MTB ne qualifient QUE si on
        trouve aussi un signal 'vtt' / 'mtb' / 'mountain' / etc. dans le texte.
     """
-    from .vtt_models import GENERIC_XC, GENERIC_DIRT, MODELS_UNAMBIGUOUS_ENDURO
+    from .vtt_models import GENERIC_XC, GENERIC_DIRT, MODELS_UNAMBIGUOUS_ENDURO, EXCLUDE_TERMS
 
     text = _normalize_text(f"{subject or ''} {body or ''}")
     padded = f" {text} "
+
+    # Niveau 0 (blacklist) : si l'annonce contient un terme excluant
+    # (velo route, lot de plusieurs velos, triathlon, draisienne, etc.) on
+    # rejette immediatement, peu importe les autres matches positifs.
+    for kw in EXCLUDE_TERMS:
+        if _contains_word(padded, kw):
+            return None
 
     # Niveau 1 : mots-cles generiques qui qualifient seuls. Ordre = priorite.
     generic_table = (
