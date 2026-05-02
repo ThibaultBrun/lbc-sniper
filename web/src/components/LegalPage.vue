@@ -1,6 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, defineAsyncComponent } from "vue";
 import { useRoute, useRouter } from "vue-router";
+
+// Lazy-load : Leaflet pese ~150 kB (40 gzip), on le charge SEULEMENT quand
+// la page A propos est ouverte (rare). Sans ca, tous les visiteurs de la home
+// telechargent la carte pour rien.
+const CoverageMap = defineAsyncComponent(() => import("./CoverageMap.vue"));
 
 const route = useRoute();
 const router = useRouter();
@@ -72,6 +77,9 @@ const lastUpdate = "29 avril 2026";
             les annonces hors de cette zone pour rester pertinent et garder une
             qualité d'analyse élevée.
           </p>
+          <div class="my-4">
+            <CoverageMap />
+          </div>
           <p class="text-sm text-muted mt-2">
             <strong>Période</strong> : le site a été lancé fin avril 2026. Les annonces
             publiées avant le 28 avril 2026 ne sont pas disponibles. Nouvelles
