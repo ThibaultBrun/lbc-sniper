@@ -6,9 +6,9 @@ import type { GeoFilterValue } from "./components/GeoFilter.vue";
 // Snapshot de tous les filtres UI courants. Stocke en jsonb.
 export type SavedSearchFilters = {
   categoryFilter: string | null;
-  vttCategoryFilter?: string | null;   // xc | all_mountain | enduro | dh | dirt
-  sizeFilter?: string | null;          // XS | S | M | L | XL | XXL
-  wheelFilter?: string | null;         // 20 | 24 | 26 | 27.5 | 29
+  vttCategoryFilter?: string | string[] | null;   // xc | all_mountain | enduro | dh | dirt
+  sizeFilter?: string | string[] | null;          // XS | S | M | L | XL | XXL
+  wheelFilter?: string | string[] | null;         // 20 | 24 | 26 | 27.5 | 29
   geo: GeoFilterValue | null;
   radiusKm: number;
   electricFilter: "all" | "yes" | "no";

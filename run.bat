@@ -10,7 +10,7 @@ REM   run.bat hybrid           -> VTT, Sonnet sur tout puis Opus refinement sur 
 REM   run.bat all              -> TOUS les watches du config
 REM   run.bat all opus         -> tous les watches, mode Opus
 
-set PYTHON=C:\Python313\python.exe
+set PYTHON=C:\Python314\python.exe
 set FIRST=%1
 set SECOND=%2
 set SCOPE=vtt

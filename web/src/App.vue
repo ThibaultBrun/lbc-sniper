@@ -64,13 +64,13 @@ const enrichedCount = ref(0);
 const greatCount = ref(0);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const categoryFilter = ref<string | null>(null);
-const vttCategoryFilter = ref<string | null>(null);
+const vttCategoryFilter = ref<string[]>([]);
 
 const geo = ref<GeoFilterValue | null>(null);
 const radiusKm = ref(30);
 const electricFilter = ref<"all" | "yes" | "no">("all");
-const sizeFilter = ref<string | null>(null);
-const wheelFilter = ref<string | null>(null);
+const sizeFilter = ref<string[]>([]);
+const wheelFilter = ref<string[]>([]);
 // Score minimum (filtre IA "ne montre que les bonnes affaires")
 const minDealScore = ref<number | null>(null);
 
@@ -108,6 +108,17 @@ const WHEEL_OPTIONS = [
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
 const searchText = ref("");
+
+function asArrayFilter(value: string | string[] | null | undefined): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return value ? [value] : [];
+}
+
+function toggleMultiFilter(target: string[], value: string) {
+  const i = target.indexOf(value);
+  if (i >= 0) target.splice(i, 1);
+  else target.push(value);
+}
 
 function normalizeText(s: string): string {
   return s
@@ -233,11 +244,11 @@ function buildFilteredQueryBase<T>(q: T): T {
     .eq("admin_hidden", false);
   if (!isSecret.value) qq = qq.in("category_label", VTT_LABELS);
   if (categoryFilter.value) qq = qq.eq("category_label", categoryFilter.value);
-  if (vttCategoryFilter.value) qq = qq.eq("vtt_category", vttCategoryFilter.value);
-  if (sizeFilter.value) qq = qq.eq("size_label", sizeFilter.value);
-  if (wheelFilter.value) {
+  if (vttCategoryFilter.value.length > 0) qq = qq.in("vtt_category", vttCategoryFilter.value);
+  if (sizeFilter.value.length > 0) qq = qq.in("size_label", sizeFilter.value);
+  if (wheelFilter.value.length > 0) {
     // wheel_size peut etre stocke '29"', '29 pouces', '29' -> on prefixe-match.
-    qq = qq.ilike("wheel_size", `${wheelFilter.value}%`);
+    qq = qq.or(wheelFilter.value.map((w) => `wheel_size.ilike.${w}%`).join(","));
   }
   if (minDealScore.value !== null) qq = qq.gte("deal_score", minDealScore.value);
   if (electricFilter.value === "yes") qq = qq.eq("electric", true);
@@ -394,9 +405,9 @@ const currentFilters = computed<SavedSearchFilters>(() => ({
 
 function applySavedSearch(f: SavedSearchFilters) {
   categoryFilter.value = f.categoryFilter;
-  vttCategoryFilter.value = f.vttCategoryFilter ?? null;
-  sizeFilter.value = f.sizeFilter ?? null;
-  wheelFilter.value = f.wheelFilter ?? null;
+  vttCategoryFilter.value = asArrayFilter(f.vttCategoryFilter);
+  sizeFilter.value = asArrayFilter(f.sizeFilter);
+  wheelFilter.value = asArrayFilter(f.wheelFilter);
   minDealScore.value = f.minDealScore ?? null;
   geo.value = f.geo;
   radiusKm.value = f.radiusKm ?? 30;
@@ -409,9 +420,9 @@ function applySavedSearch(f: SavedSearchFilters) {
 
 function resetFilters() {
   categoryFilter.value = null;
-  vttCategoryFilter.value = null;
-  sizeFilter.value = null;
-  wheelFilter.value = null;
+  vttCategoryFilter.value = [];
+  sizeFilter.value = [];
+  wheelFilter.value = [];
   minDealScore.value = null;
   geo.value = null;
   radiusKm.value = 30;
@@ -425,9 +436,9 @@ function resetFilters() {
 // True des qu'au moins un filtre est actif (utilise pour afficher le bouton reset).
 const hasActiveFilters = computed(() =>
   categoryFilter.value !== null
-  || vttCategoryFilter.value !== null
-  || sizeFilter.value !== null
-  || wheelFilter.value !== null
+  || vttCategoryFilter.value.length > 0
+  || sizeFilter.value.length > 0
+  || wheelFilter.value.length > 0
   || minDealScore.value !== null
   || geo.value !== null
   || electricFilter.value !== "all"
@@ -721,12 +732,17 @@ const stats = computed(() => ({
         <div class="filter-row" style="border-top: 1px solid var(--color-border-subtle)">
           <label class="filter-field">
             <span class="text-muted">🚵 Type:</span>
-            <select v-model="vttCategoryFilter" class="input-base flex-1 sm:flex-none">
-              <option :value="null">Tous</option>
-              <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
+            <div class="multi-filter-group">
+              <button
+                v-for="o in VTT_CATEGORY_OPTIONS"
+                :key="o.value"
+                type="button"
+                @click="toggleMultiFilter(vttCategoryFilter, o.value)"
+                :class="vttCategoryFilter.includes(o.value) ? 'chip-active' : 'chip-inactive'"
+              >
                 {{ o.label }}
-              </option>
-            </select>
+              </button>
+            </div>
           </label>
 
           <label class="filter-field">
@@ -740,18 +756,32 @@ const stats = computed(() => ({
 
           <label class="filter-field">
             <span class="text-muted">📏 Taille:</span>
-            <select v-model="sizeFilter" class="input-base flex-1 sm:flex-none">
-              <option :value="null">Toutes</option>
-              <option v-for="s in SIZE_OPTIONS" :key="s" :value="s">{{ s }}</option>
-            </select>
+            <div class="multi-filter-group">
+              <button
+                v-for="s in SIZE_OPTIONS"
+                :key="s"
+                type="button"
+                @click="toggleMultiFilter(sizeFilter, s)"
+                :class="sizeFilter.includes(s) ? 'chip-active' : 'chip-inactive'"
+              >
+                {{ s }}
+              </button>
+            </div>
           </label>
 
           <label class="filter-field">
             <span class="text-muted">🛞 Roues:</span>
-            <select v-model="wheelFilter" class="input-base flex-1 sm:flex-none">
-              <option :value="null">Toutes</option>
-              <option v-for="w in WHEEL_OPTIONS" :key="w.value" :value="w.value">{{ w.label }}</option>
-            </select>
+            <div class="multi-filter-group">
+              <button
+                v-for="w in WHEEL_OPTIONS"
+                :key="w.value"
+                type="button"
+                @click="toggleMultiFilter(wheelFilter, w.value)"
+                :class="wheelFilter.includes(w.value) ? 'chip-active' : 'chip-inactive'"
+              >
+                {{ w.label }}
+              </button>
+            </div>
           </label>
 
           <label class="filter-field">

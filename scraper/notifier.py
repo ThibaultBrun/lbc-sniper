@@ -86,10 +86,32 @@ def _normalize(s: Optional[str]) -> str:
     return s
 
 
+def _as_list(value: Any) -> list:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return [v for v in value if v]
+    return [value] if value else []
+
+
 def ad_matches_filters(ad: dict, filters: dict) -> bool:
     """Reproduit la logique de filtrage de App.vue cote Python."""
     if filters.get("categoryFilter") and ad.get("category_label") != filters["categoryFilter"]:
         return False
+
+    vtt_cats = _as_list(filters.get("vttCategoryFilter"))
+    if vtt_cats and ad.get("vtt_category") not in vtt_cats:
+        return False
+
+    sizes = _as_list(filters.get("sizeFilter"))
+    if sizes and ad.get("size_label") not in sizes:
+        return False
+
+    wheels = _as_list(filters.get("wheelFilter"))
+    if wheels:
+        wheel = str(ad.get("wheel_size") or "")
+        if not any(wheel.startswith(str(w)) for w in wheels):
+            return False
 
     geo = filters.get("geo")
     radius = filters.get("radiusKm", 50)
@@ -347,7 +369,8 @@ def process_saved_searches(db, dry_run: bool = False) -> tuple[int, int]:
     # On charge toutes les annonces actives une seule fois (pas par recherche).
     ads = db.table("ads").select(
         "id, subject, current_price, estimated_market_eur, image_url, city, "
-        "category_label, ad_lat, ad_lng, electric, deal_score, first_seen_at"
+        "category_label, vtt_category, size_label, wheel_size, "
+        "ad_lat, ad_lng, electric, deal_score, first_seen_at"
     ).eq("is_active", True).not_.is_("deal_score", "null").execute().data
 
     now = datetime.now(timezone.utc)

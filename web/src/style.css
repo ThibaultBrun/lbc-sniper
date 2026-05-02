@@ -443,6 +443,9 @@ html, body {
       @apply w-auto;
     }
   }
+  .multi-filter-group {
+    @apply flex flex-wrap gap-1.5 flex-1 min-w-0;
+  }
   /* Actions (Reset + SavedSearches) : pleine largeur en bas du bloc sur mobile,
      a droite sur desktop. */
   .filter-actions {

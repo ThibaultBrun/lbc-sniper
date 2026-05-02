@@ -19,11 +19,22 @@ const newName = ref("");
 const newNotifyMode = ref<"off" | "instant" | "daily">("daily");
 const saving = ref(false);
 
+function asArrayFilter(value: string | string[] | null | undefined): string[] {
+  if (Array.isArray(value)) return value.filter(Boolean);
+  return value ? [value] : [];
+}
+
 const summary = computed(() => {
   const f = props.currentFilters;
   const parts: string[] = [];
   if (f.geo) parts.push(`📍 ${f.geo.label} (${f.radiusKm} km)`);
   if (f.categoryFilter) parts.push(f.categoryFilter);
+  const types = asArrayFilter(f.vttCategoryFilter);
+  if (types.length) parts.push(`Type: ${types.join(", ")}`);
+  const sizes = asArrayFilter(f.sizeFilter);
+  if (sizes.length) parts.push(`Taille: ${sizes.join(", ")}`);
+  const wheels = asArrayFilter(f.wheelFilter);
+  if (wheels.length) parts.push(`Roues: ${wheels.join(", ")}`);
   if (f.electricFilter !== "all")
     parts.push(f.electricFilter === "yes" ? "⚡ Électrique" : "Musculaire");
   if (f.priceMin !== null || f.priceMax !== null) {
