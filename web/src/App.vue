@@ -109,16 +109,27 @@ const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
 const searchText = ref("");
 const openMultiFilter = ref<"type" | "size" | "wheel" | null>(null);
+const filtersRoot = ref<HTMLElement | null>(null);
 
 function asArrayFilter(value: string | string[] | null | undefined): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
   return value ? [value] : [];
 }
 
-function toggleMultiFilter(target: string[], value: string) {
-  const i = target.indexOf(value);
-  if (i >= 0) target.splice(i, 1);
-  else target.push(value);
+function toggleArrayValue(values: string[], value: string): string[] {
+  return values.includes(value)
+    ? values.filter((v) => v !== value)
+    : [...values, value];
+}
+
+function toggleMultiFilter(kind: "type" | "size" | "wheel", value: string) {
+  if (kind === "type") {
+    vttCategoryFilter.value = toggleArrayValue(vttCategoryFilter.value, value);
+  } else if (kind === "size") {
+    sizeFilter.value = toggleArrayValue(sizeFilter.value, value);
+  } else {
+    wheelFilter.value = toggleArrayValue(wheelFilter.value, value);
+  }
 }
 
 function multiFilterLabel(values: string[], fallback: string, options?: { value: string; label: string }[]) {
@@ -157,10 +168,19 @@ const pageSize = computed(() => ROWS_PER_PAGE * cols.value);
 onMounted(() => {
   updateCols();
   window.addEventListener("resize", updateCols);
+  document.addEventListener("pointerdown", handleOutsideFilterClick);
 });
 onUnmounted(() => {
   if (typeof window !== "undefined") window.removeEventListener("resize", updateCols);
+  document.removeEventListener("pointerdown", handleOutsideFilterClick);
 });
+
+function handleOutsideFilterClick(event: PointerEvent) {
+  if (!openMultiFilter.value) return;
+  const root = filtersRoot.value;
+  if (!root || !(event.target instanceof Node) || root.contains(event.target)) return;
+  openMultiFilter.value = null;
+}
 
 const selectedAd = ref<Ad | null>(null);
 const selectedAdLoading = ref(false);
@@ -721,7 +741,7 @@ const stats = computed(() => ({
       </section>
 
       <!-- Filtres -->
-      <div class="surface-filters">
+      <div ref="filtersRoot" class="surface-filters">
 
         <!-- Ligne 1 : recherche texte + ville/position/rayon -->
         <div class="flex flex-wrap items-center gap-4">
@@ -756,7 +776,7 @@ const stats = computed(() => ({
                   <input
                     type="checkbox"
                     :checked="vttCategoryFilter.includes(o.value)"
-                    @change="toggleMultiFilter(vttCategoryFilter, o.value)"
+                    @change="toggleMultiFilter('type', o.value)"
                   />
                   <span>{{ o.label }}</span>
                 </label>
@@ -789,7 +809,7 @@ const stats = computed(() => ({
                   <input
                     type="checkbox"
                     :checked="sizeFilter.includes(s)"
-                    @change="toggleMultiFilter(sizeFilter, s)"
+                    @change="toggleMultiFilter('size', s)"
                   />
                   <span>{{ s }}</span>
                 </label>
@@ -813,7 +833,7 @@ const stats = computed(() => ({
                   <input
                     type="checkbox"
                     :checked="wheelFilter.includes(w.value)"
-                    @change="toggleMultiFilter(wheelFilter, w.value)"
+                    @change="toggleMultiFilter('wheel', w.value)"
                   />
                   <span>{{ w.label }}</span>
                 </label>
