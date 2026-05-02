@@ -115,7 +115,7 @@ function delayedHide() {
     <!-- Jalons de rayon. Grise sans ville. -->
     <div class="flex items-center gap-1">
       <button
-        v-for="km in [20, 50, 100, 200]"
+        v-for="km in [5, 10, 30, 50, 100]"
         :key="km"
         type="button"
         @click="$emit('update:radiusKm', km)"

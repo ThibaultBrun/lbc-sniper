@@ -67,7 +67,7 @@ const categoryFilter = ref<string | null>(null);
 const vttCategoryFilter = ref<string | null>(null);
 
 const geo = ref<GeoFilterValue | null>(null);
-const radiusKm = ref(50);
+const radiusKm = ref(30);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const sizeFilter = ref<string | null>(null);
 const wheelFilter = ref<string | null>(null);
@@ -399,7 +399,7 @@ function applySavedSearch(f: SavedSearchFilters) {
   wheelFilter.value = f.wheelFilter ?? null;
   minDealScore.value = f.minDealScore ?? null;
   geo.value = f.geo;
-  radiusKm.value = f.radiusKm ?? 50;
+  radiusKm.value = f.radiusKm ?? 30;
   electricFilter.value = f.electricFilter ?? "all";
   priceMin.value = f.priceMin ?? null;
   priceMax.value = f.priceMax ?? null;
@@ -414,7 +414,7 @@ function resetFilters() {
   wheelFilter.value = null;
   minDealScore.value = null;
   geo.value = null;
-  radiusKm.value = 50;
+  radiusKm.value = 30;
   electricFilter.value = "all";
   priceMin.value = null;
   priceMax.value = null;
@@ -605,7 +605,7 @@ const stats = computed(() => ({
           </h1>
           <p class="text-[11px] sm:text-xs text-muted mt-0.5 hidden sm:block">
             <span v-if="isSecret">VTT, voitures, motos — analyse IA complète</span>
-            <span v-else>les meilleures affaires VTT du moment, analysées par IA</span>
+            <span v-else>les meilleures affaires VTT autour de Bayonne, analysées par IA</span>
           </p>
         </div>
         <div class="flex items-center gap-2 sm:gap-4 text-xs text-muted flex-wrap justify-end">
