@@ -89,9 +89,18 @@ EXCLUDE_TERMS = {
     'velo ville',
     'hollandais',
     # BMX / dirt jump pur (deja capture par GENERIC_DIRT mais on confirme)
-    # Velo enfant explicite (titre)
+    # Velo enfant explicite (titre/body) - les vrais VTT adultes n'utilisent
+    # JAMAIS ces termes, et les "ransom 400" / "slash 24" enfants matchent
+    # alors faussement les marques pure-MTB ou MODELS_UNAMBIGUOUS_ENDURO.
     'pousseur enfant',
     'draisienne',
+    'velo enfant',
+    'vtt enfant',
+    'pour enfant',
+    '20 pouces',
+    '24 pouces',
+    'roues 20',
+    'roues 24',
     # Vente en lot (annonce composite, non analysable)
     'lot velo',
     'lot de velo',

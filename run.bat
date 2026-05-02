@@ -3,17 +3,17 @@ REM Pipeline complet : fetch LBC -> cleanup -> enrichit via Claude -> envoie mai
 REM Par defaut, ne traite QUE les watches VTT (enduro + DH France).
 REM
 REM Usage:
-REM   run.bat                  -> VTT uniquement, enrichissement Haiku (rapide + pas cher, defaut)
-REM   run.bat opus             -> VTT uniquement, tout Opus (cher mais affine)
+REM   run.bat                  -> VTT uniquement, enrichissement Opus (defaut, plus precis)
+REM   run.bat haiku            -> VTT uniquement, tout Haiku (rapide, pas cher)
 REM   run.bat hybrid           -> VTT uniquement, Haiku puis Opus refinement sur deal_score >= 60
-REM   run.bat all              -> TOUS les watches du config (VTT + voitures + motos)
-REM   run.bat all opus         -> tous les watches, mode Opus
+REM   run.bat all              -> TOUS les watches du config
+REM   run.bat all haiku        -> tous les watches, mode Haiku
 
 set PYTHON=C:\Python313\python.exe
 set FIRST=%1
 set SECOND=%2
 set SCOPE=vtt
-set MODE=haiku
+set MODE=opus
 
 REM Premier argument peut etre 'all' (scope) ou un mode (opus/haiku/hybrid)
 if /I "%FIRST%"=="all" (

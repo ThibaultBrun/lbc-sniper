@@ -10,22 +10,21 @@ watches:
   # Pas de location -> France entiere. Le filtre geographique se fait cote site.
   # ============================================================================
 
-  - id: vtt-france
-    label: "VTT (enduro/AM/trail/DH/e-MTB) - France entiere"
+  - id: vtt-bayonne
+    label: "VTT (enduro/AM/trail/DH/e-MTB) - 100km Bayonne"
     # category_label sera surcharge par auto_classify_vtt avec
-    # 'VTT enduro' ou 'VTT DH' selon le signal trouve dans titre+body.
+    # 'VTT enduro' / 'VTT DH' / 'VTT XC' / 'VTT dirt' selon le signal trouve.
     category_label: "VTT enduro"
     category: LOISIRS_VELOS
-    # Pas de filtre text : on prend toutes les annonces velo cat=55,
-    # puis classify_vtt() trie cote Python pour ne garder que les VTT
-    # enduro/AM/trail/DH/e-MTB (env. 25% du flux, le reste est XC, route, ville,
-    # enfant, etc.). Le grand avantage : on ne rate plus les annonces qui
-    # ne mentionnent pas explicitement 'enduro' ou 'dh' dans le titre.
+    # Filtre geographique : 100km autour de Bayonne. Reduit le volume
+    # d'annonces a analyser (~80% moins) et focalise sur la zone d'interet.
+    location:
+      city: Bayonne
+      lat: 43.4933
+      lng: -1.4747
+      radius_km: 100
     limit: 100
     incremental_hours: 24
     auto_classify_vtt: true
-    # Le domain 'vtt_enduro' sert pour le prompt par defaut. Un VTT DH est
-    # marque differemment dans la DB (category_label) mais utilise le meme
-    # prompt expert; les regles de decote VTT s'appliquent aux deux.
     enrichment_domain: "vtt_enduro"
 
