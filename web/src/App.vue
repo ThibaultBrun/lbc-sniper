@@ -108,6 +108,7 @@ const WHEEL_OPTIONS = [
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
 const searchText = ref("");
+const openMultiFilter = ref<"type" | "size" | "wheel" | null>(null);
 
 function asArrayFilter(value: string | string[] | null | undefined): string[] {
   if (Array.isArray(value)) return value.filter(Boolean);
@@ -118,6 +119,15 @@ function toggleMultiFilter(target: string[], value: string) {
   const i = target.indexOf(value);
   if (i >= 0) target.splice(i, 1);
   else target.push(value);
+}
+
+function multiFilterLabel(values: string[], fallback: string, options?: { value: string; label: string }[]) {
+  if (values.length === 0) return fallback;
+  if (values.length === 1) {
+    const value = values[0];
+    return options?.find((o) => o.value === value)?.label ?? value;
+  }
+  return `${values.length} selectionnes`;
 }
 
 function normalizeText(s: string): string {
@@ -732,16 +742,25 @@ const stats = computed(() => ({
         <div class="filter-row" style="border-top: 1px solid var(--color-border-subtle)">
           <label class="filter-field">
             <span class="text-muted">🚵 Type:</span>
-            <div class="multi-filter-group">
+            <div class="multi-select">
               <button
-                v-for="o in VTT_CATEGORY_OPTIONS"
-                :key="o.value"
                 type="button"
-                @click="toggleMultiFilter(vttCategoryFilter, o.value)"
-                :class="vttCategoryFilter.includes(o.value) ? 'chip-active' : 'chip-inactive'"
+                class="input-base multi-select-trigger"
+                @click="openMultiFilter = openMultiFilter === 'type' ? null : 'type'"
               >
-                {{ o.label }}
+                <span>{{ multiFilterLabel(vttCategoryFilter, "Tous", VTT_CATEGORY_OPTIONS) }}</span>
+                <span class="text-subtle">▾</span>
               </button>
+              <div v-if="openMultiFilter === 'type'" class="multi-select-menu">
+                <label v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" class="multi-select-option">
+                  <input
+                    type="checkbox"
+                    :checked="vttCategoryFilter.includes(o.value)"
+                    @change="toggleMultiFilter(vttCategoryFilter, o.value)"
+                  />
+                  <span>{{ o.label }}</span>
+                </label>
+              </div>
             </div>
           </label>
 
@@ -756,31 +775,49 @@ const stats = computed(() => ({
 
           <label class="filter-field">
             <span class="text-muted">📏 Taille:</span>
-            <div class="multi-filter-group">
+            <div class="multi-select">
               <button
-                v-for="s in SIZE_OPTIONS"
-                :key="s"
                 type="button"
-                @click="toggleMultiFilter(sizeFilter, s)"
-                :class="sizeFilter.includes(s) ? 'chip-active' : 'chip-inactive'"
+                class="input-base multi-select-trigger"
+                @click="openMultiFilter = openMultiFilter === 'size' ? null : 'size'"
               >
-                {{ s }}
+                <span>{{ multiFilterLabel(sizeFilter, "Toutes") }}</span>
+                <span class="text-subtle">▾</span>
               </button>
+              <div v-if="openMultiFilter === 'size'" class="multi-select-menu">
+                <label v-for="s in SIZE_OPTIONS" :key="s" class="multi-select-option">
+                  <input
+                    type="checkbox"
+                    :checked="sizeFilter.includes(s)"
+                    @change="toggleMultiFilter(sizeFilter, s)"
+                  />
+                  <span>{{ s }}</span>
+                </label>
+              </div>
             </div>
           </label>
 
           <label class="filter-field">
             <span class="text-muted">🛞 Roues:</span>
-            <div class="multi-filter-group">
+            <div class="multi-select">
               <button
-                v-for="w in WHEEL_OPTIONS"
-                :key="w.value"
                 type="button"
-                @click="toggleMultiFilter(wheelFilter, w.value)"
-                :class="wheelFilter.includes(w.value) ? 'chip-active' : 'chip-inactive'"
+                class="input-base multi-select-trigger"
+                @click="openMultiFilter = openMultiFilter === 'wheel' ? null : 'wheel'"
               >
-                {{ w.label }}
+                <span>{{ multiFilterLabel(wheelFilter, "Toutes", WHEEL_OPTIONS) }}</span>
+                <span class="text-subtle">▾</span>
               </button>
+              <div v-if="openMultiFilter === 'wheel'" class="multi-select-menu">
+                <label v-for="w in WHEEL_OPTIONS" :key="w.value" class="multi-select-option">
+                  <input
+                    type="checkbox"
+                    :checked="wheelFilter.includes(w.value)"
+                    @change="toggleMultiFilter(wheelFilter, w.value)"
+                  />
+                  <span>{{ w.label }}</span>
+                </label>
+              </div>
             </div>
           </label>
 

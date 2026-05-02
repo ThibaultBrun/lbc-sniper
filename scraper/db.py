@@ -70,27 +70,26 @@ def _fetch_known_prices(db: Client, ad_ids: list[int]) -> dict[int, Optional[flo
     return {row["id"]: row["current_price"] for row in res.data}
 
 
-def _build_canonical_map(
+def _build_existing_duplicate_map(
     db: Client, new_ads: list[FetchedAd]
-) -> tuple[dict[str, int], dict[str, FetchedAd]]:
+) -> dict[str, list[int]]:
     """Pour chaque nouvelle ad (id non encore en base), calcule son fingerprint.
     Cherche en base les ads existantes qui partagent le meme (city, price) puis
-    matche les fingerprints.
-    Retourne (canonical_id_by_fp, fingerprints_to_check)."""
+    matche les fingerprints. Retourne les IDs actifs a desactiver si la nouvelle
+    annonce doit devenir la version canonique."""
     fingerprints_to_check: dict[str, FetchedAd] = {}
     for a in new_ads:
         fp = _fingerprint(a.subject, a.city, a.price)
         if fp:
             fingerprints_to_check[fp] = a
 
-    canonical_id_by_fp: dict[str, int] = {}
     if not fingerprints_to_check:
-        return canonical_id_by_fp, fingerprints_to_check
+        return {}
 
     cities = list({a.city for a in fingerprints_to_check.values() if a.city})
     prices = list({a.price for a in fingerprints_to_check.values() if a.price is not None})
     if not cities or not prices:
-        return canonical_id_by_fp, fingerprints_to_check
+        return {}
 
     candidates = (
         db.table("ads")
@@ -102,12 +101,12 @@ def _build_canonical_map(
         .execute()
         .data
     )
+    duplicate_ids_by_fp: dict[str, list[int]] = {}
     for row in candidates:
         fp = _fingerprint(row.get("subject"), row.get("city"), row.get("current_price"))
-        if fp and fp in fingerprints_to_check and fp not in canonical_id_by_fp:
-            # On garde la canonique la plus ancienne (premier id rencontre)
-            canonical_id_by_fp[fp] = row["id"]
-    return canonical_id_by_fp, fingerprints_to_check
+        if fp and fp in fingerprints_to_check and row["id"] != fingerprints_to_check[fp].id:
+            duplicate_ids_by_fp.setdefault(fp, []).append(row["id"])
+    return duplicate_ids_by_fp
 
 
 def _build_row(
@@ -147,24 +146,21 @@ class _UpsertBatch:
     def __init__(self) -> None:
         self.rows_to_upsert: list[dict] = []
         self.price_history_rows: list[dict] = []
-        self.canonical_to_refresh: list[int] = []
+        self.duplicate_ids_to_deactivate: list[int] = []
         self.new_count = 0
         self.updated_count = 0
         self.deduped_count = 0
 
 
-def _is_dedup_skip(
-    a: FetchedAd, is_new: bool, canonical_id_by_fp: dict[str, int]
-) -> Optional[int]:
-    """Si l'ad est nouvelle ET que son fingerprint matche une canonique
-    existante d'un autre id, retourne l'id canonique (-> skip). Sinon None."""
+def _existing_duplicate_ids(
+    a: FetchedAd, is_new: bool, duplicate_ids_by_fp: dict[str, list[int]]
+) -> list[int]:
+    """Si l'ad est nouvelle et matche des annonces actives existantes, retourne
+    ces IDs. On garde la nouvelle annonce et on desactive les anciennes."""
     if not is_new:
-        return None
+        return []
     fp = _fingerprint(a.subject, a.city, a.price)
-    canonical_id = canonical_id_by_fp.get(fp) if fp else None
-    if canonical_id and canonical_id != a.id:
-        return canonical_id
-    return None
+    return duplicate_ids_by_fp.get(fp, []) if fp else []
 
 
 def _process_ad(
@@ -191,16 +187,16 @@ def _process_ad(
 
 
 def _flush_batch(db: Client, batch: _UpsertBatch, now: str) -> None:
-    """Persiste tout ce qui est dans batch (upserts + price_history + canonical bump)."""
+    """Persiste tout ce qui est dans batch (upserts + price_history + dedup)."""
     if batch.rows_to_upsert:
         # default_to_null=False : sur un update, les colonnes non envoyees
         # (ex: first_seen_at) restent en place plutot que d'etre remises a NULL.
         db.table("ads").upsert(batch.rows_to_upsert, default_to_null=False).execute()
     if batch.price_history_rows:
         db.table("price_history").insert(batch.price_history_rows).execute()
-    if batch.canonical_to_refresh:
-        db.table("ads").update({"last_seen_at": now}).in_(
-            "id", list(set(batch.canonical_to_refresh))
+    if batch.duplicate_ids_to_deactivate:
+        db.table("ads").update({"is_active": False, "last_seen_at": now}).in_(
+            "id", list(set(batch.duplicate_ids_to_deactivate))
         ).execute()
 
 
@@ -212,9 +208,9 @@ def upsert_ads(
 
     DEDUP : si une annonce LBC fraichement fetchee a le meme fingerprint
     (subject normalise + city + price) qu'une annonce DEJA en base avec un
-    autre id, on SKIP l'insert. On rafraichit juste last_seen_at sur l'ad
-    canonique. Cas typique : revendeurs pros qui republient le meme velo
-    plusieurs fois avec des angles marketing differents.
+    autre id, on garde la nouvelle annonce et on desactive les anciennes.
+    Cas typique : revendeurs pros qui republient le meme velo avec des angles
+    marketing differents.
     """
     if not ads:
         return 0, 0
@@ -222,22 +218,21 @@ def upsert_ads(
     now = datetime.now(timezone.utc).isoformat()
     known_prices = _fetch_known_prices(db, [a.id for a in ads])
     new_ads = [a for a in ads if a.id not in known_prices]
-    canonical_id_by_fp, _ = _build_canonical_map(db, new_ads)
+    duplicate_ids_by_fp = _build_existing_duplicate_map(db, new_ads)
 
     batch = _UpsertBatch()
     for a in ads:
         is_new = a.id not in known_prices
-        skip_canonical = _is_dedup_skip(a, is_new, canonical_id_by_fp)
-        if skip_canonical is not None:
-            batch.deduped_count += 1
-            batch.canonical_to_refresh.append(skip_canonical)
-            continue
+        existing_duplicates = _existing_duplicate_ids(a, is_new, duplicate_ids_by_fp)
+        if existing_duplicates:
+            batch.deduped_count += len(existing_duplicates)
+            batch.duplicate_ids_to_deactivate.extend(existing_duplicates)
         _process_ad(a, is_new, known_prices.get(a.id), watch_id, category_label, now, batch)
 
     _flush_batch(db, batch, now)
 
     if batch.deduped_count:
-        print(f"  dedup: {batch.deduped_count} doublon(s) skip (meme subject+city+price qu'une ad existante)")
+        print(f"  dedup: {batch.deduped_count} ancienne(s) annonce(s) desactivee(s) (meme subject+city+price)")
 
     return batch.new_count, batch.updated_count
 

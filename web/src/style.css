@@ -443,8 +443,26 @@ html, body {
       @apply w-auto;
     }
   }
-  .multi-filter-group {
-    @apply flex flex-wrap gap-1.5 flex-1 min-w-0;
+  .multi-select {
+    @apply relative flex-1 min-w-[180px] sm:flex-none;
+  }
+  .multi-select-trigger {
+    @apply w-full sm:w-48 flex items-center justify-between gap-2 text-left;
+  }
+  .multi-select-menu {
+    @apply absolute left-0 top-full mt-1 w-56 rounded shadow-lg p-1 z-30;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-strong);
+  }
+  .multi-select-option {
+    @apply flex items-center gap-2 rounded px-2 py-1.5 text-sm cursor-pointer transition;
+    color: var(--color-text);
+  }
+  .multi-select-option:hover {
+    background-color: var(--color-bg-input);
+  }
+  .multi-select-option input {
+    accent-color: var(--color-accent);
   }
   /* Actions (Reset + SavedSearches) : pleine largeur en bas du bloc sur mobile,
      a droite sur desktop. */
