@@ -223,8 +223,8 @@ function buildAdHtml(template, ad) {
 }
 
 function buildHomeHtml(template, ads) {
-  const title = "Trouve Ton VTT — Bonnes affaires VTT autour de Bayonne (Pays basque, Landes), analysées par IA";
-  const description = `Découvre les meilleures affaires VTT à 100km autour de Bayonne (Pays basque, Landes, Béarn). ${ads.length} annonces analysées automatiquement par IA : score de prix, points forts, points de vigilance. Gratuit, sans inscription.`;
+  const title = "Trouve Ton VTT — Bonnes affaires VTT du Sud Ouest (Pays basque, Landes, Béarn), analysées par IA";
+  const description = `Découvre les meilleures affaires VTT dans le Sud Ouest (Pays basque, Landes, Béarn, Pyrénées). ${ads.length} annonces analysées automatiquement par IA : score de prix, points forts, points de vigilance. Gratuit, sans inscription.`;
   const url = SITE_URL;
 
   // SEO content : un H1 + un bref pitch + les 12 meilleures affaires en clair
@@ -238,7 +238,7 @@ function buildHomeHtml(template, ads) {
 
   const inlineContent = `
     <article style="display:none">
-      <h1>Trouve Ton VTT — Les meilleures affaires VTT autour de Bayonne (Pays basque, Landes, Béarn)</h1>
+      <h1>Trouve Ton VTT — Les meilleures affaires VTT du Sud Ouest (Pays basque, Landes, Béarn)</h1>
       <p>Une intelligence artificielle analyse chaque annonce VTT publiée sur les principales plateformes de petites annonces françaises et te dit instantanément si c'est une bonne affaire ou pas. Marque, modèle, année, prix marché, points forts et points de vigilance — tout est expliqué en quelques secondes.</p>
       <h2>Pour qui ?</h2>
       <p>Pour quiconque cherche un VTT d'occasion (enduro, all-mountain, descente, électrique) sans passer des heures à éplucher des centaines d'annonces et sans se faire avoir sur le prix.</p>

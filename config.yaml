@@ -5,24 +5,24 @@
 watches:
 
   # ============================================================================
-  # VTT — Recherches France entiere, fenetre de 24h glissante
+  # VTT — Sud-Ouest (100km autour de Bayonne), fenetre de 24h glissante
   # `incremental_hours: 24` -> on pagine jusqu'a tomber sur une annonce > 24h.
-  # Pas de location -> France entiere. Le filtre geographique se fait cote site.
+  # Le filtre geographique est fait cote LBC via l'API location (radius_km).
   # ============================================================================
 
   - id: vtt-bayonne
-    label: "VTT (enduro/AM/trail/DH/e-MTB) - 100km Bayonne"
+    label: "VTT Sud Ouest (200km Bayonne)"
     # category_label sera surcharge par auto_classify_vtt avec
     # 'VTT enduro' / 'VTT DH' / 'VTT XC' / 'VTT dirt' selon le signal trouve.
     category_label: "VTT enduro"
     category: LOISIRS_VELOS
-    # Filtre geographique : 100km autour de Bayonne. Reduit le volume
-    # d'annonces a analyser (~80% moins) et focalise sur la zone d'interet.
+    # Filtre geographique : 200km autour de Bayonne -> couvre tout le Sud Ouest
+    # (Pays basque, Landes, Bearn, Gironde sud, Pyrenees, Gers, Haute-Garonne).
     location:
       city: Bayonne
       lat: 43.4933
       lng: -1.4747
-      radius_km: 100
+      radius_km: 200
     limit: 100
     incremental_hours: 24
     auto_classify_vtt: true

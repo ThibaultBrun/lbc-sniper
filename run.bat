@@ -38,7 +38,7 @@ if errorlevel 1 (
 echo.
 echo === [2/5] Scraping LBC (scope: %SCOPE%) ===
 if /I "%SCOPE%"=="vtt" (
-  "%PYTHON%" -m scraper.main --watch vtt-france
+  "%PYTHON%" -m scraper.main --watch vtt-bayonne
   if errorlevel 1 ( echo Scraper VTT failed. & exit /b 1 )
 ) else (
   "%PYTHON%" -m scraper.main

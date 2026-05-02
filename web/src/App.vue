@@ -605,7 +605,7 @@ const stats = computed(() => ({
           </h1>
           <p class="text-[11px] sm:text-xs text-muted mt-0.5 hidden sm:block">
             <span v-if="isSecret">VTT, voitures, motos — analyse IA complète</span>
-            <span v-else>les meilleures affaires VTT autour de Bayonne, analysées par IA</span>
+            <span v-else>les meilleures affaires VTT du Sud Ouest, analysées par IA</span>
           </p>
         </div>
         <div class="flex items-center gap-2 sm:gap-4 text-xs text-muted flex-wrap justify-end">

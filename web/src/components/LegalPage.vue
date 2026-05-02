@@ -65,11 +65,12 @@ const lastUpdate = "29 avril 2026";
         <section>
           <h2 class="text-xl font-bold text-strong mt-6 mb-2">Couverture</h2>
           <p class="text-sm text-muted">
-            <strong>Zone géographique</strong> : on couvre les annonces VTT à
-            <strong>100 km autour de Bayonne</strong> (Pays basque, Landes, Béarn,
-            sud des Pyrénées-Atlantiques, partie ouest de la Haute-Garonne et
-            Hautes-Pyrénées). On n'agrège pas les annonces hors de cette zone
-            pour rester pertinent et garder une qualité d'analyse élevée.
+            <strong>Zone géographique</strong> : on couvre les annonces VTT du
+            <strong>Sud Ouest</strong> dans un rayon de <strong>200 km autour de Bayonne</strong>
+            (Pays basque, Landes, Béarn, Gironde sud, Pyrénées-Atlantiques,
+            Hautes-Pyrénées, Gers, Lot-et-Garonne, Haute-Garonne). On n'agrège pas
+            les annonces hors de cette zone pour rester pertinent et garder une
+            qualité d'analyse élevée.
           </p>
           <p class="text-sm text-muted mt-2">
             <strong>Période</strong> : le site a été lancé fin avril 2026. Les annonces
