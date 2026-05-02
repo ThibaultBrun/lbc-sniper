@@ -242,7 +242,7 @@ Sois concis. Reponds en JSON via le schema:
 """
 
 
-def call_claude(prompt: str, model: str = "opus") -> dict:
+def call_claude(prompt: str, model: str = "sonnet") -> dict:
     """Appelle le CLI claude et retourne le `structured_output` parse.
 
     Lève RuntimeError si claude n'est pas trouve, timeout, ou JSON invalide.
@@ -523,7 +523,7 @@ def _run_loop(
 def enrich(
     watch_id: Optional[str] = None,
     limit: int = 50,
-    model: str = "opus",
+    model: str = "sonnet",
     reset: bool = False,
     parallelism: int = 3,
 ) -> int:
@@ -586,24 +586,33 @@ def enrich_hybrid(
     from .config import load_config
     watches = {w.id: w for w in load_config("config.yaml")}
 
-    # === Pass 1 : Haiku sur tout ===
-    print(f"\n>>> PASS 1 / Haiku ({len(pending)} ads)")
+    # === Pass 1 : Sonnet sur tout ===
+    # Sonnet a un quota Claude Max DEDIE (separe d'Opus) -> ne consomme pas
+    # le pool Opus. Qualite tres proche d'Opus sur 75% des cas, et 3x plus
+    # rapide. Meilleur compromis qu'Haiku qui se trompait sur les modeles
+    # ambigus (Scott Ransom enfant vs adulte, BMC Altitude route, etc.).
+    print(f"\n>>> PASS 1 / Sonnet ({len(pending)} ads)")
     run_id_1 = start_run(db, watch_id or "*", "enrich")
     ok1, failed1, rate1, ok_ids = _run_loop(
-        db, pending, watches, model="haiku", prefix="[H1] ",
+        db, pending, watches, model="sonnet", prefix="[S1] ",
     )
     finish_run(
         db, run_id_1, ads_processed=ok1 + failed1, ads_new=ok1,
-        error="rate-limit hit (haiku)" if rate1 else (f"{failed1} failures" if failed1 else None),
+        error="rate-limit hit (sonnet)" if rate1 else (f"{failed1} failures" if failed1 else None),
     )
     if rate1:
         print(f"\n=== Hybrid aborted at pass 1: {ok1} ok, {failed1} failed ===", file=sys.stderr)
         return 2
     if not ok_ids:
-        print("\n=== No successful Haiku analysis, nothing to refine ===")
+        print("\n=== No successful Sonnet analysis, nothing to refine ===")
         return 1 if failed1 else 0
 
     # === Pass 2 : Opus uniquement sur les annonces deal_score >= refine_threshold ===
+    # Opus est nettement plus precis que Sonnet sur les modeles obscurs et les
+    # pieges semantiques (modeles enfant qui partagent le nom d'un modele adulte
+    # haut de gamme, marques avec gammes route et VTT mixees). Reserve aux ads
+    # candidates "bon deal" car ce sont celles ou la precision est critique
+    # (decision d'achat).
     refresh = (
         db.table("ads")
         .select("*")
@@ -618,7 +627,7 @@ def enrich_hybrid(
     )
 
     if not to_refine:
-        print(f"\n=== Hybrid done: {ok1} Haiku, 0 promoted to Opus ===")
+        print(f"\n=== Hybrid done: {ok1} Sonnet, 0 promoted to Opus ===")
         return 0
 
     run_id_2 = start_run(db, watch_id or "*", "enrich")
@@ -631,7 +640,7 @@ def enrich_hybrid(
     )
 
     print(
-        f"\n=== Hybrid done: {ok1} Haiku passes, {ok2} Opus refinements"
+        f"\n=== Hybrid done: {ok1} Sonnet passes, {ok2} Opus refinements"
         + (f", {failed2} Opus failures" if failed2 else "")
         + (" (Opus rate-limited)" if rate2 else "")
         + " ==="
@@ -643,7 +652,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Enrich ads via claude CLI")
     parser.add_argument("--watch", help="Limit to a single watch_id")
     parser.add_argument("--limit", type=int, default=50, help="Max ads per run")
-    parser.add_argument("--model", default="opus", help="claude model: opus | sonnet | haiku (default: opus, le plus precis)")
+    parser.add_argument("--model", default="sonnet", help="claude model: opus | sonnet | haiku (default: sonnet, bon compromis qualite/quota)")
     parser.add_argument(
         "--reset",
         action="store_true",
