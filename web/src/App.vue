@@ -64,6 +64,8 @@ const enrichedCount = ref(0);
 const greatCount = ref(0);
 const sortBy = ref<"deal" | "price" | "recent">("deal");
 const categoryFilter = ref<string | null>(null);
+// Multi-select : tableau vide = pas de filtre, sinon on garde les ads dont
+// la valeur appartient au tableau.
 const vttCategoryFilter = ref<string[]>([]);
 
 const geo = ref<GeoFilterValue | null>(null);
@@ -71,6 +73,28 @@ const radiusKm = ref(30);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const sizeFilter = ref<string[]>([]);
 const wheelFilter = ref<string[]>([]);
+
+// Helper : toggle une valeur dans un tableau ref (pills cliquables)
+function _toggleInArray(arrRef: { value: string[] }, val: string) {
+  const i = arrRef.value.indexOf(val);
+  if (i >= 0) {
+    // Re-cree le tableau pour declencher la reactivite Vue
+    arrRef.value = arrRef.value.filter((_, j) => j !== i);
+  } else {
+    arrRef.value = [...arrRef.value, val];
+  }
+}
+function toggleVttCategory(v: string) { _toggleInArray(vttCategoryFilter, v); }
+function toggleSize(v: string) { _toggleInArray(sizeFilter, v); }
+function toggleWheel(v: string) { _toggleInArray(wheelFilter, v); }
+
+// Compat : convertit une valeur saved-search potentiellement ancienne
+// (string | null) ou nouvelle (string[] | null | undefined) en array.
+function _toArray(v: string | string[] | null | undefined): string[] {
+  if (Array.isArray(v)) return v;
+  if (typeof v === "string" && v) return [v];
+  return [];
+}
 // Score minimum (filtre IA "ne montre que les bonnes affaires")
 const minDealScore = ref<number | null>(null);
 
@@ -108,38 +132,6 @@ const WHEEL_OPTIONS = [
 const priceMin = ref<number | null>(null);
 const priceMax = ref<number | null>(null);
 const searchText = ref("");
-const openMultiFilter = ref<"type" | "size" | "wheel" | null>(null);
-const filtersRoot = ref<HTMLElement | null>(null);
-
-function asArrayFilter(value: string | string[] | null | undefined): string[] {
-  if (Array.isArray(value)) return value.filter(Boolean);
-  return value ? [value] : [];
-}
-
-function toggleArrayValue(values: string[], value: string): string[] {
-  return values.includes(value)
-    ? values.filter((v) => v !== value)
-    : [...values, value];
-}
-
-function toggleMultiFilter(kind: "type" | "size" | "wheel", value: string) {
-  if (kind === "type") {
-    vttCategoryFilter.value = toggleArrayValue(vttCategoryFilter.value, value);
-  } else if (kind === "size") {
-    sizeFilter.value = toggleArrayValue(sizeFilter.value, value);
-  } else {
-    wheelFilter.value = toggleArrayValue(wheelFilter.value, value);
-  }
-}
-
-function multiFilterLabel(values: string[], fallback: string, options?: { value: string; label: string }[]) {
-  if (values.length === 0) return fallback;
-  if (values.length === 1) {
-    const value = values[0];
-    return options?.find((o) => o.value === value)?.label ?? value;
-  }
-  return `${values.length} selectionnes`;
-}
 
 function normalizeText(s: string): string {
   return s
@@ -168,19 +160,10 @@ const pageSize = computed(() => ROWS_PER_PAGE * cols.value);
 onMounted(() => {
   updateCols();
   window.addEventListener("resize", updateCols);
-  document.addEventListener("pointerdown", handleOutsideFilterClick);
 });
 onUnmounted(() => {
   if (typeof window !== "undefined") window.removeEventListener("resize", updateCols);
-  document.removeEventListener("pointerdown", handleOutsideFilterClick);
 });
-
-function handleOutsideFilterClick(event: PointerEvent) {
-  if (!openMultiFilter.value) return;
-  const root = filtersRoot.value;
-  if (!root || !(event.target instanceof Node) || root.contains(event.target)) return;
-  openMultiFilter.value = null;
-}
 
 const selectedAd = ref<Ad | null>(null);
 const selectedAdLoading = ref(false);
@@ -277,8 +260,12 @@ function buildFilteredQueryBase<T>(q: T): T {
   if (vttCategoryFilter.value.length > 0) qq = qq.in("vtt_category", vttCategoryFilter.value);
   if (sizeFilter.value.length > 0) qq = qq.in("size_label", sizeFilter.value);
   if (wheelFilter.value.length > 0) {
-    // wheel_size peut etre stocke '29"', '29 pouces', '29' -> on prefixe-match.
-    qq = qq.or(wheelFilter.value.map((w) => `wheel_size.ilike.${w}%`).join(","));
+    // wheel_size peut etre stocke "29\"", "29 pouces", "29" -> on construit
+    // un OR de prefix-match (ilike) pour chaque taille selectionnee.
+    const orClauses = wheelFilter.value
+      .map((v) => `wheel_size.ilike.${v}%`)
+      .join(",");
+    qq = qq.or(orClauses);
   }
   if (minDealScore.value !== null) qq = qq.gte("deal_score", minDealScore.value);
   if (electricFilter.value === "yes") qq = qq.eq("electric", true);
@@ -435,9 +422,10 @@ const currentFilters = computed<SavedSearchFilters>(() => ({
 
 function applySavedSearch(f: SavedSearchFilters) {
   categoryFilter.value = f.categoryFilter;
-  vttCategoryFilter.value = asArrayFilter(f.vttCategoryFilter);
-  sizeFilter.value = asArrayFilter(f.sizeFilter);
-  wheelFilter.value = asArrayFilter(f.wheelFilter);
+  // Compat : ancien format (string|null) ou nouveau (string[]). On normalise vers array.
+  vttCategoryFilter.value = _toArray(f.vttCategoryFilter);
+  sizeFilter.value = _toArray(f.sizeFilter);
+  wheelFilter.value = _toArray(f.wheelFilter);
   minDealScore.value = f.minDealScore ?? null;
   geo.value = f.geo;
   radiusKm.value = f.radiusKm ?? 30;
@@ -466,9 +454,9 @@ function resetFilters() {
 // True des qu'au moins un filtre est actif (utilise pour afficher le bouton reset).
 const hasActiveFilters = computed(() =>
   categoryFilter.value !== null
-  || vttCategoryFilter.value.length > 0
-  || sizeFilter.value.length > 0
-  || wheelFilter.value.length > 0
+  || vttCategoryFilter.value !== null
+  || sizeFilter.value !== null
+  || wheelFilter.value !== null
   || minDealScore.value !== null
   || geo.value !== null
   || electricFilter.value !== "all"
@@ -741,7 +729,7 @@ const stats = computed(() => ({
       </section>
 
       <!-- Filtres -->
-      <div ref="filtersRoot" class="surface-filters">
+      <div class="surface-filters">
 
         <!-- Ligne 1 : recherche texte + ville/position/rayon -->
         <div class="flex flex-wrap items-center gap-4">
@@ -762,26 +750,12 @@ const stats = computed(() => ({
         <div class="filter-row" style="border-top: 1px solid var(--color-border-subtle)">
           <label class="filter-field">
             <span class="text-muted">🚵 Type:</span>
-            <div class="multi-select">
-              <button
-                type="button"
-                class="input-base multi-select-trigger"
-                @click="openMultiFilter = openMultiFilter === 'type' ? null : 'type'"
-              >
-                <span>{{ multiFilterLabel(vttCategoryFilter, "Tous", VTT_CATEGORY_OPTIONS) }}</span>
-                <span class="text-subtle">▾</span>
-              </button>
-              <div v-if="openMultiFilter === 'type'" class="multi-select-menu">
-                <label v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" class="multi-select-option">
-                  <input
-                    type="checkbox"
-                    :checked="vttCategoryFilter.includes(o.value)"
-                    @change="toggleMultiFilter('type', o.value)"
-                  />
-                  <span>{{ o.label }}</span>
-                </label>
-              </div>
-            </div>
+            <select v-model="vttCategoryFilter" class="input-base flex-1 sm:flex-none">
+              <option :value="null">Tous</option>
+              <option v-for="o in VTT_CATEGORY_OPTIONS" :key="o.value" :value="o.value">
+                {{ o.label }}
+              </option>
+            </select>
           </label>
 
           <label class="filter-field">
@@ -795,50 +769,18 @@ const stats = computed(() => ({
 
           <label class="filter-field">
             <span class="text-muted">📏 Taille:</span>
-            <div class="multi-select">
-              <button
-                type="button"
-                class="input-base multi-select-trigger"
-                @click="openMultiFilter = openMultiFilter === 'size' ? null : 'size'"
-              >
-                <span>{{ multiFilterLabel(sizeFilter, "Toutes") }}</span>
-                <span class="text-subtle">▾</span>
-              </button>
-              <div v-if="openMultiFilter === 'size'" class="multi-select-menu">
-                <label v-for="s in SIZE_OPTIONS" :key="s" class="multi-select-option">
-                  <input
-                    type="checkbox"
-                    :checked="sizeFilter.includes(s)"
-                    @change="toggleMultiFilter('size', s)"
-                  />
-                  <span>{{ s }}</span>
-                </label>
-              </div>
-            </div>
+            <select v-model="sizeFilter" class="input-base flex-1 sm:flex-none">
+              <option :value="null">Toutes</option>
+              <option v-for="s in SIZE_OPTIONS" :key="s" :value="s">{{ s }}</option>
+            </select>
           </label>
 
           <label class="filter-field">
             <span class="text-muted">🛞 Roues:</span>
-            <div class="multi-select">
-              <button
-                type="button"
-                class="input-base multi-select-trigger"
-                @click="openMultiFilter = openMultiFilter === 'wheel' ? null : 'wheel'"
-              >
-                <span>{{ multiFilterLabel(wheelFilter, "Toutes", WHEEL_OPTIONS) }}</span>
-                <span class="text-subtle">▾</span>
-              </button>
-              <div v-if="openMultiFilter === 'wheel'" class="multi-select-menu">
-                <label v-for="w in WHEEL_OPTIONS" :key="w.value" class="multi-select-option">
-                  <input
-                    type="checkbox"
-                    :checked="wheelFilter.includes(w.value)"
-                    @change="toggleMultiFilter('wheel', w.value)"
-                  />
-                  <span>{{ w.label }}</span>
-                </label>
-              </div>
-            </div>
+            <select v-model="wheelFilter" class="input-base flex-1 sm:flex-none">
+              <option :value="null">Toutes</option>
+              <option v-for="w in WHEEL_OPTIONS" :key="w.value" :value="w.value">{{ w.label }}</option>
+            </select>
           </label>
 
           <label class="filter-field">

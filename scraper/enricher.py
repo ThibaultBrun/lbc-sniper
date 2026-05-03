@@ -566,7 +566,7 @@ def enrich_hybrid(
     watch_id: Optional[str] = None,
     limit: int = 50,
     reset: bool = False,
-    refine_threshold: int = 60,
+    refine_threshold: int = 75,
 ) -> int:
     """Mode hybride : pass Haiku rapide sur tout, puis pass Opus de raffinement
     sur les annonces dont le deal_score Haiku >= refine_threshold.
@@ -666,8 +666,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--refine-threshold",
         type=int,
-        default=60,
-        help="Min deal_score from Haiku to trigger Opus refinement (default: 60).",
+        default=75,
+        help="Min deal_score from Sonnet to trigger Opus refinement (default: 75).",
     )
     parser.add_argument(
         "--parallelism",

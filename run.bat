@@ -6,7 +6,7 @@ REM Usage:
 REM   run.bat                  -> VTT, enrichissement Sonnet (defaut, bon compromis qualite/quota)
 REM   run.bat opus             -> VTT, tout Opus (precision max mais consomme le pool Opus)
 REM   run.bat haiku            -> VTT, tout Haiku (rapide mais moins fin)
-REM   run.bat hybrid           -> VTT, Sonnet sur tout puis Opus refinement sur deal_score >= 60
+REM   run.bat hybrid           -> VTT, Sonnet sur tout puis Opus refinement sur deal_score >= 75
 REM   run.bat all              -> TOUS les watches du config
 REM   run.bat all opus         -> tous les watches, mode Opus
 
