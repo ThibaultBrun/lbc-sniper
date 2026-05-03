@@ -68,6 +68,7 @@ const vttCategoryFilter = ref<string[]>([]);
 
 const geo = ref<GeoFilterValue | null>(null);
 const radiusKm = ref(30);
+const geoResetKey = ref(0);
 const electricFilter = ref<"all" | "yes" | "no">("all");
 const sizeFilter = ref<string[]>([]);
 const wheelFilter = ref<string[]>([]);
@@ -485,11 +486,16 @@ function resetFilters() {
   minDealScore.value = null;
   geo.value = null;
   radiusKm.value = 30;
+  geoResetKey.value += 1;
   electricFilter.value = "all";
   priceMin.value = null;
   priceMax.value = null;
   searchText.value = "";
   sortBy.value = "deal";
+  currentPage.value = 1;
+  if (isFilterRouteName(route.name)) {
+    router.replace({ path: route.path, query: {} });
+  }
 }
 
 function isFilterRouteName(name: unknown): boolean {
@@ -896,7 +902,7 @@ const stats = computed(() => ({
             />
           </label>
 
-          <GeoFilter v-model="geo" v-model:radius-km="radiusKm" />
+          <GeoFilter :key="geoResetKey" v-model="geo" v-model:radius-km="radiusKm" />
         </div>
 
         <!-- Ligne 2 : filtres metier -->

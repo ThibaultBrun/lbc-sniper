@@ -16,7 +16,7 @@ const { searches, save, remove, update } = useSavedSearches();
 const showSaveDialog = ref(false);
 const showList = ref(false);
 const newName = ref("");
-const newNotifyMode = ref<"off" | "instant" | "daily">("daily");
+const newNotifyMode = ref<"off" | "instant">("instant");
 const saving = ref(false);
 
 function asArrayFilter(value: string | string[] | null | undefined): string[] {
@@ -51,6 +51,7 @@ async function handleSave() {
     await save(newName.value.trim(), props.currentFilters, newNotifyMode.value);
     showSaveDialog.value = false;
     newName.value = "";
+    newNotifyMode.value = "instant";
   } finally {
     saving.value = false;
   }
@@ -79,7 +80,7 @@ async function handleRemove(s: SavedSearch, e: MouseEvent) {
 
 async function toggleNotifyMode(s: SavedSearch, e: MouseEvent) {
   e.stopPropagation();
-  const next = s.notify_mode === "off" ? "daily" : "off";
+  const next = s.notify_mode === "off" ? "instant" : "off";
   await update(s.id, { notify_mode: next });
 }
 
@@ -159,7 +160,6 @@ function notifyLabel(mode: "off" | "instant" | "daily"): string {
           <span class="text-sm">Alerte mail</span>
           <select v-model="newNotifyMode" class="input-base mt-1 w-full py-2">
             <option value="off">Pas d'alerte</option>
-            <option value="daily">Digest journalier</option>
             <option value="instant">À chaque nouvelle annonce</option>
           </select>
           <p class="mt-1 text-xs text-subtle">

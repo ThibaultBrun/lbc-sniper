@@ -85,7 +85,7 @@ export function useSavedSearches() {
   ensureInit();
   const { user, isAuthenticated } = useAuth();
 
-  async function save(name: string, filters: SavedSearchFilters, notify_mode: "off" | "instant" | "daily" = "daily") {
+  async function save(name: string, filters: SavedSearchFilters, notify_mode: "off" | "instant" | "daily" = "instant") {
     if (!user.value) throw new Error("Sign in required");
     const { data, error } = await supabase
       .from("saved_searches")
