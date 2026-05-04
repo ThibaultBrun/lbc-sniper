@@ -18,6 +18,12 @@ import SavedSearchesBar from "./components/SavedSearchesBar.vue";
 import type { SavedSearchFilters } from "./saved-searches";
 import { useFavorites } from "./favorites";
 import { haversineKm } from "./geo";
+import {
+  enableNotifications,
+  isNotificationEnabled,
+  startNotificationsPolling,
+  stopNotificationsPolling,
+} from "./notifications";
 
 const route = useRoute();
 const router = useRouter();
@@ -50,8 +56,19 @@ const VTT_LABELS = ["VTT enduro", "VTT DH", "VTT XC", "VTT dirt"];
 // Encart guides : replie par defaut quel que soit le device (mobile + desktop).
 // Le user clique pour deplier, son choix n'est pas persiste (re-replie au reload).
 const guidesOpen = ref(false);
+const notificationsEnabled = ref(false);
 function toggleGuides() {
   guidesOpen.value = !guidesOpen.value;
+}
+
+async function onEnableNotifications() {
+  const granted = await enableNotifications();
+  notificationsEnabled.value = granted;
+  if (granted) {
+    await startNotificationsPolling();
+  } else {
+    stopNotificationsPolling();
+  }
 }
 
 const ads = ref<Ad[]>([]);
@@ -196,10 +213,15 @@ onMounted(() => {
   updateCols();
   window.addEventListener("resize", updateCols);
   document.addEventListener("pointerdown", handleOutsideFilterClick);
+  notificationsEnabled.value = isNotificationEnabled();
+  if (notificationsEnabled.value) {
+    void startNotificationsPolling();
+  }
 });
 onUnmounted(() => {
   if (typeof window !== "undefined") window.removeEventListener("resize", updateCols);
   document.removeEventListener("pointerdown", handleOutsideFilterClick);
+  stopNotificationsPolling();
 });
 
 function handleOutsideFilterClick(event: PointerEvent) {
@@ -820,6 +842,14 @@ const stats = computed(() => ({
           <button @click="load" class="btn btn-ghost" aria-label="Recharger">
             <span class="sm:hidden">↻</span>
             <span class="hidden sm:inline">↻ Recharger</span>
+          </button>
+          <button
+            @click="onEnableNotifications"
+            class="btn btn-ghost"
+            :title="notificationsEnabled ? 'Notifications activees' : 'Activer les notifications'"
+          >
+            <span class="hidden sm:inline">{{ notificationsEnabled ? "Notifications on" : "Activer notif" }}</span>
+            <span class="sm:hidden">{{ notificationsEnabled ? "Notif on" : "Notif" }}</span>
           </button>
           <AuthButton />
         </div>

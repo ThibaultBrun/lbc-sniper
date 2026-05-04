@@ -1,0 +1,18 @@
+{
+  "name": "Trouve Ton VTT",
+  "short_name": "TrouveVTT",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef1f6",
+  "theme_color": "#10b981",
+  "lang": "fr",
+  "description": "Les meilleures affaires VTT analysees par IA.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
